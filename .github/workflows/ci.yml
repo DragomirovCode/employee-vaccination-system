@@ -1,0 +1,42 @@
+# ================================================================
+# CI Pipeline
+# ================================================================
+# PR:
+#   1. Проверка оформления PR
+#
+# Push в master:
+#   1. Проверка commit message (MERGED: ...)
+# ================================================================
+
+name: CI Pipeline
+
+on:
+  pull_request:
+    types: [ opened, edited, reopened, synchronize ]
+  push:
+    branches: [ master ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------
+      # PR validation
+      # ------------------------------------------------
+      - name: Check Pull Request format
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bash scripts/check_pr.sh
+
+      # ------------------------------------------------
+      # Commit validation (master)
+      # ------------------------------------------------
+      - name: Check commit message
+        if: github.event_name == 'push'
+        run: bash scripts/check_commit.sh
