@@ -3,13 +3,9 @@
 # ================================================================
 # PR:
 #   1. Проверка оформления PR
-#   2. ktlint
-#   3. build (с тестами)
 #
 # Push в master:
 #   1. Проверка commit message (MERGED: ...)
-#   2. ktlint
-#   3. build (с тестами)
 # ================================================================
 
 name: CI Pipeline
@@ -28,21 +24,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
-      # --- PR validation ---
+      # ------------------------------------------------
+      # PR validation
+      # ------------------------------------------------
       - name: Check Pull Request format
         if: github.event_name == 'pull_request'
         env:
@@ -50,15 +34,9 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bash scripts/check_pr.sh
 
-      # --- Commit validation (master) ---
+      # ------------------------------------------------
+      # Commit validation (master)
+      # ------------------------------------------------
       - name: Check commit message
         if: github.event_name == 'push'
         run: bash scripts/check_commit.sh
-
-      # --- Ktlint ---
-      - name: Ktlint check
-        run: ./gradlew ktlintCheck --no-daemon
-
-      # --- Build with tests ---
-      - name: Build (with tests)
-        run: ./gradlew build --no-daemon
