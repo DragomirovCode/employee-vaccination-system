@@ -2,16 +2,9 @@
 # ================================================================
 # Скрипт для проверки корректности оформления Pull Request (PR)
 # ================================================================
-# Ожидаемый формат заголовка:
-#   <module> | <type> | #<issue_number> - <описание>
-#
-# Пример:
-#   auth | fix | #42 - Исправить проверку токена
-# ================================================================
 
 set -e
 
-# --- Цвета ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -19,7 +12,6 @@ NC='\033[0m'
 
 FAILURE=false
 
-# --- Проверка переменных окружения ---
 if [ -z "$PR_TITLE" ]; then
   echo -e "${RED}❌ Не задана переменная окружения PR_TITLE.${NC}"
   exit 1
@@ -30,19 +22,16 @@ if [ -z "$PR_BODY" ]; then
   exit 1
 fi
 
-# --- Разрешённые модули ---
 MODULES="generic|auth"
-
-# --- Разрешённые типы ---
 TYPES="feature|fix|docs|refactor|perf|test|config|security"
 
-# --- Маска заголовка ---
 TITLE_MASK="^(${MODULES})[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
+CHANGELOG_MASK="^Changelog:[[:space:]](${TYPES})$"
 
-# --- Маска Changelog (в конце описания) ---
-CHANGELOG_MASK="Changelog:[[:space:]](${TYPES})([[:space:]]*)$"
+# --- НОВОЕ: берём последнюю непустую строку ---
+PR_BODY_LAST_LINE="$(printf '%s\n' "$PR_BODY" | sed '/^[[:space:]]*$/d' | tail -n 1)"
 
-echo " "
+echo
 echo "##### 1. Проверка заголовка PR..."
 echo "Текущий заголовок: '${PR_TITLE}'"
 
@@ -50,33 +39,24 @@ if [[ "$PR_TITLE" =~ $TITLE_MASK ]]; then
   echo -e "${GREEN}✅ Заголовок PR корректен.${NC}"
 else
   echo -e "${RED}❌ Некорректный заголовок PR.${NC}"
-  echo -e "${RED}Ожидаемый формат:${NC}"
-  echo -e "${BLUE}<module> | <type> | #<issue> - <описание>${NC}"
-  echo -e "${BLUE}Пример:${NC}"
-  echo -e "${BLUE}auth | fix | #42 - Исправить проверку токена${NC}"
-  echo -e "${RED}Доступные модули: ${MODULES}${NC}"
-  echo -e "${RED}Доступные типы: ${TYPES}${NC}"
   FAILURE=true
 fi
 
-echo " "
+echo
 echo "##### 2. Проверка наличия Changelog в конце описания..."
 
-if [[ "$PR_BODY" =~ $CHANGELOG_MASK ]]; then
+if [[ "$PR_BODY_LAST_LINE" =~ $CHANGELOG_MASK ]]; then
   echo -e "${GREEN}✅ Changelog оформлен корректно.${NC}"
 else
   echo -e "${RED}❌ Не найден корректный трейлер Changelog в конце описания PR.${NC}"
-  echo -e "${RED}Описание PR должно заканчиваться строкой:${NC}"
-  echo -e "${BLUE}Changelog: fix${NC}"
+  echo -e "${BLUE}Ожидается:${NC} Changelog: fix"
   FAILURE=true
 fi
 
-# --- Итог ---
-echo " "
+echo
 if [ "$FAILURE" = true ]; then
-  echo -e "${RED}❌ Проверка PR не пройдена. Исправьте замечания выше.${NC}"
+  echo -e "${RED}❌ Проверка PR не пройдена.${NC}"
   exit 1
 else
   echo -e "${GREEN}🎉 Проверка PR успешно пройдена.${NC}"
-  exit 0
 fi

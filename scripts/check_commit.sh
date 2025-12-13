@@ -9,17 +9,18 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
+# Берём только первую строку commit message
+COMMIT_MESSAGE="$(git log -1 --pretty=%B | head -n 1)"
 
 MODULES="generic|auth"
 TYPES="feature|fix|docs|refactor|perf|test|config|security"
 
 COMMIT_MASK="^MERGED:[[:space:]](${MODULES})[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
 
-echo "Последний commit message:"
-echo "-------------------------"
+echo "Последний commit message (первая строка):"
+echo "----------------------------------------"
 echo "$COMMIT_MESSAGE"
-echo "-------------------------"
+echo "----------------------------------------"
 
 if [[ "$COMMIT_MESSAGE" =~ $COMMIT_MASK ]]; then
   echo -e "${GREEN}✅ Commit message корректен.${NC}"
