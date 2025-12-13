@@ -1,0 +1,65 @@
+name: Bug
+description: Сообщение об ошибке
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **ТРЕБОВАНИЯ К ОПИСАНИЮ ЗАДАЧИ:**
+
+        1. Проблема должна воспроизводиться 1 к 1.
+        2. Шаги для воспроизведения должны с высокой вероятностью (выше 20%) приводить к повторению проблемного поведения.
+
+        **ЕСЛИ ПУНКТЫ 1 и 2 НЕ ВЫПОЛНЯЮТСЯ — ЗАДАЧА НЕ ПРИНИМАЕТСЯ В РАБОТУ.**
+
+        ---
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание
+      description: Кратко и точно опишите суть проблемы.
+      placeholder: Что именно работает некорректно?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги для воспроизведения
+      description: |
+        Шаги должны с высокой вероятностью приводить к воспроизведению проблемы (>20%).
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Текущее поведение
+      description: Что происходит сейчас при выполнении шагов воспроизведения.
+      placeholder: Фактический результат
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+      description: Как система должна работать в корректном варианте.
+      placeholder: Ожидаемый результат
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи и / или скриншоты
+      description: Приложите логи, скриншоты или другие материалы для наглядной иллюстрации проблемы.
+      placeholder: Ссылки, файлы, фрагменты логов
+    validations:
+      required: false
