@@ -1,0 +1,67 @@
+name: Feature
+description: Запрос на новую функциональность
+title: "[FEATURE] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание
+      description: Максимально подробное описание того, что мы хотим получить.
+      placeholder: Что должно появиться/измениться? Что именно ожидается в итоге?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: ui_changes
+    attributes:
+      label: Изменения в UI
+      description: Если изменения включают UI — приложите материалы.
+      options:
+        - label: UI не затрагивается
+        - label: Приложен скриншот "Как сейчас"
+        - label: Приложен макет/скриншот с пометками "Как должно стать"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему решает?
+      description: |
+        Сформулируйте проблему, которую пытаемся решить. Это влияет на приоритет.
+        Важно донести, почему задача важна.
+
+        Не принимаются формулировки вида:
+        - "Мы хотим тут такую кнопку, чтобы решить проблему, что кнопки нет"
+        - "Требование продакта"
+        - "Требование проекта"
+      placeholder: Какая боль/риск/потеря сейчас? Почему это важно?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативные способы решения
+      description: |
+        Есть ли способы решить цель иначе?
+        Опишите воркараунд/костыли, на которые придётся идти без этой фичи.
+      placeholder: Какие альтернативы рассматривались? Почему они хуже/не подходят?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Критерии приёмки
+      description: |
+        По шагам (1..N) опишите сценарий проверки.
+        Разработчики и QA обеспечат выполнение сценария перед релизом.
+        Задача, закрытая по факту выполнения критериев приёмки, дальнейшему переоткрытию не подлежит.
+      placeholder: |
+        1) ...
+        2) ...
+        3) ...
+    validations:
+      required: true

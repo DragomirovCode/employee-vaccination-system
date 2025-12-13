@@ -1,0 +1,94 @@
+name: Frontend
+description: Фронтенд-задача (UI / UX / FE-логика)
+title: "[FRONTEND] "
+labels: ["frontend"]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Задача
+      description: |
+        Краткое описание задачи.
+        Используется для общего контекста без погружения в детали.
+      placeholder: Коротко — что нужно сделать?
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание
+      description: |
+        Подробное описание задачи.
+        Все детали реализации, логика, ограничения, скриншоты и т.д.
+      placeholder: Полное описание поведения и требований
+    validations:
+      required: true
+
+  - type: textarea
+    id: design_resources
+    attributes:
+      label: Ресурсы — дизайн
+      description: |
+        Заполняется, если предполагаются графические изменения.
+
+        • Ссылка на Figma
+        • Уточнить у дизайнера:
+          – Используются ли существующие дизайн-наработки для поддержания консистентности?
+          – Проверен ли дизайн на малое и большое количество контента?
+          – Используется ли принципиально новый компонент
+            (или старый должен уметь делать принципиально новое)?
+            → в этом случае требуется отдельная задача.
+      placeholder: |
+        Комментарии дизайнера:
+        - ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: backend_resources
+    attributes:
+      label: Ресурсы — бэкенд
+      description: |
+        Заполняется, если предполагается работа с бэком.
+
+        • Ссылка на Swagger
+        • Ссылка на бэкенд-задачу
+        • Перечень API / эндпойнтов
+      placeholder: |
+        Swagger: https://swagger-ui.html
+        Backend issue: #
+        Endpoints:
+        - GET /...
+        - POST /...
+    validations:
+      required: false
+
+  - type: textarea
+    id: texts
+    attributes:
+      label: Тексты (RU / EN)
+      description: |
+        Заполняется, если предполагается добавление или изменение текстов.
+        Перечень всех текстовых значений на русском и английском языках.
+      placeholder: |
+        RU:
+        - ...
+        EN:
+        - ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Критерии приемки задачи
+      description: |
+        Список действий, выполнение которых позволит проверить
+        корректность выполнения задачи.
+      placeholder: |
+        1) ...
+        2) ...
+        3) ...
+    validations:
+      required: true
