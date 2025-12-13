@@ -48,12 +48,12 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: ./scripts/check_pr.sh
+        run: bash scripts/check_pr.sh
 
       # --- Commit validation (master) ---
       - name: Check commit message
         if: github.event_name == 'push'
-        run: ./scripts/check_commit.sh
+        run: bash scripts/check_commit.sh
 
       # --- Ktlint ---
       - name: Ktlint check
