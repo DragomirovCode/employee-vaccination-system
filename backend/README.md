@@ -39,3 +39,8 @@ Default credentials:
 - `DB_URL`
 - `DB_USER`
 - `DB_PASSWORD`
+
+## Auth persistence
+- `users` table with UUID v7 ids
+- `roles` table
+- `user_roles` table (composite PK: `user_id`, `role_id`)

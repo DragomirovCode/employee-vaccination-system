@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.2.20"
 springBoot = "4.0.3"
+flyway = "11.14.1"
 ktlintPlugin = "14.0.1"
 ktlint = "1.8.0"
 
@@ -9,7 +10,8 @@ spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies"
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBoot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBoot" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBoot" }
-flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 postgresql = { module = "org.postgresql:postgresql" }
 h2 = { module = "com.h2database:h2" }
 spring-context = { module = "org.springframework:spring-context" }
