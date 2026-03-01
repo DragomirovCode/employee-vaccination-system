@@ -50,3 +50,9 @@ Default credentials:
 - `departments` table uses UUID v4 ids
 - `employees` table uses UUID v7 ids
 - `employees.user_id` is nullable and unique
+
+## Vaccine module
+- `vaccine` module is included in backend multi-module build
+- `vaccines` table uses UUID v4 ids
+- `diseases` table uses integer identity ids
+- `vaccine_diseases` uses composite PK (`vaccine_id`, `disease_id`)

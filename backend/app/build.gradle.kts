@@ -17,4 +17,5 @@ dependencies {
 
     implementation(project(":auth"))
     implementation(project(":employee"))
+    implementation(project(":vaccine"))
 }
