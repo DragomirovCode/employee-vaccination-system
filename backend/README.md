@@ -22,4 +22,20 @@ curl -i -H 'X-Auth-Token: dev-token' http://localhost:8080/hello
 ```bash
 ./gradlew build
 ```
-s
+
+## PostgreSQL (Docker)
+From repository root:
+```bash
+docker compose up -d postgres
+```
+
+Default credentials:
+- DB: `evs`
+- User: `evs`
+- Password: `evs`
+- Port: `5432`
+
+`app` module uses these defaults via `application.yml`, or you can override with:
+- `DB_URL`
+- `DB_USER`
+- `DB_PASSWORD`

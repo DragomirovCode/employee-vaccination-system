@@ -3,6 +3,7 @@ import org.gradle.api.tasks.testing.Test
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.jpa)
 }
 
 dependencies {
@@ -13,7 +14,11 @@ dependencies {
     testRuntimeOnly(bootBom)
 
     implementation(libs.spring.context)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.kotlin.reflect)
+    implementation(libs.uuid.creator)
     testImplementation(libs.spring.boot.starter.test)
+    testRuntimeOnly(libs.h2)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
