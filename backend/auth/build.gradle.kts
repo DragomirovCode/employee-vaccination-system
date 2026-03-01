@@ -15,6 +15,7 @@ dependencies {
 
     implementation(libs.spring.context)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.flyway.core)
     implementation(libs.kotlin.reflect)
     implementation(libs.uuid.creator)
     testImplementation(libs.spring.boot.starter.test)
