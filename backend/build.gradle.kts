@@ -1,7 +1,12 @@
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.spring.boot) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.spring) apply false
+    alias(libs.plugins.ktlint) apply false
     id("java")
 }
 
@@ -15,23 +20,33 @@ allprojects {
 }
 
 subprojects {
-    // Ensure consistent Java/Kotlin target across all modules.
     plugins.withId("org.jetbrains.kotlin.jvm") {
+        // ktlint только для Kotlin-модулей
+        apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
+        // Java toolchain
         java {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(21))
             }
         }
 
-        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            compilerOptions {
-                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-                freeCompilerArgs.addAll("-Xjsr305=strict")
-            }
+        // Kotlin compiler options
+        tasks.withType<KotlinCompile>().configureEach {
+            compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+            compilerOptions.freeCompilerArgs.addAll("-Xjsr305=strict")
         }
 
-        tasks.withType<Test>().configureEach {
-            useJUnitPlatform()
+        // ktlint config
+        extensions.configure<KtlintExtension> {
+            version.set(libs.versions.ktlint.get())
+            android.set(false)
+            outputToConsole.set(true)
+            ignoreFailures.set(false)
         }
+    }
+
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
     }
 }
