@@ -16,4 +16,5 @@ dependencies {
     testRuntimeOnly(libs.h2)
 
     implementation(project(":auth"))
+    implementation(project(":employee"))
 }
