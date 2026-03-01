@@ -3,6 +3,7 @@
 # ================================================================
 # PR:
 #   1. Проверка оформления PR
+#   2. Ktlint check
 #
 # Push в master:
 #   1. Проверка commit message (MERGED: ...)
@@ -33,6 +34,21 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bash scripts/check_pr.sh
+
+      - name: Set up JDK 21
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle (cache)
+        if: github.event_name == 'pull_request'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run ktlint check
+        if: github.event_name == 'pull_request'
+        run: ./gradlew ktlintCheck
 
       # ------------------------------------------------
       # Commit validation (master)

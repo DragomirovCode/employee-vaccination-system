@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.RestController
 class HelloController(
     private val authService: AuthService,
 ) {
-
     @GetMapping("/hello")
-    fun hello(@RequestHeader("X-Auth-Token", required = false) token: String?): ResponseEntity<String> {
+    fun hello(
+        @RequestHeader("X-Auth-Token", required = false) token: String?,
+    ): ResponseEntity<String> {
         if (!authService.isTokenValid(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body("Unauthorized")
         }
         return ResponseEntity.ok("Hello from app module")

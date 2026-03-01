@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class AuthConfiguration {
-
     @Bean
     fun authService(): AuthService = AuthService()
 }
