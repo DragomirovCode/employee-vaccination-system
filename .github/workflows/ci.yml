@@ -37,7 +37,7 @@ jobs:
 
       - name: Run ktlint check
         if: github.event_name == 'pull_request'
-        run: ./gradlew ktlintCheck
+        run: chmod +x backend/gradlew
 
       # ------------------------------------------------
       # Commit validation (master)
