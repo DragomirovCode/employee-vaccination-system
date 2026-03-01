@@ -12,4 +12,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "backend"
-include("app", "auth")
+include("app", "auth", "employee")

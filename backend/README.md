@@ -44,3 +44,9 @@ Default credentials:
 - `users` table with UUID v7 ids
 - `roles` table
 - `user_roles` table (composite PK: `user_id`, `role_id`)
+
+## Employee module
+- `employee` module is included in backend multi-module build
+- `departments` table uses UUID v4 ids
+- `employees` table uses UUID v7 ids
+- `employees.user_id` is nullable and unique
