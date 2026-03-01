@@ -3,6 +3,7 @@
 # ================================================================
 # PR:
 #   1. Проверка оформления PR
+#   2. Ktlint check
 #
 # Push в master:
 #   1. Проверка commit message (MERGED: ...)
@@ -33,6 +34,10 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: bash scripts/check_pr.sh
+
+      - name: Run ktlint check
+        if: github.event_name == 'pull_request'
+        run: chmod +x backend/gradlew
 
       # ------------------------------------------------
       # Commit validation (master)
