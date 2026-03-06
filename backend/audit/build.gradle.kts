@@ -1,4 +1,4 @@
-﻿import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -18,11 +18,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.kotlin.reflect)
     implementation(libs.uuid.creator)
-
-    implementation(project(":audit"))
-    implementation(project(":auth"))
-    implementation(project(":employee"))
-    implementation(project(":vaccine"))
+    implementation(libs.jackson.databind)
 
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly(libs.h2)

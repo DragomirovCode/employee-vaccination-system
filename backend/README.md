@@ -7,6 +7,7 @@
 - `vaccine` — библиотечный модуль справочников вакцин (vaccines, diseases).
 - `vaccination` — библиотечный модуль учета вакцинаций и документов.
 - `reporting` — библиотечный модуль read-only отчетов.
+- `audit` — библиотечный модуль журнала изменений.
 
 ## Требования
 - JDK 21
@@ -82,3 +83,12 @@ Default credentials:
 - response fields:
   - `employeeId`, `fullName`, `departmentId`, `vaccineName`
   - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
+
+## Audit module
+- `audit` module is included in backend multi-module build
+- `audit_log` table stores immutable audit records
+- captures:
+  - `action`: CREATE/UPDATE/DELETE
+  - `entity_type`: VACCINATION/DOCUMENT
+  - `entity_id`, `user_id`, `old_value`, `new_value`, `created_at`
+- integrated with `vaccination` module services for `vaccinations` and `documents`
