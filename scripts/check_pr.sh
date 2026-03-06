@@ -36,13 +36,14 @@ fi
 # ------------------------------------------------
 # Разрешённые значения
 # ------------------------------------------------
-MODULES="generic|auth|employee|vaccine"
+MODULES="generic|auth|employee|vaccine|vaccination"
 TYPES="feature|fix|docs|refactoring"
+SCOPES="backend|frontend"
 
 # ------------------------------------------------
 # Регулярное выражение заголовка
 # ------------------------------------------------
-TITLE_MASK="^(${MODULES})[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
+TITLE_MASK="^(((${SCOPES})[[:space:]]\|[[:space:]])?(${MODULES}))[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
 
 # ================================================================
 # Проверка заголовка PR
@@ -58,9 +59,12 @@ else
   echo -e "${RED}❌ Некорректный заголовок PR.${NC}"
   echo -e "${BLUE}Ожидаемый формат:${NC}"
   echo -e "  <module> | <type> | #<issue> - <описание>"
+  echo -e "  <scope> | <module> | <type> | #<issue> - <описание>  (scope: backend|frontend, optional)"
   echo -e "${BLUE}Пример:${NC}"
   echo -e "  auth | feature | #42 - Добавить проверку токена"
+  echo -e "  backend | vaccination | feature | #25 - Реализовать модуль vaccination"
   echo -e "${BLUE}Допустимые модули:${NC} ${MODULES}"
+  echo -e "${BLUE}Допустимые scope:${NC} ${SCOPES}"
   echo -e "${BLUE}Допустимые типы:${NC} ${TYPES}"
   FAILURE=true
 fi
