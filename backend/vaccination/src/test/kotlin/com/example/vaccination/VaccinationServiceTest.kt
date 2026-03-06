@@ -1,5 +1,6 @@
-﻿package com.example.vaccination
+package com.example.vaccination
 
+import com.example.audit.log.AuditLogRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -21,6 +22,9 @@ import java.time.LocalDate
 @SpringBootTest(classes = [VaccinationTestApplication::class])
 class VaccinationServiceTest {
     @Autowired
+    private lateinit var auditLogRepository: AuditLogRepository
+
+    @Autowired
     private lateinit var vaccinationService: VaccinationService
 
     @Autowired
@@ -40,6 +44,7 @@ class VaccinationServiceTest {
 
     @Test
     fun `calculates next dose and revaccination dates`() {
+        auditLogRepository.deleteAll()
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()

@@ -19,6 +19,7 @@ h2 = { module = "com.h2database:h2" }
 spring-context = { module = "org.springframework:spring-context" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version = "6.1.1" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swaggerAnnotations" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
