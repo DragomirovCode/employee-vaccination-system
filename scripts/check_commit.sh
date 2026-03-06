@@ -14,8 +14,9 @@ COMMIT_MESSAGE="$(git log -1 --pretty=%B | head -n 1)"
 
 MODULES="generic|auth|employee|vaccine|vaccination"
 TYPES="feature|fix|docs|refactor|perf|test|config|security"
+SCOPES="backend|frontend"
 
-COMMIT_MASK="^MERGED:[[:space:]](${MODULES})[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
+COMMIT_MASK="^MERGED:[[:space:]](((${SCOPES})[[:space:]]\|[[:space:]])?(${MODULES}))[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
 
 echo "Последний commit message (первая строка):"
 echo "----------------------------------------"
@@ -28,5 +29,6 @@ else
   echo -e "${RED}❌ Некорректный commit message в master.${NC}"
   echo -e "${RED}Ожидаемый формат:${NC}"
   echo -e "MERGED: <module> | <type> | #<issue> - <описание>"
+  echo -e "MERGED: <scope> | <module> | <type> | #<issue> - <описание>  (scope: backend|frontend, optional)"
   exit 1
 fi
