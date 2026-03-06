@@ -1,0 +1,44 @@
+package com.example.reporting.revaccination
+
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.stereotype.Service
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.util.UUID
+
+@Service
+class RevaccinationDueService(
+    private val queryRepository: RevaccinationDueQueryRepository,
+) {
+    fun getDueInDays(
+        days: Int,
+        departmentId: UUID?,
+        pageable: Pageable,
+    ): Page<RevaccinationDueItem> {
+        require(days >= 0) { "days must be >= 0" }
+
+        val fromDate = LocalDate.now()
+        val toDate = fromDate.plusDays(days.toLong())
+
+        return queryRepository.findDueInPeriod(fromDate, toDate, departmentId, pageable).map { row ->
+            RevaccinationDueItem(
+                employeeId = row.employeeId,
+                fullName = buildFullName(row.lastName, row.firstName, row.middleName),
+                departmentId = row.departmentId,
+                vaccineName = row.vaccineName,
+                lastVaccinationDate = row.vaccinationDate,
+                revaccinationDate = row.revaccinationDate,
+                daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
+            )
+        }
+    }
+
+    private fun buildFullName(
+        lastName: String,
+        firstName: String,
+        middleName: String?,
+    ): String =
+        listOfNotNull(lastName, firstName, middleName?.takeIf { it.isNotBlank() })
+            .joinToString(" ")
+}

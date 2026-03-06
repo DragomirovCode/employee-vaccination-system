@@ -4,6 +4,8 @@ springBoot = "4.0.3"
 flyway = "11.14.1"
 ktlintPlugin = "14.0.1"
 ktlint = "1.8.0"
+swaggerAnnotations = "2.2.31"
+springdoc = "3.0.0"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
@@ -17,6 +19,8 @@ h2 = { module = "com.h2database:h2" }
 spring-context = { module = "org.springframework:spring-context" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version = "6.1.1" }
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations", version.ref = "swaggerAnnotations" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
