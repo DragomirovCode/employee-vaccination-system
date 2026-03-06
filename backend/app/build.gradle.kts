@@ -9,6 +9,7 @@ dependencies {
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.flyway.core)
     runtimeOnly(libs.flyway.database.postgresql)
     runtimeOnly(libs.postgresql)
@@ -18,4 +19,5 @@ dependencies {
     implementation(project(":auth"))
     implementation(project(":employee"))
     implementation(project(":vaccine"))
+    implementation(project(":reporting"))
 }

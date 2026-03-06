@@ -12,7 +12,7 @@ NC='\033[0m'
 # Берём только первую строку commit message
 COMMIT_MESSAGE="$(git log -1 --pretty=%B | head -n 1)"
 
-MODULES="generic|auth|employee|vaccine|vaccination"
+MODULES="generic|auth|employee|vaccine|vaccination|reporting"
 TYPES="feature|fix|docs|refactor|perf|test|config|security"
 SCOPES="backend|frontend"
 

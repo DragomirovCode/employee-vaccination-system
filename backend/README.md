@@ -6,6 +6,7 @@
 - `employee` — библиотечный модуль кадрового учета (departments, employees).
 - `vaccine` — библиотечный модуль справочников вакцин (vaccines, diseases).
 - `vaccination` — библиотечный модуль учета вакцинаций и документов.
+- `reporting` — библиотечный модуль read-only отчетов.
 
 ## Требования
 - JDK 21
@@ -19,6 +20,11 @@
 ```bash
 curl -i http://localhost:8080/hello
 curl -i -H 'X-Auth-Token: dev-token' http://localhost:8080/hello
+```
+
+Swagger UI:
+```bash
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ## Сборка
@@ -66,3 +72,12 @@ Default credentials:
 - `vaccinations.next_dose_date` and `vaccinations.revaccination_date` are persisted fields
 - `documents` table stores file metadata for vaccination documents
 - `documents.vaccination_id` is FK to `vaccinations(id)`
+
+## Reporting module
+- `reporting` module is included in backend multi-module build
+- no own tables, reads data from `employee`, `vaccine`, `vaccination`
+- endpoint:
+  - `GET /reports/revaccination-due?days=30&departmentId=<uuid>&page=0&size=20`
+- response fields:
+  - `employeeId`, `fullName`, `departmentId`, `vaccineName`
+  - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
