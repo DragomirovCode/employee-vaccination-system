@@ -3,6 +3,9 @@
 Модули:
 - `app` — запускаемое Spring Boot приложение.
 - `auth` — библиотечный модуль с демонстрационным `AuthService`.
+- `employee` — библиотечный модуль кадрового учета (departments, employees).
+- `vaccine` — библиотечный модуль справочников вакцин (vaccines, diseases).
+- `vaccination` — библиотечный модуль учета вакцинаций и документов.
 
 ## Требования
 - JDK 21
@@ -56,3 +59,10 @@ Default credentials:
 - `vaccines` table uses UUID v4 ids
 - `diseases` table uses integer identity ids
 - `vaccine_diseases` uses composite PK (`vaccine_id`, `disease_id`)
+
+## Vaccination module
+- `vaccination` module is included in backend multi-module build
+- `vaccinations` table stores vaccination facts
+- `vaccinations.next_dose_date` and `vaccinations.revaccination_date` are persisted fields
+- `documents` table stores file metadata for vaccination documents
+- `documents.vaccination_id` is FK to `vaccinations(id)`
