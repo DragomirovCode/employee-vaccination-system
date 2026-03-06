@@ -78,6 +78,7 @@ Default credentials:
 - no own tables, reads data from `employee`, `vaccine`, `vaccination`
 - endpoint:
   - `GET /reports/revaccination-due?days=30&departmentId=<uuid>&page=0&size=20`
+  - `GET /reports/vaccination-coverage?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>`
 - response fields:
   - `employeeId`, `fullName`, `departmentId`, `vaccineName`
   - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
