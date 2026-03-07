@@ -226,9 +226,12 @@ class EmployeeApiTest {
         val departmentLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.DEPARTMENT, departmentId)
         val employeeLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.EMPLOYEE, employeeId)
 
-        org.junit.jupiter.api.Assertions.assertTrue(departmentLogs.any { it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(employeeLogs.any { it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(employeeLogs.any { it.action == AuditAction.UPDATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(departmentLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(employeeLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(employeeLogs.any { it.action == AuditAction.UPDATE })
     }
 
     private fun createUserWithRole(roleCode: String): UserEntity {

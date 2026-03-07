@@ -30,15 +30,15 @@ class VaccineService(
         requireUniqueName(command.name, null)
         val saved =
             vaccineRepository.saveAndFlush(
-            VaccineEntity(
-                name = command.name.trim(),
-                manufacturer = command.manufacturer?.trim(),
-                validityDays = command.validityDays,
-                dosesRequired = command.dosesRequired,
-                daysBetween = command.daysBetween,
-                isActive = command.isActive,
-            ),
-        )
+                VaccineEntity(
+                    name = command.name.trim(),
+                    manufacturer = command.manufacturer?.trim(),
+                    validityDays = command.validityDays,
+                    dosesRequired = command.dosesRequired,
+                    daysBetween = command.daysBetween,
+                    isActive = command.isActive,
+                ),
+            )
         auditLogService.logCreate(
             userId = performedBy,
             entityType = AuditEntityType.VACCINE,

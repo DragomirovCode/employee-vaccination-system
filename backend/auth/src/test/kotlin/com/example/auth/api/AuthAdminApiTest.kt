@@ -1,9 +1,9 @@
 package com.example.auth.api
 
-import com.example.auth.AuthTestApplication
 import com.example.audit.log.AuditAction
 import com.example.audit.log.AuditEntityType
 import com.example.audit.log.AuditLogRepository
+import com.example.auth.AuthTestApplication
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleEntity
@@ -198,10 +198,22 @@ class AuthAdminApiTest {
 
         val userLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.USER, createdId)
         val allLogs = auditLogRepository.findAll()
-        org.junit.jupiter.api.Assertions.assertTrue(userLogs.any { it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(userLogs.any { it.action == AuditAction.UPDATE })
-        org.junit.jupiter.api.Assertions.assertTrue(allLogs.any { it.entityType == AuditEntityType.USER_ROLE && it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(allLogs.any { it.entityType == AuditEntityType.USER_ROLE && it.action == AuditAction.DELETE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(userLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(userLogs.any { it.action == AuditAction.UPDATE })
+        org.junit.jupiter.api.Assertions.assertTrue(
+            allLogs.any {
+                it.entityType == AuditEntityType.USER_ROLE &&
+                    it.action == AuditAction.CREATE
+            },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            allLogs.any {
+                it.entityType == AuditEntityType.USER_ROLE &&
+                    it.action == AuditAction.DELETE
+            },
+        )
     }
 
     private fun createUserWithRole(roleCode: String): UserEntity {

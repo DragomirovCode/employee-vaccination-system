@@ -34,17 +34,17 @@ class EmployeeService(
         return try {
             val saved =
                 employeeRepository.saveAndFlush(
-                EmployeeEntity(
-                    userId = command.userId,
-                    departmentId = command.departmentId,
-                    firstName = command.firstName.trim(),
-                    lastName = command.lastName.trim(),
-                    middleName = command.middleName?.trim(),
-                    birthDate = command.birthDate,
-                    position = command.position?.trim(),
-                    hireDate = command.hireDate,
-                ),
-            )
+                    EmployeeEntity(
+                        userId = command.userId,
+                        departmentId = command.departmentId,
+                        firstName = command.firstName.trim(),
+                        lastName = command.lastName.trim(),
+                        middleName = command.middleName?.trim(),
+                        birthDate = command.birthDate,
+                        position = command.position?.trim(),
+                        hireDate = command.hireDate,
+                    ),
+                )
             auditLogService.logCreate(
                 userId = performedBy,
                 entityType = AuditEntityType.EMPLOYEE,

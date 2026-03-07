@@ -209,10 +209,24 @@ class VaccineApiTest {
             ).andExpect(status().isNoContent)
 
         val logs = auditLogRepository.findAll()
-        org.junit.jupiter.api.Assertions.assertTrue(logs.any { it.entityType == AuditEntityType.VACCINE && it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(logs.any { it.entityType == AuditEntityType.DISEASE && it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(logs.any { it.entityType == AuditEntityType.VACCINE_DISEASE && it.action == AuditAction.CREATE })
-        org.junit.jupiter.api.Assertions.assertTrue(logs.any { it.entityType == AuditEntityType.VACCINE_DISEASE && it.action == AuditAction.DELETE })
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any { it.entityType == AuditEntityType.VACCINE && it.action == AuditAction.CREATE },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any { it.entityType == AuditEntityType.DISEASE && it.action == AuditAction.CREATE },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any {
+                it.entityType == AuditEntityType.VACCINE_DISEASE &&
+                    it.action == AuditAction.CREATE
+            },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any {
+                it.entityType == AuditEntityType.VACCINE_DISEASE &&
+                    it.action == AuditAction.DELETE
+            },
+        )
     }
 
     private fun createUserWithRole(roleCode: String): UserEntity {

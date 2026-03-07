@@ -30,11 +30,11 @@ class DiseaseService(
         requireUniqueName(command.name, null)
         val saved =
             diseaseRepository.saveAndFlush(
-            DiseaseEntity(
-                name = command.name.trim(),
-                description = command.description?.trim(),
-            ),
-        )
+                DiseaseEntity(
+                    name = command.name.trim(),
+                    description = command.description?.trim(),
+                ),
+            )
         auditLogService.logCreate(
             userId = performedBy,
             entityType = AuditEntityType.DISEASE,

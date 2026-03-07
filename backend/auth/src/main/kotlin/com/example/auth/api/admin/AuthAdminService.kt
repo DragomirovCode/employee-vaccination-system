@@ -36,12 +36,12 @@ class AuthAdminService(
         requireUniqueEmail(command.email, null)
         val saved =
             userRepository.saveAndFlush(
-            UserEntity(
-                email = command.email.trim(),
-                passwordHash = command.passwordHash,
-                isActive = command.isActive,
-            ),
-        )
+                UserEntity(
+                    email = command.email.trim(),
+                    passwordHash = command.passwordHash,
+                    isActive = command.isActive,
+                ),
+            )
         auditLogService.logCreate(
             userId = performedBy,
             entityType = AuditEntityType.USER,
@@ -120,11 +120,11 @@ class AuthAdminService(
 
         val saved =
             userRoleRepository.saveAndFlush(
-            UserRoleEntity(
-                id = userRoleId,
-                assignedBy = assignedBy,
-            ),
-        )
+                UserRoleEntity(
+                    id = userRoleId,
+                    assignedBy = assignedBy,
+                ),
+            )
         auditLogService.logCreate(
             userId = assignedBy,
             entityType = AuditEntityType.USER_ROLE,
