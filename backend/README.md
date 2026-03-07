@@ -120,6 +120,19 @@ Write permissions for vaccination module:
 - `POST /documents`, `PUT /documents/{id}`, `DELETE /documents/{id}`: `MEDICAL`, `ADMIN`
 - `HR`, `PERSON` receive `403` for write operations.
 
+Employee module API:
+- departments:
+  - `GET /departments`, `GET /departments/{id}` - any authenticated user
+  - `POST /departments`, `PUT /departments/{id}`, `DELETE /departments/{id}` - `HR`, `ADMIN`
+- employees:
+  - `GET /employees`, `GET /employees/{id}` - any authenticated user
+  - `POST /employees`, `PUT /employees/{id}`, `DELETE /employees/{id}` - `HR`, `ADMIN`
+
+Employee module business rules:
+- Department hierarchy cycles are rejected with `400`
+- Employee `departmentId` must reference existing department (`400` on invalid reference)
+- `employees.user_id` must be unique when present (`409` on conflict)
+
 ## Unified API error format
 
 All API errors are returned as JSON with fields:

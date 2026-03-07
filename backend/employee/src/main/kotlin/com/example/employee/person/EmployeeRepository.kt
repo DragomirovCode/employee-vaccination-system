@@ -7,4 +7,6 @@ interface EmployeeRepository : JpaRepository<EmployeeEntity, UUID> {
     fun findByUserId(userId: UUID): EmployeeEntity?
 
     fun findAllByDepartmentId(departmentId: UUID): List<EmployeeEntity>
+
+    fun existsByDepartmentId(departmentId: UUID): Boolean
 }
