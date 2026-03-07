@@ -1,4 +1,4 @@
-import org.gradle.api.tasks.testing.Test
+﻿import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":employee"))
     implementation(project(":vaccine"))
     implementation(project(":vaccination"))
+    implementation(project(":auth"))
 
     testImplementation(project(":auth"))
     testImplementation(libs.spring.boot.starter.test)

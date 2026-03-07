@@ -1,4 +1,4 @@
-import org.gradle.api.tasks.testing.Test
+﻿import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -14,6 +14,7 @@ dependencies {
     testRuntimeOnly(bootBom)
 
     implementation(libs.spring.context)
+    implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.flyway.core)
     implementation(libs.kotlin.reflect)

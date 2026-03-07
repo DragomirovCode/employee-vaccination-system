@@ -1,5 +1,7 @@
-package com.example.reporting.revaccination
+﻿package com.example.reporting.revaccination
 
+import com.example.auth.role.RoleRepository
+import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -27,6 +29,12 @@ class RevaccinationDueServiceTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var roleRepository: RoleRepository
+
+    @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
 
     @Autowired
     private lateinit var departmentRepository: DepartmentRepository
@@ -67,6 +75,8 @@ class RevaccinationDueServiceTest {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
 

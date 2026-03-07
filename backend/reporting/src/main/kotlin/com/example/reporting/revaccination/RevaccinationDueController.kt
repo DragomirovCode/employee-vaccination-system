@@ -1,5 +1,7 @@
-package com.example.reporting.revaccination
+﻿package com.example.reporting.revaccination
 
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -23,6 +26,7 @@ import java.util.UUID
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class RevaccinationDueController(
     private val service: RevaccinationDueService,
+    private val authService: AuthService,
 ) {
     @GetMapping("/revaccination-due")
     @Operation(
@@ -42,9 +46,14 @@ class RevaccinationDueController(
                 ],
             ),
             ApiResponse(responseCode = "400", description = "Invalid request parameters"),
+            ApiResponse(responseCode = "401", description = "Unauthorized"),
+            ApiResponse(responseCode = "403", description = "Forbidden"),
         ],
     )
     fun getRevaccinationDue(
+        @Parameter(description = "Authentication token (UUID user id for dev mode)")
+        @RequestHeader("X-Auth-Token", required = false)
+        token: String?,
         @Parameter(description = "Number of days from today to include in due window", example = "30")
         @RequestParam
         days: Int,
@@ -58,6 +67,8 @@ class RevaccinationDueController(
         @RequestParam(defaultValue = "20")
         size: Int,
     ): Page<RevaccinationDueItem> {
+        authService.requireAnyRole(token, REPORTING_ROLES)
+
         if (days < 0) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "days must be >= 0")
         }
@@ -67,5 +78,9 @@ class RevaccinationDueController(
             departmentId = departmentId,
             pageable = PageRequest.of(page, size),
         )
+    }
+
+    private companion object {
+        val REPORTING_ROLES = setOf(AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
     }
 }
