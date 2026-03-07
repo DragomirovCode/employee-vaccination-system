@@ -187,6 +187,16 @@ Auth admin business rules:
 - duplicate user-role assignment is rejected with `409`
 - role assignment stores `assigned_by` as current admin user id
 
+Notifications API (personal):
+- `GET /notifications?onlyUnread=false&page=0&size=20` - current user's notifications
+- `PATCH /notifications/{id}/read` - mark one notification as read
+- `PATCH /notifications/read-all` - mark all current user's notifications as read
+
+Notifications business rules:
+- authenticated user can read and update only own notifications
+- access to someone else's notification id returns `404`
+- vaccination create/update emits `REVACCINATION_DUE` notification when target employee has linked `user_id`
+
 Vaccination read API:
 - `GET /vaccinations/{id}` - vaccination card
 - `GET /vaccinations` - list with filters: `employeeId`, `vaccineId`, `dateFrom`, `dateTo`, `page`, `size`

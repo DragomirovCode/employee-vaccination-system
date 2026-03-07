@@ -2,6 +2,10 @@ package com.example.vaccination.vaccination
 
 import com.example.audit.log.AuditEntityType
 import com.example.audit.log.AuditLogService
+import com.example.auth.notification.CreateNotificationCommand
+import com.example.auth.notification.NotificationService
+import com.example.auth.notification.NotificationType
+import com.example.employee.person.EmployeeRepository
 import com.example.vaccine.vaccine.VaccineRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,6 +17,8 @@ class VaccinationService(
     private val vaccinationRepository: VaccinationRepository,
     private val vaccineRepository: VaccineRepository,
     private val auditLogService: AuditLogService,
+    private val employeeRepository: EmployeeRepository,
+    private val notificationService: NotificationService,
 ) {
     @Transactional
     fun create(command: CreateVaccinationCommand): VaccinationEntity {
@@ -44,6 +50,11 @@ class VaccinationService(
             entityType = AuditEntityType.VACCINATION,
             entityId = saved.id!!,
             newValue = saved.toAuditPayload(),
+        )
+        maybeCreateRevaccinationNotification(
+            employeeId = command.employeeId,
+            vaccinationId = saved.id!!,
+            revaccinationDate = saved.revaccinationDate,
         )
 
         return saved
@@ -85,6 +96,11 @@ class VaccinationService(
             entityId = saved.id!!,
             oldValue = oldPayload,
             newValue = saved.toAuditPayload(),
+        )
+        maybeCreateRevaccinationNotification(
+            employeeId = command.employeeId,
+            vaccinationId = saved.id!!,
+            revaccinationDate = saved.revaccinationDate,
         )
 
         return saved
@@ -146,6 +162,28 @@ class VaccinationService(
             "revaccinationDate" to revaccinationDate?.toString(),
             "notes" to notes,
         )
+
+    private fun maybeCreateRevaccinationNotification(
+        employeeId: UUID,
+        vaccinationId: UUID,
+        revaccinationDate: LocalDate?,
+    ) {
+        if (revaccinationDate == null) {
+            return
+        }
+
+        val userId = employeeRepository.findById(employeeId).orElse(null)?.userId ?: return
+        notificationService.create(
+            CreateNotificationCommand(
+                userId = userId,
+                type = NotificationType.REVACCINATION_DUE,
+                title = "Upcoming revaccination",
+                message = "Revaccination is due on $revaccinationDate",
+                payload =
+                    """{"vaccinationId":"$vaccinationId","employeeId":"$employeeId","revaccinationDate":"$revaccinationDate"}""",
+            ),
+        )
+    }
 }
 
 private data class VaccinationDates(
