@@ -92,3 +92,25 @@ Default credentials:
   - `entity_type`: VACCINATION/DOCUMENT
   - `entity_id`, `user_id`, `old_value`, `new_value`, `created_at`
 - integrated with `vaccination` module services for `vaccinations` and `documents`
+
+## Security model (RBAC + scope)
+
+Authentication header:
+- `X-Auth-Token: <user-uuid>`
+- optional form: `X-Auth-Token: Bearer <user-uuid>`
+
+Status codes:
+- `401` - token missing/invalid, user not found, or inactive user
+- `403` - authenticated but role/scope is not sufficient
+
+Role matrix for reporting endpoints:
+- `PERSON` - can read only own records (`employees.user_id = current user`)
+- `HR` - can read employees from own department and all descendant departments
+- `MEDICAL` - full reporting scope
+- `ADMIN` - full reporting scope
+
+Endpoints:
+- `GET /reports/revaccination-due`
+- `GET /reports/vaccination-coverage`
+
+Scope is enforced in query/service layer, not only in controllers.

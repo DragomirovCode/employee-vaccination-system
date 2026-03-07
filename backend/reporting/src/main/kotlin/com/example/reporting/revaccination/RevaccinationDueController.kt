@@ -1,8 +1,7 @@
 ﻿package com.example.reporting.revaccination
 
-import com.example.auth.AppRole
-import com.example.auth.AuthService
-import com.example.reporting.access.ReportingAccessScopeResolver
+import com.example.reporting.access.ReportingAccessScope
+import com.example.reporting.access.ReportingSecurityContext
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -11,11 +10,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -27,8 +26,6 @@ import java.util.UUID
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class RevaccinationDueController(
     private val service: RevaccinationDueService,
-    private val authService: AuthService,
-    private val accessScopeResolver: ReportingAccessScopeResolver,
 ) {
     @GetMapping("/revaccination-due")
     @Operation(
@@ -53,9 +50,7 @@ class RevaccinationDueController(
         ],
     )
     fun getRevaccinationDue(
-        @Parameter(description = "Authentication token (UUID user id for dev mode)")
-        @RequestHeader("X-Auth-Token", required = false)
-        token: String?,
+        request: HttpServletRequest,
         @Parameter(description = "Number of days from today to include in due window", example = "30")
         @RequestParam
         days: Int,
@@ -69,13 +64,11 @@ class RevaccinationDueController(
         @RequestParam(defaultValue = "20")
         size: Int,
     ): Page<RevaccinationDueItem> {
-        val principal = authService.requireAnyRole(token, REPORTING_ROLES)
-
         if (days < 0) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "days must be >= 0")
         }
 
-        val scope = accessScopeResolver.resolve(principal, requestedDepartmentId = departmentId)
+        val scope = requireScope(request)
 
         return service.getDueInDays(
             days = days,
@@ -84,7 +77,7 @@ class RevaccinationDueController(
         )
     }
 
-    private companion object {
-        val REPORTING_ROLES = setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
-    }
+    private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
+        request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 }
