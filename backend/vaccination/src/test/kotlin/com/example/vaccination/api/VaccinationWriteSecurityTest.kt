@@ -385,7 +385,10 @@ class VaccinationWriteSecurityTest {
         roleRepository.findByCode(code)
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 
-    private fun createVaccination(seed: BaseSeed, performerId: UUID): VaccinationEntity {
+    private fun createVaccination(
+        seed: BaseSeed,
+        performerId: UUID,
+    ): VaccinationEntity {
         val created =
             vaccinationRepository.saveAndFlush(
                 VaccinationEntity(
@@ -402,7 +405,10 @@ class VaccinationWriteSecurityTest {
         return created
     }
 
-    private fun createDocument(vaccinationId: UUID, uploaderId: UUID): DocumentEntity {
+    private fun createDocument(
+        vaccinationId: UUID,
+        uploaderId: UUID,
+    ): DocumentEntity {
         val created =
             documentRepository.saveAndFlush(
                 DocumentEntity(
