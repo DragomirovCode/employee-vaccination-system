@@ -1,12 +1,15 @@
 ﻿package com.example.vaccination.api.document
 
 import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.api.ApiErrorResponse
 import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.document.CreateDocumentCommand
 import com.example.vaccination.document.DocumentService
 import com.example.vaccination.document.UpdateDocumentCommand
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -35,8 +38,21 @@ class DocumentWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Document created"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun create(
@@ -65,8 +81,21 @@ class DocumentWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Document updated"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun update(
@@ -99,8 +128,16 @@ class DocumentWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "Document deleted"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun delete(

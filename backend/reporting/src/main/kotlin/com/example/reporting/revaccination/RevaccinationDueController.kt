@@ -1,5 +1,6 @@
-﻿package com.example.reporting.revaccination
+package com.example.reporting.revaccination
 
+import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
 import com.example.reporting.access.ReportingSecurityContext
 import io.swagger.v3.oas.annotations.Operation
@@ -44,9 +45,21 @@ class RevaccinationDueController(
                     ),
                 ],
             ),
-            ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun getRevaccinationDue(
