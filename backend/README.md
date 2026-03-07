@@ -162,6 +162,19 @@ Vaccination read access scope:
 - `MEDICAL`, `ADMIN` - full access
 - invalid date range (`dateFrom > dateTo`) returns `400`
 
+Document content API:
+- `POST /documents/{id}/content` - upload file content for existing document metadata
+- `GET /documents/{id}/content` - download file content
+- `DELETE /documents/{id}/content` - delete file content from storage
+
+Storage providers:
+- default: `inmemory` (for local run and tests)
+- MinIO: set `STORAGE_PROVIDER=minio` and provide:
+  - `MINIO_ENDPOINT`
+  - `MINIO_ACCESS_KEY`
+  - `MINIO_SECRET_KEY`
+  - `MINIO_BUCKET`
+
 ## Unified API error format
 
 All API errors are returned as JSON with fields:
