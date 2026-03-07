@@ -2,6 +2,7 @@
 
 import com.example.auth.AppRole
 import com.example.auth.AuthService
+import com.example.reporting.access.ReportingAccessScopeResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -26,6 +27,7 @@ import java.util.UUID
 class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
     private val authService: AuthService,
+    private val accessScopeResolver: ReportingAccessScopeResolver,
 ) {
     @GetMapping("/vaccination-coverage")
     @Operation(
@@ -63,20 +65,22 @@ class VaccinationCoverageController(
         @RequestParam(required = false)
         departmentId: UUID?,
     ): List<VaccinationCoverageItem> {
-        authService.requireAnyRole(token, REPORTING_ROLES)
+        val principal = authService.requireAnyRole(token, REPORTING_ROLES)
 
         if (dateFrom.isAfter(dateTo)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
         }
 
+        val scope = accessScopeResolver.resolve(principal, requestedDepartmentId = departmentId)
+
         return service.getCoverageByDepartment(
             dateFrom = dateFrom,
             dateTo = dateTo,
-            departmentId = departmentId,
+            scope = scope,
         )
     }
 
     private companion object {
-        val REPORTING_ROLES = setOf(AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
+        val REPORTING_ROLES = setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
     }
 }

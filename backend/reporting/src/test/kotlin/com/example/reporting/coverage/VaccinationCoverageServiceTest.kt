@@ -9,6 +9,7 @@ import com.example.employee.department.DepartmentRepository
 import com.example.employee.person.EmployeeEntity
 import com.example.employee.person.EmployeeRepository
 import com.example.reporting.ReportingTestApplication
+import com.example.reporting.access.ReportingAccessScope
 import com.example.vaccination.vaccination.VaccinationEntity
 import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.vaccine.VaccineEntity
@@ -55,7 +56,7 @@ class VaccinationCoverageServiceTest {
             service.getCoverageByDepartment(
                 dateFrom = LocalDate.of(2026, 1, 1),
                 dateTo = LocalDate.of(2026, 12, 31),
-                departmentId = null,
+                scope = ReportingAccessScope(),
             )
 
         assertEquals(2, result.size)
@@ -74,7 +75,7 @@ class VaccinationCoverageServiceTest {
             service.getCoverageByDepartment(
                 dateFrom = LocalDate.of(2026, 1, 1),
                 dateTo = LocalDate.of(2026, 12, 31),
-                departmentId = seed.departmentAId,
+                scope = ReportingAccessScope(departmentIds = setOf(seed.departmentAId)),
             )
         assertEquals(1, filtered.size)
         assertEquals(seed.departmentAId, filtered.first().departmentId)
@@ -88,7 +89,7 @@ class VaccinationCoverageServiceTest {
             service.getCoverageByDepartment(
                 dateFrom = LocalDate.of(2026, 1, 1),
                 dateTo = LocalDate.of(2026, 12, 31),
-                departmentId = department.id,
+                scope = ReportingAccessScope(departmentIds = setOf(department.id!!)),
             )
 
         assertTrue(result.isEmpty())

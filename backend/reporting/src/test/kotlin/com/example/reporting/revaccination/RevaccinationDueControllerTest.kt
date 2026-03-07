@@ -63,21 +63,43 @@ class RevaccinationDueControllerTest {
     }
 
     @Test
-    fun `returns paged report with department filter for HR role`() {
+    fun `person sees only own records`() {
+        val seeded = seedData("PERSON")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].employeeId").value(seeded.authEmployeeId.toString()))
+    }
+
+    @Test
+    fun `hr sees only own department tree`() {
         val seeded = seedData("HR")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due")
                     .header("X-Auth-Token", seeded.authUserId.toString())
-                    .param("days", "10")
-                    .param("departmentId", seeded.departmentId.toString())
-                    .param("page", "0")
-                    .param("size", "10"),
+                    .param("days", "30"),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("$.totalElements").value(1))
-            .andExpect(jsonPath("$.content[0].employeeId").value(seeded.employeeId.toString()))
-            .andExpect(jsonPath("$.content[0].vaccineName").value("Influenza"))
+            .andExpect(jsonPath("$.totalElements").value(2))
+    }
+
+    @Test
+    fun `hr gets forbidden for department outside scope`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30")
+                    .param("departmentId", seeded.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
     }
 
     @Test
@@ -87,18 +109,6 @@ class RevaccinationDueControllerTest {
         mockMvc
             .perform(get("/reports/revaccination-due").param("days", "10"))
             .andExpect(status().isUnauthorized)
-    }
-
-    @Test
-    fun `returns forbidden for PERSON role`() {
-        val seeded = seedData("PERSON")
-
-        mockMvc
-            .perform(
-                get("/reports/revaccination-due")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
-                    .param("days", "10"),
-            ).andExpect(status().isForbidden)
     }
 
     @Test
@@ -132,32 +142,76 @@ class RevaccinationDueControllerTest {
             ),
         )
 
-        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Factory"))
-        val employee =
+        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Root"))
+        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Child", parentId = rootDepartment.id))
+        val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
+
+        val authEmployee =
             employeeRepository.saveAndFlush(
                 EmployeeEntity(
-                    departmentId = department.id,
-                    firstName = "Petr",
-                    lastName = "Ivanov",
+                    userId = authUser.id,
+                    departmentId = rootDepartment.id,
+                    firstName = "Auth",
+                    lastName = "User",
                 ),
             )
+
+        val childEmployee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = childDepartment.id,
+                    firstName = "Child",
+                    lastName = "User",
+                ),
+            )
+
+        val externalEmployee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = externalDepartment.id,
+                    firstName = "External",
+                    lastName = "User",
+                ),
+            )
+
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "Influenza", validityDays = 365, dosesRequired = 1))
+        val today = LocalDate.now()
 
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
-                employeeId = employee.id,
+                employeeId = authEmployee.id,
                 vaccineId = vaccine.id,
                 performedBy = performer.id,
-                vaccinationDate = LocalDate.now().minusDays(200),
+                vaccinationDate = today.minusDays(200),
                 doseNumber = 1,
-                revaccinationDate = LocalDate.now().plusDays(3),
+                revaccinationDate = today.plusDays(3),
+            ),
+        )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = childEmployee.id,
+                vaccineId = vaccine.id,
+                performedBy = performer.id,
+                vaccinationDate = today.minusDays(170),
+                doseNumber = 1,
+                revaccinationDate = today.plusDays(5),
+            ),
+        )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = externalEmployee.id,
+                vaccineId = vaccine.id,
+                performedBy = performer.id,
+                vaccinationDate = today.minusDays(150),
+                doseNumber = 1,
+                revaccinationDate = today.plusDays(7),
             ),
         )
 
         return SeededRecord(
             authUserId = authUser.id!!,
-            departmentId = department.id!!,
-            employeeId = employee.id!!,
+            authEmployeeId = authEmployee.id!!,
+            externalDepartmentId = externalDepartment.id!!,
         )
     }
 
@@ -168,6 +222,6 @@ class RevaccinationDueControllerTest {
 
 private data class SeededRecord(
     val authUserId: UUID,
-    val departmentId: UUID,
-    val employeeId: UUID,
+    val authEmployeeId: UUID,
+    val externalDepartmentId: UUID,
 )

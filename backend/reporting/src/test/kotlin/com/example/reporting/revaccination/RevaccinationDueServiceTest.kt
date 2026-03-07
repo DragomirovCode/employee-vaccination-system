@@ -9,6 +9,7 @@ import com.example.employee.department.DepartmentRepository
 import com.example.employee.person.EmployeeEntity
 import com.example.employee.person.EmployeeRepository
 import com.example.reporting.ReportingTestApplication
+import com.example.reporting.access.ReportingAccessScope
 import com.example.vaccination.vaccination.VaccinationEntity
 import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.vaccine.VaccineEntity
@@ -52,11 +53,16 @@ class RevaccinationDueServiceTest {
     fun `returns due vaccinations within days and department filter`() {
         val seed = seedData()
 
-        val allDue = service.getDueInDays(10, null, PageRequest.of(0, 20))
+        val allDue = service.getDueInDays(10, ReportingAccessScope(), PageRequest.of(0, 20))
         assertEquals(2, allDue.totalElements)
         assertTrue(allDue.content.all { it.daysLeft in 0..10 })
 
-        val onlyPrimaryDepartment = service.getDueInDays(10, seed.primaryDepartmentId, PageRequest.of(0, 20))
+        val onlyPrimaryDepartment =
+            service.getDueInDays(
+                10,
+                ReportingAccessScope(departmentIds = setOf(seed.primaryDepartmentId)),
+                PageRequest.of(0, 20),
+            )
         assertEquals(1, onlyPrimaryDepartment.totalElements)
         assertEquals(seed.primaryEmployeeId, onlyPrimaryDepartment.content.first().employeeId)
     }
@@ -65,7 +71,7 @@ class RevaccinationDueServiceTest {
     fun `returns empty page when no records in period`() {
         seedData()
 
-        val result = service.getDueInDays(0, null, PageRequest.of(0, 20))
+        val result = service.getDueInDays(0, ReportingAccessScope(), PageRequest.of(0, 20))
 
         assertEquals(0, result.totalElements)
         assertTrue(result.content.isEmpty())
