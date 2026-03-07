@@ -119,3 +119,20 @@ Write permissions for vaccination module:
 - `POST /vaccinations`, `PUT /vaccinations/{id}`, `DELETE /vaccinations/{id}`: `MEDICAL`, `ADMIN`
 - `POST /documents`, `PUT /documents/{id}`, `DELETE /documents/{id}`: `MEDICAL`, `ADMIN`
 - `HR`, `PERSON` receive `403` for write operations.
+
+## Unified API error format
+
+All API errors are returned as JSON with fields:
+- `code`: machine-readable error code
+- `message`: human-readable error message
+- `details`: optional list of validation details
+- `path`: request path
+- `timestamp`: error time (UTC, ISO-8601)
+- `traceId`: optional value from `X-Trace-Id` request header
+
+Current mappings:
+- `ResponseStatusException` -> HTTP status from exception, code by status (`BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, or `HTTP_<status>`)
+- `MethodArgumentNotValidException` / `BindException` -> `400`, `VALIDATION_ERROR`
+- `HttpMessageNotReadableException` -> `400`, `INVALID_REQUEST_BODY`
+- `IllegalArgumentException` -> `400`, `INVALID_ARGUMENT`
+- any other unhandled exception -> `500`, `INTERNAL_ERROR`
