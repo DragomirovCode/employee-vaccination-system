@@ -39,6 +39,11 @@ From repository root:
 docker compose up -d postgres
 ```
 
+PostgreSQL + MinIO:
+```bash
+docker compose up -d postgres minio
+```
+
 Default credentials:
 - DB: `evs`
 - User: `evs`
@@ -49,6 +54,11 @@ Default credentials:
 - `DB_URL`
 - `DB_USER`
 - `DB_PASSWORD`
+- `STORAGE_PROVIDER` (`inmemory` by default, set `minio` for object storage)
+- `MINIO_ENDPOINT` (default `http://localhost:9000`)
+- `MINIO_ACCESS_KEY` (default `minioadmin`)
+- `MINIO_SECRET_KEY` (default `minioadmin`)
+- `MINIO_BUCKET` (default `evs-documents`)
 
 ## Auth persistence
 - `users` table with UUID v7 ids
@@ -161,6 +171,19 @@ Vaccination read access scope:
 - `HR` - own department and all descendant departments
 - `MEDICAL`, `ADMIN` - full access
 - invalid date range (`dateFrom > dateTo`) returns `400`
+
+Document content API:
+- `POST /documents/{id}/content` - upload file content for existing document metadata
+- `GET /documents/{id}/content` - download file content
+- `DELETE /documents/{id}/content` - delete file content from storage
+
+Storage providers:
+- default: `inmemory` (for local run and tests)
+- MinIO: set `STORAGE_PROVIDER=minio` and provide:
+  - `MINIO_ENDPOINT`
+  - `MINIO_ACCESS_KEY`
+  - `MINIO_SECRET_KEY`
+  - `MINIO_BUCKET`
 
 ## Unified API error format
 

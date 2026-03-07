@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.swagger.annotations)
     implementation(libs.kotlin.reflect)
     implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("io.minio:minio:8.5.12")
     implementation(libs.uuid.creator)
 
     implementation(project(":audit"))

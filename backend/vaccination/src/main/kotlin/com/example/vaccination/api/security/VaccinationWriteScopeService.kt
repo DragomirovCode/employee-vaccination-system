@@ -89,6 +89,11 @@ class VaccinationWriteScopeService(
         assertExistingDocumentInScope(documentId, allowedDepartmentIds)
     }
 
+    fun assertDocumentContentWriteAllowed(
+        principal: AuthenticatedPrincipal,
+        documentId: UUID,
+    ) = assertDocumentDeleteAllowed(principal, documentId)
+
     private fun medicalAllowedDepartments(principal: AuthenticatedPrincipal): Set<UUID> {
         if (!principal.roles.contains(AppRole.MEDICAL)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Write access is outside role scope")

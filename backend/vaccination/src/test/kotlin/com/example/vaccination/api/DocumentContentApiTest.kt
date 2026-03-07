@@ -22,9 +22,14 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -32,7 +37,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 @SpringBootTest(classes = [VaccinationTestApplication::class])
-class VaccinationReadSecurityTest {
+class DocumentContentApiTest {
     @Autowired
     private lateinit var webApplicationContext: WebApplicationContext
 
@@ -69,105 +74,100 @@ class VaccinationReadSecurityTest {
     }
 
     @Test
-    fun `read endpoints require auth`() {
+    fun `admin uploads and person downloads own document content`() {
+        val seed = seedData()
+        val file = MockMultipartFile("file", "cert.pdf", "application/pdf", "hello-pdf".toByteArray())
+
         mockMvc
-            .perform(get("/vaccinations"))
-            .andExpect(status().isUnauthorized)
+            .perform(
+                multipart("/documents/${seed.ownDocumentId}/content")
+                    .file(file)
+                    .header("X-Auth-Token", seed.adminUserId.toString()),
+            ).andExpect(status().isOk)
+
+        mockMvc
+            .perform(
+                get("/documents/${seed.ownDocumentId}/content")
+                    .header("X-Auth-Token", seed.personUserId.toString()),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"cert.pdf\""))
+            .andExpect(content().bytes("hello-pdf".toByteArray()))
     }
 
     @Test
-    fun `person can read only own vaccinations`() {
+    fun `person cannot upload document content`() {
         val seed = seedData()
+        val file = MockMultipartFile("file", "x.pdf", "application/pdf", "x".toByteArray())
 
         mockMvc
             .perform(
-                get("/employees/${seed.personEmployeeId}/vaccinations")
-                    .header("X-Auth-Token", seed.personUserId.toString()),
-            ).andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(1))
-
-        mockMvc
-            .perform(
-                get("/employees/${seed.externalEmployeeId}/vaccinations")
+                multipart("/documents/${seed.ownDocumentId}/content")
+                    .file(file)
                     .header("X-Auth-Token", seed.personUserId.toString()),
             ).andExpect(status().isForbidden)
     }
 
     @Test
-    fun `hr cannot request employee outside department scope`() {
+    fun `person cannot download external document content`() {
         val seed = seedData()
+        val file = MockMultipartFile("file", "ext.pdf", "application/pdf", "external".toByteArray())
 
         mockMvc
             .perform(
-                get("/vaccinations")
-                    .header("X-Auth-Token", seed.hrUserId.toString())
-                    .param("employeeId", seed.externalEmployeeId.toString()),
+                multipart("/documents/${seed.externalDocumentId}/content")
+                    .file(file)
+                    .header("X-Auth-Token", seed.adminUserId.toString()),
+            ).andExpect(status().isOk)
+
+        mockMvc
+            .perform(
+                get("/documents/${seed.externalDocumentId}/content")
+                    .header("X-Auth-Token", seed.personUserId.toString()),
             ).andExpect(status().isForbidden)
     }
 
     @Test
-    fun `medical can read any document`() {
+    fun `delete content removes file from storage`() {
         val seed = seedData()
+        val file = MockMultipartFile("file", "to-delete.pdf", "application/pdf", "del".toByteArray())
 
         mockMvc
             .perform(
-                get("/documents/${seed.externalDocumentId}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString()),
+                multipart("/documents/${seed.ownDocumentId}/content")
+                    .file(file)
+                    .header("X-Auth-Token", seed.adminUserId.toString()),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(seed.externalDocumentId.toString()))
-    }
-
-    @Test
-    fun `invalid date range returns bad request`() {
-        val seed = seedData()
 
         mockMvc
             .perform(
-                get("/vaccinations")
-                    .header("X-Auth-Token", seed.hrUserId.toString())
-                    .param("dateFrom", "2026-12-31")
-                    .param("dateTo", "2026-01-01"),
-            ).andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                delete("/documents/${seed.ownDocumentId}/content")
+                    .header("X-Auth-Token", seed.adminUserId.toString()),
+            ).andExpect(status().isNoContent)
+
+        mockMvc
+            .perform(
+                get("/documents/${seed.ownDocumentId}/content")
+                    .header("X-Auth-Token", seed.adminUserId.toString()),
+            ).andExpect(status().isNotFound)
     }
 
-    private fun seedData(): VaccinationReadSeedData {
+    private fun seedData(): DocumentContentSeedData {
         val personUser = createUserWithRole("PERSON")
-        val hrUser = createUserWithRole("HR")
-        val medicalUser = createUserWithRole("MEDICAL")
-        val performer = createUserWithRole("ADMIN")
+        val adminUser = createUserWithRole("ADMIN")
+        val performer = adminUser
 
-        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Root"))
-        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Child", parentId = rootDepartment.id))
+        val ownDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Own"))
         val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
 
-        val personEmployee =
+        val ownEmployee =
             employeeRepository.saveAndFlush(
                 EmployeeEntity(
                     userId = personUser.id,
-                    departmentId = childDepartment.id,
-                    firstName = "Person",
+                    departmentId = ownDepartment.id,
+                    firstName = "Own",
                     lastName = "User",
                 ),
             )
-
-        employeeRepository.saveAndFlush(
-            EmployeeEntity(
-                userId = hrUser.id,
-                departmentId = rootDepartment.id,
-                firstName = "Hr",
-                lastName = "User",
-            ),
-        )
-
-        employeeRepository.saveAndFlush(
-            EmployeeEntity(
-                userId = medicalUser.id,
-                departmentId = rootDepartment.id,
-                firstName = "Medical",
-                lastName = "User",
-            ),
-        )
 
         val externalEmployee =
             employeeRepository.saveAndFlush(
@@ -178,17 +178,17 @@ class VaccinationReadSecurityTest {
                 ),
             )
 
-        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "ReadVax", validityDays = 365, dosesRequired = 1))
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "ContentVax", validityDays = 365, dosesRequired = 1))
 
         val ownVaccination =
             vaccinationRepository.saveAndFlush(
                 VaccinationEntity(
-                    employeeId = personEmployee.id,
+                    employeeId = ownEmployee.id,
                     vaccineId = vaccine.id,
                     performedBy = performer.id,
-                    vaccinationDate = LocalDate.of(2026, 1, 10),
+                    vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
-                    revaccinationDate = LocalDate.of(2027, 1, 10),
+                    revaccinationDate = LocalDate.of(2027, 3, 1),
                 ),
             )
 
@@ -198,41 +198,40 @@ class VaccinationReadSecurityTest {
                     employeeId = externalEmployee.id,
                     vaccineId = vaccine.id,
                     performedBy = performer.id,
-                    vaccinationDate = LocalDate.of(2026, 2, 10),
+                    vaccinationDate = LocalDate.of(2026, 4, 1),
                     doseNumber = 1,
-                    revaccinationDate = LocalDate.of(2027, 2, 10),
+                    revaccinationDate = LocalDate.of(2027, 4, 1),
                 ),
             )
 
-        documentRepository.saveAndFlush(
-            DocumentEntity(
-                vaccinationId = ownVaccination.id,
-                fileName = "own.pdf",
-                filePath = "docs/own.pdf",
-                fileSize = 100,
-                mimeType = "application/pdf",
-                uploadedBy = performer.id,
-            ),
-        )
+        val ownDocument =
+            documentRepository.saveAndFlush(
+                DocumentEntity(
+                    vaccinationId = ownVaccination.id,
+                    fileName = "own.pdf",
+                    filePath = "documents/${UUID.randomUUID()}/own.pdf",
+                    fileSize = 1,
+                    mimeType = "application/pdf",
+                    uploadedBy = performer.id,
+                ),
+            )
 
         val externalDocument =
             documentRepository.saveAndFlush(
                 DocumentEntity(
                     vaccinationId = externalVaccination.id,
                     fileName = "external.pdf",
-                    filePath = "docs/external.pdf",
-                    fileSize = 100,
+                    filePath = "documents/${UUID.randomUUID()}/external.pdf",
+                    fileSize = 1,
                     mimeType = "application/pdf",
                     uploadedBy = performer.id,
                 ),
             )
 
-        return VaccinationReadSeedData(
+        return DocumentContentSeedData(
             personUserId = personUser.id!!,
-            hrUserId = hrUser.id!!,
-            medicalUserId = medicalUser.id!!,
-            personEmployeeId = personEmployee.id!!,
-            externalEmployeeId = externalEmployee.id!!,
+            adminUserId = adminUser.id!!,
+            ownDocumentId = ownDocument.id!!,
             externalDocumentId = externalDocument.id!!,
         )
     }
@@ -260,11 +259,9 @@ class VaccinationReadSecurityTest {
     }
 }
 
-private data class VaccinationReadSeedData(
+private data class DocumentContentSeedData(
     val personUserId: UUID,
-    val hrUserId: UUID,
-    val medicalUserId: UUID,
-    val personEmployeeId: UUID,
-    val externalEmployeeId: UUID,
+    val adminUserId: UUID,
+    val ownDocumentId: UUID,
     val externalDocumentId: UUID,
 )
