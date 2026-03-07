@@ -3,6 +3,7 @@ package com.example.reporting.coverage
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
 import com.example.reporting.access.ReportingSecurityContext
+import com.example.reporting.export.CsvReportExporter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -12,7 +13,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -26,6 +30,7 @@ import java.util.UUID
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
+    private val csvReportExporter: CsvReportExporter,
 ) {
     @GetMapping("/vaccination-coverage")
     @Operation(
@@ -84,6 +89,72 @@ class VaccinationCoverageController(
             dateTo = dateTo,
             scope = scope,
         )
+    }
+
+    @GetMapping("/vaccination-coverage/export")
+    @Operation(summary = "Export vaccination coverage report as CSV")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "CSV export"),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+        ],
+    )
+    fun exportVaccinationCoverage(
+        request: HttpServletRequest,
+        @RequestParam dateFrom: LocalDate,
+        @RequestParam dateTo: LocalDate,
+        @RequestParam(required = false) departmentId: UUID?,
+        @RequestParam(defaultValue = "csv") format: String,
+    ): ResponseEntity<ByteArray> {
+        if (dateFrom.isAfter(dateTo)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
+        }
+        if (!format.equals("csv", ignoreCase = true)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Only csv export format is supported")
+        }
+        val scope = requireScope(request)
+        val rows = service.getCoverageByDepartment(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val csvBytes =
+            csvReportExporter.export(
+                headers =
+                    listOf(
+                        "departmentId",
+                        "departmentName",
+                        "employeesTotal",
+                        "employeesCovered",
+                        "coveragePercent",
+                    ),
+                rows =
+                    rows.map {
+                        listOf(
+                            it.departmentId,
+                            it.departmentName,
+                            it.employeesTotal,
+                            it.employeesCovered,
+                            it.coveragePercent,
+                        )
+                    },
+            )
+
+        return ResponseEntity
+            .ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"vaccination-coverage.csv\"")
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(csvBytes)
     }
 
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =

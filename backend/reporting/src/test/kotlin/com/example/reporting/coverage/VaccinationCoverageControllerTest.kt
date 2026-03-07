@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -116,6 +118,36 @@ class VaccinationCoverageControllerTest {
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `exports vaccination coverage as csv`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage.csv\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("departmentId,departmentName,employeesTotal")))
+    }
+
+    @Test
+    fun `coverage export returns forbidden for department outside scope`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
     }
 
     private fun seedData(roleCode: String): SeededData {

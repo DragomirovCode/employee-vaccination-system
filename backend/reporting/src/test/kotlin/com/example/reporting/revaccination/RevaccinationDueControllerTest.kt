@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -121,6 +123,34 @@ class RevaccinationDueControllerTest {
                     .header("X-Auth-Token", seeded.authUserId.toString())
                     .param("days", "-1"),
             ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `exports revaccination due report as csv`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.csv\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("employeeId,fullName,departmentId")))
+    }
+
+    @Test
+    fun `export returns forbidden for hr department outside scope`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30")
+                    .param("departmentId", seeded.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
     }
 
     private fun seedData(roleCode: String): SeededRecord {
