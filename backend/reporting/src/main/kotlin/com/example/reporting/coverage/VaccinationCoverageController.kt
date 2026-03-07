@@ -1,8 +1,8 @@
 ﻿package com.example.reporting.coverage
 
-import com.example.auth.AppRole
-import com.example.auth.AuthService
-import com.example.reporting.access.ReportingAccessScopeResolver
+import com.example.reporting.access.ReportingAccessScope
+import com.example.reporting.access.ReportingSecurityContext
+import jakarta.servlet.http.HttpServletRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -26,8 +25,6 @@ import java.util.UUID
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
-    private val authService: AuthService,
-    private val accessScopeResolver: ReportingAccessScopeResolver,
 ) {
     @GetMapping("/vaccination-coverage")
     @Operation(
@@ -52,9 +49,7 @@ class VaccinationCoverageController(
         ],
     )
     fun getVaccinationCoverage(
-        @Parameter(description = "Authentication token (UUID user id for dev mode)")
-        @RequestHeader("X-Auth-Token", required = false)
-        token: String?,
+        request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
         @RequestParam
         dateFrom: LocalDate,
@@ -65,13 +60,11 @@ class VaccinationCoverageController(
         @RequestParam(required = false)
         departmentId: UUID?,
     ): List<VaccinationCoverageItem> {
-        val principal = authService.requireAnyRole(token, REPORTING_ROLES)
-
         if (dateFrom.isAfter(dateTo)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
         }
 
-        val scope = accessScopeResolver.resolve(principal, requestedDepartmentId = departmentId)
+        val scope = requireScope(request)
 
         return service.getCoverageByDepartment(
             dateFrom = dateFrom,
@@ -80,7 +73,7 @@ class VaccinationCoverageController(
         )
     }
 
-    private companion object {
-        val REPORTING_ROLES = setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
-    }
+    private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
+        request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 }
