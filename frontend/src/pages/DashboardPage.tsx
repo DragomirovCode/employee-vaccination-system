@@ -11,14 +11,13 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!session) return;
-    const token = session.token;
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiGet<NotificationPage>("/notifications?page=0&size=10", token);
+        const response = await apiGet<NotificationPage>("/notifications?page=0&size=10");
         if (!cancelled) setData(response);
       } catch (e) {
         if (cancelled) return;

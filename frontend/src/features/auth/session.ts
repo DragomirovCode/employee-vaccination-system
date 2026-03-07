@@ -14,14 +14,23 @@ export function readSession(): AuthSession | null {
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
     if (!parsed.token || typeof parsed.token !== "string") return null;
-    return { token: parsed.token, roles: normalizeRoles(parsed.roles) };
+    const token = normalizeAuthToken(parsed.token);
+    if (!token) return null;
+    return { token, roles: normalizeRoles(parsed.roles) };
   } catch {
     return null;
   }
 }
 
 export function writeSession(session: AuthSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  const token = normalizeAuthToken(session.token);
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      ...session,
+      token
+    })
+  );
 }
 
 export function clearSession(): void {
@@ -32,4 +41,10 @@ function normalizeRoles(value: unknown): AppRole[] {
   if (!Array.isArray(value)) return [];
   const allowed = new Set<AppRole>(["PERSON", "HR", "MEDICAL", "ADMIN"]);
   return value.filter((role): role is AppRole => typeof role === "string" && allowed.has(role as AppRole));
+}
+
+export function normalizeAuthToken(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/^Bearer\s+/i, "").trim();
 }

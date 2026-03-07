@@ -1,15 +1,44 @@
 import { FormEvent, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { AppRole } from "../features/auth/session";
+import { AppRole, normalizeAuthToken } from "../features/auth/session";
+import { apiGet } from "../shared/api/client";
+import { ApiHttpError } from "../shared/api/types";
 
-function parseRoles(raw: string): AppRole[] {
-  if (!raw.trim()) return [];
+function extractRoles(payload: unknown): AppRole[] {
   const allowed = new Set<AppRole>(["PERSON", "HR", "MEDICAL", "ADMIN"]);
-  return raw
-    .split(",")
-    .map((it) => it.trim().toUpperCase())
-    .filter((it): it is AppRole => allowed.has(it as AppRole));
+  const roles = new Set<AppRole>();
+
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => walk(item));
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+
+    const obj = value as Record<string, unknown>;
+    const maybeRole = typeof obj.role === "string" ? obj.role : undefined;
+    const maybeRoles = Array.isArray(obj.roles) ? obj.roles : undefined;
+
+    if (maybeRole) {
+      const normalized = maybeRole.toUpperCase();
+      if (allowed.has(normalized as AppRole)) {
+        roles.add(normalized as AppRole);
+      }
+    }
+    if (maybeRoles) {
+      maybeRoles.forEach((role) => {
+        if (typeof role !== "string") return;
+        const normalized = role.toUpperCase();
+        if (allowed.has(normalized as AppRole)) {
+          roles.add(normalized as AppRole);
+        }
+      });
+    }
+  };
+
+  walk(payload);
+  return Array.from(roles);
 }
 
 export function LoginPage() {
@@ -17,24 +46,59 @@ export function LoginPage() {
   const location = useLocation();
   const { login } = useAuth();
   const [token, setToken] = useState("");
-  const [roles, setRoles] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const redirectTo = (location.state as { from?: string } | undefined)?.from ?? "/";
   const reason = (location.state as { reason?: string } | undefined)?.reason;
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!token.trim()) {
+    if (submitting) return;
+
+    const normalizedToken = normalizeAuthToken(token);
+    if (!normalizedToken) {
       setError("Token is required");
       return;
     }
 
-    login({
-      token: token.trim(),
-      roles: parseRoles(roles)
-    });
-    navigate(redirectTo, { replace: true });
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const users = await apiGet<unknown>("/auth/users", {
+        authToken: normalizedToken,
+        suppressAuthEvents: true
+      });
+      const roles = extractRoles(users);
+
+      login({
+        token: normalizedToken,
+        roles
+      });
+      navigate(redirectTo, { replace: true });
+    } catch (e) {
+      if (e instanceof ApiHttpError && e.status === 401) {
+        setError("Session expired. Please sign in again");
+      } else if (e instanceof ApiHttpError && e.status === 403) {
+        login({
+          token: normalizedToken,
+          roles: []
+        });
+        navigate(redirectTo, { replace: true });
+        return;
+      } else if (e instanceof ApiHttpError) {
+        setError(e.payload?.message ?? e.message);
+      } else if (e instanceof TypeError) {
+        setError("Network/CORS error. Check backend URL and CORS for X-Auth-Token header.");
+      } else if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("Unable to sign in. Try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -53,11 +117,9 @@ export function LoginPage() {
             autoFocus
           />
         </label>
-        <label>
-          Roles (optional, comma-separated)
-          <input value={roles} onChange={(e) => setRoles(e.target.value)} placeholder="PERSON,HR" />
-        </label>
-        <button type="submit">Sign in</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? "Signing in..." : "Sign in"}
+        </button>
       </form>
     </section>
   );

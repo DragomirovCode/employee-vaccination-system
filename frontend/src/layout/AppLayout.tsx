@@ -3,6 +3,7 @@ import { useAuth } from "../features/auth/AuthContext";
 
 export function AppLayout() {
   const { session, logout } = useAuth();
+  const rolesLabel = session?.roles.length ? session.roles.join(", ") : "No roles";
 
   return (
     <div className="shell">
@@ -16,7 +17,7 @@ export function AppLayout() {
           <Link to="/admin-sandbox">Admin Sandbox</Link>
         </nav>
         <div className="session">
-          <code>{session?.token ?? "-"}</code>
+          <span>{rolesLabel}</span>
           <button onClick={logout}>Sign out</button>
         </div>
       </header>

@@ -17,6 +17,9 @@ class VaccinationWriteSecurityInterceptor(
         response: HttpServletResponse,
         handler: Any,
     ): Boolean {
+        if (request.method.equals("OPTIONS", ignoreCase = true)) {
+            return true
+        }
         if (handler !is HandlerMethod) {
             return true
         }
