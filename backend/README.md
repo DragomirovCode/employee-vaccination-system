@@ -114,3 +114,8 @@ Endpoints:
 - `GET /reports/vaccination-coverage`
 
 Scope is enforced in query/service layer, not only in controllers.
+
+Write permissions for vaccination module:
+- `POST /vaccinations`, `PUT /vaccinations/{id}`, `DELETE /vaccinations/{id}`: `MEDICAL`, `ADMIN`
+- `POST /documents`, `PUT /documents/{id}`, `DELETE /documents/{id}`: `MEDICAL`, `ADMIN`
+- `HR`, `PERSON` receive `403` for write operations.
