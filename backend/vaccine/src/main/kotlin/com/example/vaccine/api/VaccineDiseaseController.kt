@@ -30,14 +30,21 @@ class VaccineDiseaseController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Links list"),
-            ApiResponse(responseCode = "400", description = "Invalid request", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun listByVaccine(
         @PathVariable vaccineId: UUID,
-    ): List<VaccineDiseaseLinkResponse> =
-        vaccineDiseaseService.listByVaccine(vaccineId).map(VaccineDiseaseLinkResponse::fromEntity)
+    ): List<VaccineDiseaseLinkResponse> = vaccineDiseaseService.listByVaccine(vaccineId).map(VaccineDiseaseLinkResponse::fromEntity)
 
     @PostMapping("/{diseaseId}")
     @ResponseStatus(HttpStatus.CREATED)
@@ -45,10 +52,26 @@ class VaccineDiseaseController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "201", description = "Link created"),
-            ApiResponse(responseCode = "400", description = "Invalid request", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "409", description = "Conflict", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "Conflict",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun createLink(
@@ -64,10 +87,26 @@ class VaccineDiseaseController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "Link deleted"),
-            ApiResponse(responseCode = "400", description = "Invalid request", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun deleteLink(
