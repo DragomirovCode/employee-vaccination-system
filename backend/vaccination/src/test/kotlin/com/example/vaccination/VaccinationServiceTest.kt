@@ -1,6 +1,8 @@
 package com.example.vaccination
 
 import com.example.audit.log.AuditLogRepository
+import com.example.auth.notification.NotificationRepository
+import com.example.auth.notification.NotificationType
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -42,8 +44,12 @@ class VaccinationServiceTest {
     @Autowired
     private lateinit var employeeRepository: EmployeeRepository
 
+    @Autowired
+    private lateinit var notificationRepository: NotificationRepository
+
     @Test
     fun `calculates next dose and revaccination dates`() {
+        notificationRepository.deleteAll()
         auditLogRepository.deleteAll()
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
@@ -99,5 +105,55 @@ class VaccinationServiceTest {
 
         assertEquals(null, completedCourse.nextDoseDate)
         assertEquals(LocalDate.of(2026, 9, 28), completedCourse.revaccinationDate)
+
+        val notifications = notificationRepository.findAll()
+        assertEquals(0, notifications.size)
+    }
+
+    @Test
+    fun `creates revaccination notifications when employee has linked user`() {
+        notificationRepository.deleteAll()
+        auditLogRepository.deleteAll()
+        vaccinationRepository.deleteAll()
+        employeeRepository.deleteAll()
+        departmentRepository.deleteAll()
+        userRepository.deleteAll()
+        vaccineRepository.deleteAll()
+
+        val medic = userRepository.saveAndFlush(UserEntity(email = "medic-notify@example.com", passwordHash = "hash"))
+        val employeeUser = userRepository.saveAndFlush(UserEntity(email = "employee-notify@example.com", passwordHash = "hash"))
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Notify Dept"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    userId = employeeUser.id,
+                    departmentId = department.id,
+                    firstName = "Notify",
+                    lastName = "User",
+                ),
+            )
+        val vaccine =
+            vaccineRepository.saveAndFlush(
+                VaccineEntity(
+                    name = "Notify vaccine",
+                    validityDays = 180,
+                    dosesRequired = 1,
+                ),
+            )
+
+        vaccinationService.create(
+            CreateVaccinationCommand(
+                employeeId = employee.id!!,
+                vaccineId = vaccine.id!!,
+                performedBy = medic.id!!,
+                vaccinationDate = LocalDate.of(2026, 3, 1),
+                doseNumber = 1,
+            ),
+        )
+
+        val notifications = notificationRepository.findAll()
+        assertEquals(1, notifications.size)
+        assertEquals(employeeUser.id, notifications.first().userId)
+        assertEquals(NotificationType.REVACCINATION_DUE, notifications.first().type)
     }
 }
