@@ -39,6 +39,11 @@ From repository root:
 docker compose up -d postgres
 ```
 
+PostgreSQL + MinIO:
+```bash
+docker compose up -d postgres minio
+```
+
 Default credentials:
 - DB: `evs`
 - User: `evs`
@@ -49,6 +54,11 @@ Default credentials:
 - `DB_URL`
 - `DB_USER`
 - `DB_PASSWORD`
+- `STORAGE_PROVIDER` (`inmemory` by default, set `minio` for object storage)
+- `MINIO_ENDPOINT` (default `http://localhost:9000`)
+- `MINIO_ACCESS_KEY` (default `minioadmin`)
+- `MINIO_SECRET_KEY` (default `minioadmin`)
+- `MINIO_BUCKET` (default `evs-documents`)
 
 ## Auth persistence
 - `users` table with UUID v7 ids
