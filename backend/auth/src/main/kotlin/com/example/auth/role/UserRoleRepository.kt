@@ -8,12 +8,14 @@ import java.util.UUID
 interface UserRoleRepository : JpaRepository<UserRoleEntity, UserRoleId> {
     fun findAllByIdUserId(userId: UUID): List<UserRoleEntity>
 
-    @Query("""
+    @Query(
+        """
         select r.code
         from UserRoleEntity ur
         join ur.role r
         where ur.id.userId = :userId
-    """)
+    """,
+    )
     fun findRoleCodesByUserId(
         @Param("userId") userId: UUID,
     ): List<String>

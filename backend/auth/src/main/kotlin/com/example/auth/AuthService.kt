@@ -29,20 +29,24 @@ class AuthService(
     }
 
     private fun authenticate(token: String?): AuthenticatedPrincipal {
-        val userId = parseUserId(token)
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication token")
+        val userId =
+            parseUserId(token)
+                ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication token")
 
-        val user = userRepository.findById(userId).orElseThrow {
-            ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found")
-        }
+        val user =
+            userRepository.findById(userId).orElseThrow {
+                ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found")
+            }
 
         if (!user.isActive) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is inactive")
         }
 
-        val roles = userRoleRepository.findRoleCodesByUserId(userId)
-            .mapNotNull(AppRole::fromCode)
-            .toSet()
+        val roles =
+            userRoleRepository
+                .findRoleCodesByUserId(userId)
+                .mapNotNull(AppRole::fromCode)
+                .toSet()
 
         return AuthenticatedPrincipal(
             userId = userId,
