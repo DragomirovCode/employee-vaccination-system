@@ -2,6 +2,7 @@
 
 import com.example.auth.AuthenticatedPrincipal
 import com.example.vaccination.api.security.VaccinationSecurityContext
+import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.vaccination.CreateVaccinationCommand
 import com.example.vaccination.vaccination.UpdateVaccinationCommand
 import com.example.vaccination.vaccination.VaccinationService
@@ -30,6 +31,7 @@ import java.util.UUID
 @Tag(name = "Vaccinations", description = "Write operations for vaccinations")
 class VaccinationWriteController(
     private val vaccinationService: VaccinationService,
+    private val scopeService: VaccinationWriteScopeService,
 ) {
     @PostMapping
     @Operation(summary = "Create vaccination")
@@ -50,6 +52,7 @@ class VaccinationWriteController(
         @RequestBody body: VaccinationWriteRequest,
     ): VaccinationWriteResponse {
         val principal = requirePrincipal(request)
+        scopeService.assertVaccinationCreateAllowed(principal, body.employeeId)
         val created =
             vaccinationService.create(
                 CreateVaccinationCommand(
@@ -82,6 +85,7 @@ class VaccinationWriteController(
         @RequestBody body: VaccinationWriteRequest,
     ): VaccinationWriteResponse {
         val principal = requirePrincipal(request)
+        scopeService.assertVaccinationUpdateAllowed(principal, id, body.employeeId)
         val updated =
             vaccinationService.update(
                 id = id,
@@ -116,6 +120,7 @@ class VaccinationWriteController(
         @PathVariable id: UUID,
     ) {
         val principal = requirePrincipal(request)
+        scopeService.assertVaccinationDeleteAllowed(principal, id)
         vaccinationService.delete(id = id, deletedBy = principal.userId)
     }
 

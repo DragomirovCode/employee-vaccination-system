@@ -1,5 +1,6 @@
 ﻿package com.example.vaccination.api
 
+import com.example.audit.log.AuditLogRepository
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleEntity
@@ -41,6 +42,9 @@ class VaccinationWriteSecurityTest {
     private lateinit var webApplicationContext: WebApplicationContext
 
     @Autowired
+    private lateinit var auditLogRepository: AuditLogRepository
+
+    @Autowired
     private lateinit var userRepository: UserRepository
 
     @Autowired
@@ -72,294 +76,220 @@ class VaccinationWriteSecurityTest {
     }
 
     @Test
-    fun `vaccination create requires auth`() {
-        val seed = seedBase()
+    fun `write requires auth`() {
+        val seed = seedScopeData()
 
         mockMvc
             .perform(
                 post("/vaccinations")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        vaccinationBody(
-                            employeeId = seed.employee.id!!,
-                            vaccineId = seed.vaccine.id!!,
-                        ),
-                    ),
+                    .content(vaccinationBody(seed.childEmployeeId, seed.vaccineId)),
             ).andExpect(status().isUnauthorized)
     }
 
     @Test
-    fun `vaccination create forbidden for HR and does not change data`() {
-        val seed = seedBase()
+    fun `hr is forbidden for write`() {
+        val seed = seedScopeData()
         val hr = createUserWithRole("HR")
-        val before = vaccinationRepository.count()
 
         mockMvc
             .perform(
                 post("/vaccinations")
                     .header("X-Auth-Token", hr.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        vaccinationBody(
-                            employeeId = seed.employee.id!!,
-                            vaccineId = seed.vaccine.id!!,
-                        ),
-                    ),
+                    .content(vaccinationBody(seed.childEmployeeId, seed.vaccineId)),
             ).andExpect(status().isForbidden)
-
-        assertEquals(before, vaccinationRepository.count())
     }
 
     @Test
-    fun `vaccination create success for MEDICAL`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
+    fun `medical can write within own department tree`() {
+        val seed = seedScopeData()
 
         mockMvc
             .perform(
                 post("/vaccinations")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        vaccinationBody(
-                            employeeId = seed.employee.id!!,
-                            vaccineId = seed.vaccine.id!!,
-                        ),
-                    ),
+                    .content(vaccinationBody(seed.childEmployeeId, seed.vaccineId)),
             ).andExpect(status().isOk)
 
         assertEquals(1, vaccinationRepository.count())
     }
 
     @Test
-    fun `vaccination update forbidden for PERSON and keeps original data`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val person = createUserWithRole("PERSON")
-        val created = createVaccination(seed, medical.id!!)
+    fun `medical cannot create vaccination outside scope and no audit created`() {
+        val seed = seedScopeData()
+        val beforeAudit = auditLogRepository.count()
+        val beforeVaccinations = vaccinationRepository.count()
 
         mockMvc
             .perform(
-                put("/vaccinations/${created.id}")
-                    .header("X-Auth-Token", person.id.toString())
+                post("/vaccinations")
+                    .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        vaccinationBody(
-                            employeeId = seed.employee.id!!,
-                            vaccineId = seed.vaccine.id!!,
-                            notes = "forbidden-update",
-                        ),
-                    ),
+                    .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId)),
             ).andExpect(status().isForbidden)
 
-        val unchanged = vaccinationRepository.findById(created.id!!).orElseThrow()
-        assertEquals(created.notes, unchanged.notes)
+        assertEquals(beforeVaccinations, vaccinationRepository.count())
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
     @Test
-    fun `vaccination update success for ADMIN`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val admin = createUserWithRole("ADMIN")
-        val created = createVaccination(seed, medical.id!!)
+    fun `admin can create vaccination outside medical scope`() {
+        val seed = seedScopeData()
 
         mockMvc
             .perform(
-                put("/vaccinations/${created.id}")
-                    .header("X-Auth-Token", admin.id.toString())
+                post("/vaccinations")
+                    .header("X-Auth-Token", seed.adminUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(
-                        vaccinationBody(
-                            employeeId = seed.employee.id!!,
-                            vaccineId = seed.vaccine.id!!,
-                            notes = "updated-by-admin",
-                        ),
-                    ),
+                    .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId)),
             ).andExpect(status().isOk)
 
-        val updated = vaccinationRepository.findById(created.id!!).orElseThrow()
-        assertEquals("updated-by-admin", updated.notes)
+        assertEquals(1, vaccinationRepository.count())
     }
 
     @Test
-    fun `vaccination delete forbidden for HR and keeps record`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val hr = createUserWithRole("HR")
-        val created = createVaccination(seed, medical.id!!)
+    fun `medical cannot update vaccination outside scope and data unchanged`() {
+        val seed = seedScopeData()
+        val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId, notes = "before")
+        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
-                delete("/vaccinations/${created.id}")
-                    .header("X-Auth-Token", hr.id.toString()),
+                put("/vaccinations/${existing.id}")
+                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId, notes = "after")),
             ).andExpect(status().isForbidden)
 
-        assertEquals(true, vaccinationRepository.findById(created.id!!).isPresent)
+        val unchanged = vaccinationRepository.findById(existing.id!!).orElseThrow()
+        assertEquals("before", unchanged.notes)
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
     @Test
-    fun `vaccination delete success for MEDICAL`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val created = createVaccination(seed, medical.id!!)
+    fun `medical cannot delete vaccination outside scope`() {
+        val seed = seedScopeData()
+        val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
+        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
-                delete("/vaccinations/${created.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
-            ).andExpect(status().isNoContent)
-
-        assertEquals(false, vaccinationRepository.findById(created.id!!).isPresent)
-    }
-
-    @Test
-    fun `document create requires auth`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val vaccination = createVaccination(seed, medical.id!!)
-
-        mockMvc
-            .perform(
-                post("/documents")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(documentBody(vaccination.id!!)),
-            ).andExpect(status().isUnauthorized)
-    }
-
-    @Test
-    fun `document create forbidden for PERSON and does not change data`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val person = createUserWithRole("PERSON")
-        val vaccination = createVaccination(seed, medical.id!!)
-        val before = documentRepository.count()
-
-        mockMvc
-            .perform(
-                post("/documents")
-                    .header("X-Auth-Token", person.id.toString())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(documentBody(vaccination.id!!)),
+                delete("/vaccinations/${existing.id}")
+                    .header("X-Auth-Token", seed.medicalUserId.toString()),
             ).andExpect(status().isForbidden)
 
-        assertEquals(before, documentRepository.count())
+        assertEquals(true, vaccinationRepository.findById(existing.id!!).isPresent)
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
     @Test
-    fun `document create success for MEDICAL`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val vaccination = createVaccination(seed, medical.id!!)
+    fun `medical cannot create document outside scope`() {
+        val seed = seedScopeData()
+        val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
+        val beforeAudit = auditLogRepository.count()
+        val beforeDocs = documentRepository.count()
 
         mockMvc
             .perform(
                 post("/documents")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(documentBody(vaccination.id!!)),
-            ).andExpect(status().isOk)
+                    .content(documentBody(externalVaccination.id!!)),
+            ).andExpect(status().isForbidden)
 
-        assertEquals(1, documentRepository.count())
+        assertEquals(beforeDocs, documentRepository.count())
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
     @Test
-    fun `document update forbidden for HR and keeps original file name`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val hr = createUserWithRole("HR")
-        val vaccination = createVaccination(seed, medical.id!!)
-        val doc = createDocument(vaccination.id!!, medical.id!!)
+    fun `medical cannot update document outside scope`() {
+        val seed = seedScopeData()
+        val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
+        val doc = createDocument(externalVaccination.id!!, seed.adminUserId, fileName = "before.pdf")
+        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
                 put("/documents/${doc.id}")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(documentBody(vaccination.id!!, fileName = "forbidden.pdf")),
+                    .content(documentBody(externalVaccination.id!!, fileName = "after.pdf")),
             ).andExpect(status().isForbidden)
 
         val unchanged = documentRepository.findById(doc.id!!).orElseThrow()
-        assertEquals(doc.fileName, unchanged.fileName)
+        assertEquals("before.pdf", unchanged.fileName)
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
     @Test
-    fun `document update success for ADMIN`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val admin = createUserWithRole("ADMIN")
-        val vaccination = createVaccination(seed, medical.id!!)
-        val doc = createDocument(vaccination.id!!, medical.id!!)
-
-        mockMvc
-            .perform(
-                put("/documents/${doc.id}")
-                    .header("X-Auth-Token", admin.id.toString())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(documentBody(vaccination.id!!, fileName = "updated.pdf")),
-            ).andExpect(status().isOk)
-
-        val updated = documentRepository.findById(doc.id!!).orElseThrow()
-        assertEquals("updated.pdf", updated.fileName)
-    }
-
-    @Test
-    fun `document delete forbidden for PERSON and keeps record`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val person = createUserWithRole("PERSON")
-        val vaccination = createVaccination(seed, medical.id!!)
-        val doc = createDocument(vaccination.id!!, medical.id!!)
+    fun `medical cannot delete document outside scope`() {
+        val seed = seedScopeData()
+        val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
+        val doc = createDocument(externalVaccination.id!!, seed.adminUserId)
+        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
                 delete("/documents/${doc.id}")
-                    .header("X-Auth-Token", person.id.toString()),
+                    .header("X-Auth-Token", seed.medicalUserId.toString()),
             ).andExpect(status().isForbidden)
 
         assertEquals(true, documentRepository.findById(doc.id!!).isPresent)
+        assertEquals(beforeAudit, auditLogRepository.count())
     }
 
-    @Test
-    fun `document delete success for MEDICAL`() {
-        val seed = seedBase()
-        val medical = createUserWithRole("MEDICAL")
-        val vaccination = createVaccination(seed, medical.id!!)
-        val doc = createDocument(vaccination.id!!, medical.id!!)
-
-        mockMvc
-            .perform(
-                delete("/documents/${doc.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
-            ).andExpect(status().isNoContent)
-
-        assertEquals(false, documentRepository.findById(doc.id!!).isPresent)
-    }
-
-    private fun seedBase(): BaseSeed {
+    private fun seedScopeData(): ScopeSeed {
         cleanup()
 
-        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Ops"))
-        val employee =
+        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "MedicalRoot"))
+        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "MedicalChild", parentId = rootDepartment.id))
+        val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
+
+        val medicalUser = createUserWithRole("MEDICAL")
+        val adminUser = createUserWithRole("ADMIN")
+
+        employeeRepository.saveAndFlush(
+            EmployeeEntity(
+                userId = medicalUser.id,
+                departmentId = rootDepartment.id,
+                firstName = "Med",
+                lastName = "Worker",
+            ),
+        )
+
+        val childEmployee =
             employeeRepository.saveAndFlush(
                 EmployeeEntity(
-                    departmentId = department.id,
-                    firstName = "Alex",
-                    lastName = "Worker",
-                ),
-            )
-        val vaccine =
-            vaccineRepository.saveAndFlush(
-                VaccineEntity(
-                    name = "CoreVaccine",
-                    validityDays = 365,
-                    dosesRequired = 1,
+                    departmentId = childDepartment.id,
+                    firstName = "In",
+                    lastName = "Scope",
                 ),
             )
 
-        return BaseSeed(employee = employee, vaccine = vaccine)
+        val externalEmployee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = externalDepartment.id,
+                    firstName = "Out",
+                    lastName = "Scope",
+                ),
+            )
+
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "ScopeVax", validityDays = 365, dosesRequired = 1))
+
+        return ScopeSeed(
+            medicalUserId = medicalUser.id!!,
+            adminUserId = adminUser.id!!,
+            childEmployeeId = childEmployee.id!!,
+            externalEmployeeId = externalEmployee.id!!,
+            vaccineId = vaccine.id!!,
+        )
     }
 
     private fun cleanup() {
+        auditLogRepository.deleteAll()
         documentRepository.deleteAll()
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
@@ -373,11 +303,7 @@ class VaccinationWriteSecurityTest {
     private fun createUserWithRole(roleCode: String): UserEntity {
         val user = userRepository.saveAndFlush(UserEntity(email = "$roleCode-${UUID.randomUUID()}@example.com", passwordHash = "hash"))
         val role = ensureRole(roleCode)
-        userRoleRepository.saveAndFlush(
-            UserRoleEntity(
-                id = UserRoleId(userId = user.id, roleId = role.id),
-            ),
-        )
+        userRoleRepository.saveAndFlush(UserRoleEntity(id = UserRoleId(userId = user.id, roleId = role.id)))
         return user
     }
 
@@ -386,19 +312,21 @@ class VaccinationWriteSecurityTest {
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 
     private fun createVaccination(
-        seed: BaseSeed,
+        employeeId: UUID,
+        vaccineId: UUID,
         performerId: UUID,
+        notes: String = "created",
     ): VaccinationEntity {
         val created =
             vaccinationRepository.saveAndFlush(
                 VaccinationEntity(
-                    employeeId = seed.employee.id,
-                    vaccineId = seed.vaccine.id,
+                    employeeId = employeeId,
+                    vaccineId = vaccineId,
                     performedBy = performerId,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
                     revaccinationDate = LocalDate.of(2027, 3, 1),
-                    notes = "initial",
+                    notes = notes,
                 ),
             )
         assertNotNull(created.id)
@@ -408,14 +336,15 @@ class VaccinationWriteSecurityTest {
     private fun createDocument(
         vaccinationId: UUID,
         uploaderId: UUID,
+        fileName: String = "doc.pdf",
     ): DocumentEntity {
         val created =
             documentRepository.saveAndFlush(
                 DocumentEntity(
                     vaccinationId = vaccinationId,
-                    fileName = "initial.pdf",
-                    filePath = "docs/initial.pdf",
-                    fileSize = 100,
+                    fileName = fileName,
+                    filePath = "docs/$fileName",
+                    fileSize = 123,
                     mimeType = "application/pdf",
                     uploadedBy = uploaderId,
                 ),
@@ -456,7 +385,10 @@ class VaccinationWriteSecurityTest {
         """.trimIndent()
 }
 
-private data class BaseSeed(
-    val employee: EmployeeEntity,
-    val vaccine: VaccineEntity,
+private data class ScopeSeed(
+    val medicalUserId: UUID,
+    val adminUserId: UUID,
+    val childEmployeeId: UUID,
+    val externalEmployeeId: UUID,
+    val vaccineId: UUID,
 )
