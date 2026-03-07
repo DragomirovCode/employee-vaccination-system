@@ -95,6 +95,41 @@ class VaccinationCoverageServiceTest {
         assertTrue(result.isEmpty())
     }
 
+    @Test
+    fun `returns coverage grouped by vaccine and supports person scope`() {
+        val seed = seedData()
+
+        val result =
+            service.getCoverageByVaccine(
+                dateFrom = LocalDate.of(2026, 1, 1),
+                dateTo = LocalDate.of(2026, 12, 31),
+                scope = ReportingAccessScope(),
+            )
+        assertEquals(2, result.size)
+
+        val alpha = result.first { it.vaccineId == seed.vaccineAId }
+        assertEquals(5, alpha.employeesTotal)
+        assertEquals(2, alpha.employeesCovered)
+        assertEquals(40.0, alpha.coveragePercent)
+
+        val beta = result.first { it.vaccineId == seed.vaccineBId }
+        assertEquals(5, beta.employeesTotal)
+        assertEquals(1, beta.employeesCovered)
+        assertEquals(20.0, beta.coveragePercent)
+
+        val personOnly =
+            service.getCoverageByVaccine(
+                dateFrom = LocalDate.of(2026, 1, 1),
+                dateTo = LocalDate.of(2026, 12, 31),
+                scope = ReportingAccessScope(employeeId = seed.employeeA1Id),
+            )
+        assertEquals(1, personOnly.size)
+        assertEquals(seed.vaccineAId, personOnly.first().vaccineId)
+        assertEquals(1, personOnly.first().employeesTotal)
+        assertEquals(1, personOnly.first().employeesCovered)
+        assertEquals(100.0, personOnly.first().coveragePercent)
+    }
+
     private fun seedData(): SeedResult {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
@@ -105,7 +140,8 @@ class VaccinationCoverageServiceTest {
         vaccineRepository.deleteAll()
 
         val performer = userRepository.saveAndFlush(UserEntity(email = "coverage-service@example.com", passwordHash = "hash"))
-        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "CoverageVax", validityDays = 365, dosesRequired = 1))
+        val vaccineA = vaccineRepository.saveAndFlush(VaccineEntity(name = "CoverageVax-A", validityDays = 365, dosesRequired = 1))
+        val vaccineB = vaccineRepository.saveAndFlush(VaccineEntity(name = "CoverageVax-B", validityDays = 365, dosesRequired = 1))
 
         val departmentA = departmentRepository.saveAndFlush(DepartmentEntity(name = "A Department"))
         val departmentB = departmentRepository.saveAndFlush(DepartmentEntity(name = "B Department"))
@@ -119,7 +155,7 @@ class VaccinationCoverageServiceTest {
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = a1.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 2, 10),
                 doseNumber = 1,
@@ -129,7 +165,7 @@ class VaccinationCoverageServiceTest {
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = a2.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 3, 10),
                 doseNumber = 1,
@@ -139,7 +175,7 @@ class VaccinationCoverageServiceTest {
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = a3.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2025, 12, 10),
                 doseNumber = 1,
@@ -149,9 +185,19 @@ class VaccinationCoverageServiceTest {
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = b1.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 4, 10),
+                doseNumber = 1,
+                revaccinationDate = LocalDate.now().plusDays(30),
+            ),
+        )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = b1.id,
+                vaccineId = vaccineB.id,
+                performedBy = performer.id,
+                vaccinationDate = LocalDate.of(2026, 6, 10),
                 doseNumber = 1,
                 revaccinationDate = LocalDate.now().plusDays(30),
             ),
@@ -160,6 +206,9 @@ class VaccinationCoverageServiceTest {
         return SeedResult(
             departmentAId = departmentA.id!!,
             departmentBId = departmentB.id!!,
+            vaccineAId = vaccineA.id!!,
+            vaccineBId = vaccineB.id!!,
+            employeeA1Id = a1.id!!,
         )
     }
 }
@@ -167,4 +216,7 @@ class VaccinationCoverageServiceTest {
 private data class SeedResult(
     val departmentAId: UUID,
     val departmentBId: UUID,
+    val vaccineAId: UUID,
+    val vaccineBId: UUID,
+    val employeeA1Id: UUID,
 )

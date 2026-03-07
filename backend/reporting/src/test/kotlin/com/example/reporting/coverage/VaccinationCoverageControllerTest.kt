@@ -221,6 +221,149 @@ class VaccinationCoverageControllerTest {
             ).andExpect(status().isForbidden)
     }
 
+    @Test
+    fun `medical sees vaccine coverage report`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].vaccineName").exists())
+            .andExpect(jsonPath("$[0].employeesTotal").value(3))
+    }
+
+    @Test
+    fun `vaccine coverage returns forbidden for department outside scope`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `vaccine coverage returns bad request for invalid date range`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-12-31")
+                    .param("dateTo", "2026-01-01"),
+            ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `exports vaccine coverage as csv`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage-by-vaccine.csv\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("vaccineId,vaccineName,employeesTotal")))
+    }
+
+    @Test
+    fun `exports vaccine coverage as xlsx`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "xlsx"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage-by-vaccine.xlsx\""))
+            .andExpect(
+                header().string(
+                    "Content-Type",
+                    org.hamcrest.Matchers.containsString(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                ),
+            ).andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 2 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte(),
+                    "Expected XLSX zip signature (PK)",
+                )
+            }
+    }
+
+    @Test
+    fun `exports vaccine coverage as pdf`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "pdf"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage-by-vaccine.pdf\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/pdf")))
+            .andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 4 &&
+                        bytes[0] == '%'.code.toByte() &&
+                        bytes[1] == 'P'.code.toByte() &&
+                        bytes[2] == 'D'.code.toByte() &&
+                        bytes[3] == 'F'.code.toByte(),
+                    "Expected PDF signature (%PDF)",
+                )
+            }
+    }
+
+    @Test
+    fun `vaccine coverage export returns bad request for unsupported format`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "xml"),
+            ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `vaccine coverage export returns forbidden for department outside scope`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-vaccine/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
+    }
+
     private fun seedData(roleCode: String): SeededData {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
@@ -272,12 +415,13 @@ class VaccinationCoverageControllerTest {
                 ),
             )
 
-        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "Coverage API Vax", validityDays = 365, dosesRequired = 1))
+        val vaccineA = vaccineRepository.saveAndFlush(VaccineEntity(name = "Coverage API Vax-A", validityDays = 365, dosesRequired = 1))
+        val vaccineB = vaccineRepository.saveAndFlush(VaccineEntity(name = "Coverage API Vax-B", validityDays = 365, dosesRequired = 1))
 
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = authEmployee.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 3, 1),
                 doseNumber = 1,
@@ -287,7 +431,7 @@ class VaccinationCoverageControllerTest {
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
                 employeeId = childEmployee.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 4, 1),
                 doseNumber = 1,
@@ -296,8 +440,18 @@ class VaccinationCoverageControllerTest {
         )
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
+                employeeId = childEmployee.id,
+                vaccineId = vaccineB.id,
+                performedBy = performer.id,
+                vaccinationDate = LocalDate.of(2026, 6, 1),
+                doseNumber = 1,
+                revaccinationDate = LocalDate.now().plusDays(30),
+            ),
+        )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
                 employeeId = externalEmployee.id,
-                vaccineId = vaccine.id,
+                vaccineId = vaccineA.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 5, 1),
                 doseNumber = 1,

@@ -9,6 +9,42 @@ import java.util.UUID
 class VaccinationCoverageQueryRepository(
     private val entityManager: EntityManager,
 ) {
+    fun countEmployeesInScope(
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
+    ): Long {
+        if (departmentIds != null && departmentIds.isEmpty()) {
+            return 0L
+        }
+
+        val whereClause =
+            buildString {
+                val predicates = mutableListOf<String>()
+                if (departmentIds != null) {
+                    predicates.add("e.departmentId IN :departmentIds")
+                }
+                if (employeeId != null) {
+                    predicates.add("e.id = :employeeId")
+                }
+                if (predicates.isNotEmpty()) {
+                    append("WHERE ${predicates.joinToString(" AND ")}")
+                }
+            }
+
+        val query =
+            entityManager.createQuery(
+                """
+                SELECT COUNT(e.id)
+                FROM EmployeeEntity e
+                $whereClause
+                """.trimIndent(),
+                java.lang.Long::class.java,
+            )
+
+        bindScopeParameters(query, departmentIds, employeeId)
+        return query.singleResult.toLong()
+    }
+
     fun findDepartmentTotals(
         departmentIds: Set<UUID>?,
         employeeId: UUID?,
@@ -45,6 +81,54 @@ class VaccinationCoverageQueryRepository(
                 """.trimIndent(),
                 DepartmentEmployeesTotalRow::class.java,
             )
+
+        bindScopeParameters(query, departmentIds, employeeId)
+
+        return query.resultList
+    }
+
+    fun findVaccineCovered(
+        dateFrom: LocalDate,
+        dateTo: LocalDate,
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
+        today: LocalDate,
+    ): List<VaccineEmployeesCoveredRow> {
+        if (departmentIds != null && departmentIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val whereClause =
+            buildString {
+                append("v.vaccinationDate BETWEEN :dateFrom AND :dateTo ")
+                append("AND v.revaccinationDate IS NOT NULL ")
+                append("AND v.revaccinationDate >= :today ")
+                if (departmentIds != null) {
+                    append("AND e.departmentId IN :departmentIds ")
+                }
+                if (employeeId != null) {
+                    append("AND e.id = :employeeId ")
+                }
+            }
+
+        val query =
+            entityManager
+                .createQuery(
+                    """
+                    SELECT new com.example.reporting.coverage.VaccineEmployeesCoveredRow(
+                        vac.id, vac.name, COUNT(DISTINCT e.id)
+                    )
+                    FROM VaccinationEntity v
+                    JOIN EmployeeEntity e ON e.id = v.employeeId
+                    JOIN VaccineEntity vac ON vac.id = v.vaccineId
+                    WHERE $whereClause
+                    GROUP BY vac.id, vac.name
+                    ORDER BY vac.name ASC
+                    """.trimIndent(),
+                    VaccineEmployeesCoveredRow::class.java,
+                ).setParameter("dateFrom", dateFrom)
+                .setParameter("dateTo", dateTo)
+                .setParameter("today", today)
 
         bindScopeParameters(query, departmentIds, employeeId)
 
