@@ -67,6 +67,7 @@ class AuthAdminController(
         ],
     )
     fun createUser(
+        request: HttpServletRequest,
         @RequestBody body: AuthUserWriteRequest,
     ): AuthUserResponse =
         AuthUserResponse.fromEntity(
@@ -76,6 +77,7 @@ class AuthAdminController(
                     passwordHash = body.passwordHash,
                     isActive = body.isActive,
                 ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -107,6 +109,7 @@ class AuthAdminController(
         ],
     )
     fun updateUser(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: AuthUserWriteRequest,
     ): AuthUserResponse =
@@ -119,6 +122,7 @@ class AuthAdminController(
                         passwordHash = body.passwordHash,
                         isActive = body.isActive,
                     ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -145,9 +149,10 @@ class AuthAdminController(
         ],
     )
     fun setStatus(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: AuthUserStatusRequest,
-    ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.setStatus(id, body.active))
+    ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.setStatus(id, body.active, requirePrincipal(request).userId))
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles list")
@@ -230,10 +235,11 @@ class AuthAdminController(
         ],
     )
     fun unassignRole(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
         @PathVariable roleCode: String,
     ) {
-        authAdminService.unassignRole(id, roleCode)
+        authAdminService.unassignRole(id, roleCode, requirePrincipal(request).userId)
     }
 
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =

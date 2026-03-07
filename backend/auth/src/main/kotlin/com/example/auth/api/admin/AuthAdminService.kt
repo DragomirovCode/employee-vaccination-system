@@ -1,5 +1,7 @@
 package com.example.auth.api.admin
 
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogService
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleEntity
@@ -18,6 +20,7 @@ class AuthAdminService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val userRoleRepository: UserRoleRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
     fun listUsers(): List<UserEntity> = userRepository.findAll()
@@ -26,38 +29,69 @@ class AuthAdminService(
     fun getUser(id: UUID): UserEntity = findUser(id)
 
     @Transactional
-    fun createUser(command: CreateUserCommand): UserEntity {
+    fun createUser(
+        command: CreateUserCommand,
+        performedBy: UUID,
+    ): UserEntity {
         requireUniqueEmail(command.email, null)
-        return userRepository.saveAndFlush(
+        val saved =
+            userRepository.saveAndFlush(
             UserEntity(
                 email = command.email.trim(),
                 passwordHash = command.passwordHash,
                 isActive = command.isActive,
             ),
         )
+        auditLogService.logCreate(
+            userId = performedBy,
+            entityType = AuditEntityType.USER,
+            entityId = saved.id!!,
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional
     fun updateUser(
         id: UUID,
         command: UpdateUserCommand,
+        performedBy: UUID,
     ): UserEntity {
         val user = findUser(id)
+        val oldPayload = user.toAuditPayload()
         requireUniqueEmail(command.email, id)
         user.email = command.email.trim()
         user.passwordHash = command.passwordHash
         user.isActive = command.isActive
-        return userRepository.saveAndFlush(user)
+        val saved = userRepository.saveAndFlush(user)
+        auditLogService.logUpdate(
+            userId = performedBy,
+            entityType = AuditEntityType.USER,
+            entityId = saved.id!!,
+            oldValue = oldPayload,
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional
     fun setStatus(
         id: UUID,
         isActive: Boolean,
+        performedBy: UUID,
     ): UserEntity {
         val user = findUser(id)
+        val oldPayload = user.toAuditPayload()
         user.isActive = isActive
-        return userRepository.saveAndFlush(user)
+        val saved = userRepository.saveAndFlush(user)
+        auditLogService.logUpdate(
+            userId = performedBy,
+            entityType = AuditEntityType.USER,
+            entityId = saved.id!!,
+            oldValue = oldPayload,
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional(readOnly = true)
@@ -84,18 +118,27 @@ class AuthAdminService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Role already assigned")
         }
 
-        return userRoleRepository.saveAndFlush(
+        val saved =
+            userRoleRepository.saveAndFlush(
             UserRoleEntity(
                 id = userRoleId,
                 assignedBy = assignedBy,
             ),
         )
+        auditLogService.logCreate(
+            userId = assignedBy,
+            entityType = AuditEntityType.USER_ROLE,
+            entityKey = "${userRoleId.userId}:${userRoleId.roleId}",
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional
     fun unassignRole(
         userId: UUID,
         roleCode: String,
+        unassignedBy: UUID,
     ) {
         findUser(userId)
         val role = findRoleByCode(roleCode)
@@ -106,6 +149,12 @@ class AuthAdminService(
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Role assignment not found")
         }
         userRoleRepository.deleteById(userRoleId)
+        auditLogService.logDelete(
+            userId = unassignedBy,
+            entityType = AuditEntityType.USER_ROLE,
+            entityKey = "${userRoleId.userId}:${userRoleId.roleId}",
+            oldValue = mapOf("userId" to userRoleId.userId.toString(), "roleId" to userRoleId.roleId),
+        )
     }
 
     private fun requireUniqueEmail(
@@ -126,6 +175,23 @@ class AuthAdminService(
     private fun findRoleByCode(code: String): RoleEntity =
         roleRepository.findByCode(code.trim().uppercase())
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found")
+
+    private fun UserEntity.toAuditPayload(): Map<String, Any?> =
+        mapOf(
+            "id" to id?.toString(),
+            "email" to email,
+            "isActive" to isActive,
+            "createdAt" to createdAt?.toString(),
+            "updatedAt" to updatedAt?.toString(),
+        )
+
+    private fun UserRoleEntity.toAuditPayload(): Map<String, Any?> =
+        mapOf(
+            "userId" to id.userId?.toString(),
+            "roleId" to id.roleId,
+            "assignedAt" to assignedAt?.toString(),
+            "assignedBy" to assignedBy?.toString(),
+        )
 }
 
 data class CreateUserCommand(

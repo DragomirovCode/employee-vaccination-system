@@ -1,5 +1,7 @@
 package com.example.employee.person
 
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogService
 import com.example.employee.department.DepartmentRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
@@ -13,6 +15,7 @@ import java.util.UUID
 class EmployeeService(
     private val employeeRepository: EmployeeRepository,
     private val departmentRepository: DepartmentRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
     fun list(): List<EmployeeEntity> = employeeRepository.findAll()
@@ -21,12 +24,16 @@ class EmployeeService(
     fun get(id: UUID): EmployeeEntity = findEmployee(id)
 
     @Transactional
-    fun create(command: CreateEmployeeCommand): EmployeeEntity {
+    fun create(
+        command: CreateEmployeeCommand,
+        performedBy: UUID,
+    ): EmployeeEntity {
         validateDepartment(command.departmentId)
         validateUserUniqueness(command.userId, null)
 
         return try {
-            employeeRepository.saveAndFlush(
+            val saved =
+                employeeRepository.saveAndFlush(
                 EmployeeEntity(
                     userId = command.userId,
                     departmentId = command.departmentId,
@@ -38,6 +45,13 @@ class EmployeeService(
                     hireDate = command.hireDate,
                 ),
             )
+            auditLogService.logCreate(
+                userId = performedBy,
+                entityType = AuditEntityType.EMPLOYEE,
+                entityId = saved.id!!,
+                newValue = saved.toAuditPayload(),
+            )
+            saved
         } catch (ex: DataIntegrityViolationException) {
             throw toConflict(ex)
         }
@@ -47,8 +61,10 @@ class EmployeeService(
     fun update(
         id: UUID,
         command: UpdateEmployeeCommand,
+        performedBy: UUID,
     ): EmployeeEntity {
         val employee = findEmployee(id)
+        val oldPayload = employee.toAuditPayload()
         validateDepartment(command.departmentId)
         validateUserUniqueness(command.userId, id)
 
@@ -62,16 +78,33 @@ class EmployeeService(
         employee.hireDate = command.hireDate
 
         return try {
-            employeeRepository.saveAndFlush(employee)
+            val saved = employeeRepository.saveAndFlush(employee)
+            auditLogService.logUpdate(
+                userId = performedBy,
+                entityType = AuditEntityType.EMPLOYEE,
+                entityId = saved.id!!,
+                oldValue = oldPayload,
+                newValue = saved.toAuditPayload(),
+            )
+            saved
         } catch (ex: DataIntegrityViolationException) {
             throw toConflict(ex)
         }
     }
 
     @Transactional
-    fun delete(id: UUID) {
-        findEmployee(id)
+    fun delete(
+        id: UUID,
+        performedBy: UUID,
+    ) {
+        val existing = findEmployee(id)
         employeeRepository.deleteById(id)
+        auditLogService.logDelete(
+            userId = performedBy,
+            entityType = AuditEntityType.EMPLOYEE,
+            entityId = id,
+            oldValue = existing.toAuditPayload(),
+        )
     }
 
     private fun validateDepartment(departmentId: UUID) {
@@ -103,6 +136,21 @@ class EmployeeService(
         val message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation"
         return ResponseStatusException(HttpStatus.CONFLICT, message)
     }
+
+    private fun EmployeeEntity.toAuditPayload(): Map<String, Any?> =
+        mapOf(
+            "id" to id?.toString(),
+            "userId" to userId?.toString(),
+            "departmentId" to departmentId?.toString(),
+            "firstName" to firstName,
+            "lastName" to lastName,
+            "middleName" to middleName,
+            "birthDate" to birthDate?.toString(),
+            "position" to position,
+            "hireDate" to hireDate?.toString(),
+            "createdAt" to createdAt?.toString(),
+            "updatedAt" to updatedAt?.toString(),
+        )
 }
 
 data class CreateEmployeeCommand(

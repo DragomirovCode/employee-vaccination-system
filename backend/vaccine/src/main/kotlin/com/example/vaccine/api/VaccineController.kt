@@ -1,6 +1,8 @@
 package com.example.vaccine.api
 
+import com.example.auth.AuthenticatedPrincipal
 import com.example.auth.api.ApiErrorResponse
+import com.example.vaccine.api.security.VaccineSecurityContext
 import com.example.vaccine.vaccine.CreateVaccineCommand
 import com.example.vaccine.vaccine.UpdateVaccineCommand
 import com.example.vaccine.vaccine.VaccineEntity
@@ -11,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -69,6 +73,7 @@ class VaccineController(
         ],
     )
     fun create(
+        request: HttpServletRequest,
         @RequestBody body: VaccineWriteRequest,
     ): VaccineResponse =
         VaccineResponse.fromEntity(
@@ -81,6 +86,7 @@ class VaccineController(
                     daysBetween = body.daysBetween,
                     isActive = body.isActive,
                 ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -117,6 +123,7 @@ class VaccineController(
         ],
     )
     fun update(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: VaccineWriteRequest,
     ): VaccineResponse =
@@ -132,6 +139,7 @@ class VaccineController(
                         daysBetween = body.daysBetween,
                         isActive = body.isActive,
                     ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -164,10 +172,15 @@ class VaccineController(
         ],
     )
     fun delete(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        vaccineService.delete(id)
+        vaccineService.delete(id, requirePrincipal(request).userId)
     }
+
+    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
+        request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class VaccineWriteRequest(

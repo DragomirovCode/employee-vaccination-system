@@ -1,6 +1,8 @@
 package com.example.employee.api
 
+import com.example.auth.AuthenticatedPrincipal
 import com.example.auth.api.ApiErrorResponse
+import com.example.employee.api.security.EmployeeSecurityContext
 import com.example.employee.department.CreateDepartmentCommand
 import com.example.employee.department.DepartmentService
 import com.example.employee.department.UpdateDepartmentCommand
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -63,6 +67,7 @@ class DepartmentController(
     )
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
+        request: HttpServletRequest,
         @RequestBody body: DepartmentWriteRequest,
     ): DepartmentResponse =
         DepartmentResponse.fromEntity(
@@ -71,6 +76,7 @@ class DepartmentController(
                     name = body.name,
                     parentId = body.parentId,
                 ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -102,6 +108,7 @@ class DepartmentController(
         ],
     )
     fun update(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: DepartmentWriteRequest,
     ): DepartmentResponse =
@@ -113,6 +120,7 @@ class DepartmentController(
                         name = body.name,
                         parentId = body.parentId,
                     ),
+                performedBy = requirePrincipal(request).userId,
             ),
         )
 
@@ -145,10 +153,15 @@ class DepartmentController(
         ],
     )
     fun delete(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        departmentService.delete(id)
+        departmentService.delete(id, requirePrincipal(request).userId)
     }
+
+    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
+        request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class DepartmentWriteRequest(
