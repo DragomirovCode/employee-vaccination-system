@@ -5,4 +5,18 @@ import java.util.UUID
 
 interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, VaccineDiseaseId> {
     fun findAllByIdVaccineId(vaccineId: UUID): List<VaccineDiseaseEntity>
+
+    fun existsByIdVaccineId(vaccineId: UUID): Boolean
+
+    fun existsByIdDiseaseId(diseaseId: Int): Boolean
+
+    fun existsByIdVaccineIdAndIdDiseaseId(
+        vaccineId: UUID,
+        diseaseId: Int,
+    ): Boolean
+
+    fun deleteByIdVaccineIdAndIdDiseaseId(
+        vaccineId: UUID,
+        diseaseId: Int,
+    ): Long
 }
