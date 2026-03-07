@@ -9,8 +9,27 @@ import java.util.UUID
 class VaccinationCoverageQueryRepository(
     private val entityManager: EntityManager,
 ) {
-    fun findDepartmentTotals(departmentId: UUID?): List<DepartmentEmployeesTotalRow> {
-        val whereClause = if (departmentId != null) "WHERE d.id = :departmentId" else ""
+    fun findDepartmentTotals(
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
+    ): List<DepartmentEmployeesTotalRow> {
+        if (departmentIds != null && departmentIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val whereClause =
+            buildString {
+                val predicates = mutableListOf<String>()
+                if (departmentIds != null) {
+                    predicates.add("d.id IN :departmentIds")
+                }
+                if (employeeId != null) {
+                    predicates.add("e.id = :employeeId")
+                }
+                if (predicates.isNotEmpty()) {
+                    append("WHERE ${predicates.joinToString(" AND ")}")
+                }
+            }
 
         val query =
             entityManager.createQuery(
@@ -27,9 +46,7 @@ class VaccinationCoverageQueryRepository(
                 DepartmentEmployeesTotalRow::class.java,
             )
 
-        if (departmentId != null) {
-            query.setParameter("departmentId", departmentId)
-        }
+        bindScopeParameters(query, departmentIds, employeeId)
 
         return query.resultList
     }
@@ -37,16 +54,24 @@ class VaccinationCoverageQueryRepository(
     fun findDepartmentCovered(
         dateFrom: LocalDate,
         dateTo: LocalDate,
-        departmentId: UUID?,
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
         today: LocalDate,
     ): List<DepartmentEmployeesCoveredRow> {
+        if (departmentIds != null && departmentIds.isEmpty()) {
+            return emptyList()
+        }
+
         val whereClause =
             buildString {
                 append("v.vaccinationDate BETWEEN :dateFrom AND :dateTo ")
                 append("AND v.revaccinationDate IS NOT NULL ")
                 append("AND v.revaccinationDate >= :today ")
-                if (departmentId != null) {
-                    append("AND e.departmentId = :departmentId ")
+                if (departmentIds != null) {
+                    append("AND e.departmentId IN :departmentIds ")
+                }
+                if (employeeId != null) {
+                    append("AND e.id = :employeeId ")
                 }
             }
 
@@ -67,10 +92,21 @@ class VaccinationCoverageQueryRepository(
                 .setParameter("dateTo", dateTo)
                 .setParameter("today", today)
 
-        if (departmentId != null) {
-            query.setParameter("departmentId", departmentId)
-        }
+        bindScopeParameters(query, departmentIds, employeeId)
 
         return query.resultList
+    }
+
+    private fun bindScopeParameters(
+        query: jakarta.persistence.TypedQuery<*>,
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
+    ) {
+        if (departmentIds != null) {
+            query.setParameter("departmentIds", departmentIds)
+        }
+        if (employeeId != null) {
+            query.setParameter("employeeId", employeeId)
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 import com.example.auth.AppRole
 import com.example.auth.AuthService
+import com.example.reporting.access.ReportingAccessScopeResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -27,6 +28,7 @@ import java.util.UUID
 class RevaccinationDueController(
     private val service: RevaccinationDueService,
     private val authService: AuthService,
+    private val accessScopeResolver: ReportingAccessScopeResolver,
 ) {
     @GetMapping("/revaccination-due")
     @Operation(
@@ -67,20 +69,22 @@ class RevaccinationDueController(
         @RequestParam(defaultValue = "20")
         size: Int,
     ): Page<RevaccinationDueItem> {
-        authService.requireAnyRole(token, REPORTING_ROLES)
+        val principal = authService.requireAnyRole(token, REPORTING_ROLES)
 
         if (days < 0) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "days must be >= 0")
         }
 
+        val scope = accessScopeResolver.resolve(principal, requestedDepartmentId = departmentId)
+
         return service.getDueInDays(
             days = days,
-            departmentId = departmentId,
+            scope = scope,
             pageable = PageRequest.of(page, size),
         )
     }
 
     private companion object {
-        val REPORTING_ROLES = setOf(AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
+        val REPORTING_ROLES = setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
     }
 }

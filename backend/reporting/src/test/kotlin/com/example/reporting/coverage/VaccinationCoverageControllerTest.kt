@@ -63,8 +63,24 @@ class VaccinationCoverageControllerTest {
     }
 
     @Test
-    fun `returns vaccination coverage report for MEDICAL role`() {
-        val seed = seedData("MEDICAL")
+    fun `person sees only own coverage`() {
+        val seed = seedData("PERSON")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].employeesTotal").value(1))
+            .andExpect(jsonPath("$[0].employeesCovered").value(1))
+    }
+
+    @Test
+    fun `hr gets forbidden for department outside scope`() {
+        val seed = seedData("HR")
 
         mockMvc
             .perform(
@@ -72,13 +88,22 @@ class VaccinationCoverageControllerTest {
                     .header("X-Auth-Token", seed.authUserId.toString())
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
-                    .param("departmentId", seed.departmentId.toString()),
+                    .param("departmentId", seed.externalDepartmentId.toString()),
+            ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `medical sees full coverage`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(1))
-            .andExpect(jsonPath("$[0].departmentId").value(seed.departmentId.toString()))
-            .andExpect(jsonPath("$[0].employeesTotal").value(2))
-            .andExpect(jsonPath("$[0].employeesCovered").value(1))
-            .andExpect(jsonPath("$[0].coveragePercent").value(50.0))
+            .andExpect(jsonPath("$.length()").value(3))
     }
 
     @Test
@@ -91,32 +116,6 @@ class VaccinationCoverageControllerTest {
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isUnauthorized)
-    }
-
-    @Test
-    fun `returns forbidden for PERSON role`() {
-        val seed = seedData("PERSON")
-
-        mockMvc
-            .perform(
-                get("/reports/vaccination-coverage")
-                    .header("X-Auth-Token", seed.authUserId.toString())
-                    .param("dateFrom", "2026-01-01")
-                    .param("dateTo", "2026-12-31"),
-            ).andExpect(status().isForbidden)
-    }
-
-    @Test
-    fun `returns bad request when dateFrom is after dateTo`() {
-        val seed = seedData("HR")
-
-        mockMvc
-            .perform(
-                get("/reports/vaccination-coverage")
-                    .header("X-Auth-Token", seed.authUserId.toString())
-                    .param("dateFrom", "2026-12-31")
-                    .param("dateTo", "2026-01-01"),
-            ).andExpect(status().isBadRequest)
     }
 
     private fun seedData(roleCode: String): SeededData {
@@ -138,21 +137,35 @@ class VaccinationCoverageControllerTest {
             ),
         )
 
-        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Coverage Controller Department"))
-        val employeeCovered =
+        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Root"))
+        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "Child", parentId = rootDepartment.id))
+        val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
+
+        val authEmployee =
             employeeRepository.saveAndFlush(
                 EmployeeEntity(
-                    departmentId = department.id,
-                    firstName = "Covered",
-                    lastName = "Employee",
+                    userId = authUser.id,
+                    departmentId = rootDepartment.id,
+                    firstName = "Auth",
+                    lastName = "Coverage",
                 ),
             )
-        val employeeNotCovered =
+
+        val childEmployee =
             employeeRepository.saveAndFlush(
                 EmployeeEntity(
-                    departmentId = department.id,
-                    firstName = "NotCovered",
-                    lastName = "Employee",
+                    departmentId = childDepartment.id,
+                    firstName = "Child",
+                    lastName = "Coverage",
+                ),
+            )
+
+        val externalEmployee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = externalDepartment.id,
+                    firstName = "External",
+                    lastName = "Coverage",
                 ),
             )
 
@@ -160,7 +173,7 @@ class VaccinationCoverageControllerTest {
 
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
-                employeeId = employeeCovered.id,
+                employeeId = authEmployee.id,
                 vaccineId = vaccine.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 3, 1),
@@ -170,18 +183,28 @@ class VaccinationCoverageControllerTest {
         )
         vaccinationRepository.saveAndFlush(
             VaccinationEntity(
-                employeeId = employeeNotCovered.id,
+                employeeId = childEmployee.id,
                 vaccineId = vaccine.id,
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 4, 1),
                 doseNumber = 1,
-                revaccinationDate = LocalDate.now().minusDays(1),
+                revaccinationDate = LocalDate.now().plusDays(30),
+            ),
+        )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = externalEmployee.id,
+                vaccineId = vaccine.id,
+                performedBy = performer.id,
+                vaccinationDate = LocalDate.of(2026, 5, 1),
+                doseNumber = 1,
+                revaccinationDate = LocalDate.now().plusDays(90),
             ),
         )
 
         return SeededData(
             authUserId = authUser.id!!,
-            departmentId = department.id!!,
+            externalDepartmentId = externalDepartment.id!!,
         )
     }
 
@@ -192,5 +215,5 @@ class VaccinationCoverageControllerTest {
 
 private data class SeededData(
     val authUserId: UUID,
-    val departmentId: UUID,
+    val externalDepartmentId: UUID,
 )

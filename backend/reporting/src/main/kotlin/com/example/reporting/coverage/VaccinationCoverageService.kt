@@ -1,10 +1,10 @@
 package com.example.reporting.coverage
 
+import com.example.reporting.access.ReportingAccessScope
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
-import java.util.UUID
 
 @Service
 class VaccinationCoverageService(
@@ -13,11 +13,15 @@ class VaccinationCoverageService(
     fun getCoverageByDepartment(
         dateFrom: LocalDate,
         dateTo: LocalDate,
-        departmentId: UUID?,
+        scope: ReportingAccessScope,
     ): List<VaccinationCoverageItem> {
         require(!dateFrom.isAfter(dateTo)) { "dateFrom must be <= dateTo" }
 
-        val totals = queryRepository.findDepartmentTotals(departmentId)
+        val totals =
+            queryRepository.findDepartmentTotals(
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+            )
         if (totals.isEmpty()) {
             return emptyList()
         }
@@ -27,7 +31,8 @@ class VaccinationCoverageService(
                 .findDepartmentCovered(
                     dateFrom = dateFrom,
                     dateTo = dateTo,
-                    departmentId = departmentId,
+                    departmentIds = scope.departmentIds,
+                    employeeId = scope.employeeId,
                     today = LocalDate.now(),
                 ).associateBy({ it.departmentId }, { it.employeesCovered })
 

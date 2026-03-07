@@ -1,11 +1,11 @@
-package com.example.reporting.revaccination
+﻿package com.example.reporting.revaccination
 
+import com.example.reporting.access.ReportingAccessScope
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 @Service
 class RevaccinationDueService(
@@ -13,7 +13,7 @@ class RevaccinationDueService(
 ) {
     fun getDueInDays(
         days: Int,
-        departmentId: UUID?,
+        scope: ReportingAccessScope,
         pageable: Pageable,
     ): Page<RevaccinationDueItem> {
         require(days >= 0) { "days must be >= 0" }
@@ -21,17 +21,24 @@ class RevaccinationDueService(
         val fromDate = LocalDate.now()
         val toDate = fromDate.plusDays(days.toLong())
 
-        return queryRepository.findDueInPeriod(fromDate, toDate, departmentId, pageable).map { row ->
-            RevaccinationDueItem(
-                employeeId = row.employeeId,
-                fullName = buildFullName(row.lastName, row.firstName, row.middleName),
-                departmentId = row.departmentId,
-                vaccineName = row.vaccineName,
-                lastVaccinationDate = row.vaccinationDate,
-                revaccinationDate = row.revaccinationDate,
-                daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
-            )
-        }
+        return queryRepository
+            .findDueInPeriod(
+                fromDate = fromDate,
+                toDate = toDate,
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+                pageable = pageable,
+            ).map { row ->
+                RevaccinationDueItem(
+                    employeeId = row.employeeId,
+                    fullName = buildFullName(row.lastName, row.firstName, row.middleName),
+                    departmentId = row.departmentId,
+                    vaccineName = row.vaccineName,
+                    lastVaccinationDate = row.vaccinationDate,
+                    revaccinationDate = row.revaccinationDate,
+                    daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
+                )
+            }
     }
 
     private fun buildFullName(

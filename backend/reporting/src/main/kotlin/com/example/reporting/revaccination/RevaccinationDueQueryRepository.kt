@@ -15,15 +15,23 @@ class RevaccinationDueQueryRepository(
     fun findDueInPeriod(
         fromDate: LocalDate,
         toDate: LocalDate,
-        departmentId: UUID?,
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
         pageable: Pageable,
     ): Page<RevaccinationDueRow> {
+        if (departmentIds != null && departmentIds.isEmpty()) {
+            return PageImpl(emptyList(), pageable, 0)
+        }
+
         val whereClause =
             buildString {
                 append("v.revaccinationDate IS NOT NULL ")
                 append("AND v.revaccinationDate BETWEEN :fromDate AND :toDate ")
-                if (departmentId != null) {
-                    append("AND e.departmentId = :departmentId ")
+                if (departmentIds != null) {
+                    append("AND e.departmentId IN :departmentIds ")
+                }
+                if (employeeId != null) {
+                    append("AND e.id = :employeeId ")
                 }
             }
 
@@ -45,9 +53,11 @@ class RevaccinationDueQueryRepository(
                 ).setParameter("fromDate", fromDate)
                 .setParameter("toDate", toDate)
 
-        if (departmentId != null) {
-            selectQuery.setParameter("departmentId", departmentId)
-        }
+        bindScopeParameters(
+            query = selectQuery,
+            departmentIds = departmentIds,
+            employeeId = employeeId,
+        )
 
         val totalCount =
             entityManager
@@ -63,12 +73,13 @@ class RevaccinationDueQueryRepository(
                     "fromDate",
                     fromDate,
                 ).setParameter("toDate", toDate)
-                .let {
-                    if (departmentId != null) {
-                        it.setParameter("departmentId", departmentId)
-                    } else {
-                        it
-                    }
+                .let { query ->
+                    bindScopeParameters(
+                        query = query,
+                        departmentIds = departmentIds,
+                        employeeId = employeeId,
+                    )
+                    query
                 }.singleResult
                 .toLong()
 
@@ -79,5 +90,18 @@ class RevaccinationDueQueryRepository(
                 .resultList
 
         return PageImpl(content, pageable, totalCount)
+    }
+
+    private fun bindScopeParameters(
+        query: jakarta.persistence.TypedQuery<*>,
+        departmentIds: Set<UUID>?,
+        employeeId: UUID?,
+    ) {
+        if (departmentIds != null) {
+            query.setParameter("departmentIds", departmentIds)
+        }
+        if (employeeId != null) {
+            query.setParameter("employeeId", employeeId)
+        }
     }
 }
