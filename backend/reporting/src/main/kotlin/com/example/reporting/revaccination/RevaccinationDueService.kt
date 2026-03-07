@@ -29,16 +29,16 @@ class RevaccinationDueService(
                 employeeId = scope.employeeId,
                 pageable = pageable,
             ).map { row ->
-            RevaccinationDueItem(
-                employeeId = row.employeeId,
-                fullName = buildFullName(row.lastName, row.firstName, row.middleName),
-                departmentId = row.departmentId,
-                vaccineName = row.vaccineName,
-                lastVaccinationDate = row.vaccinationDate,
-                revaccinationDate = row.revaccinationDate,
-                daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
-            )
-        }
+                RevaccinationDueItem(
+                    employeeId = row.employeeId,
+                    fullName = buildFullName(row.lastName, row.firstName, row.middleName),
+                    departmentId = row.departmentId,
+                    vaccineName = row.vaccineName,
+                    lastVaccinationDate = row.vaccinationDate,
+                    revaccinationDate = row.revaccinationDate,
+                    daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
+                )
+            }
     }
 
     private fun buildFullName(
