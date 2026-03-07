@@ -1,5 +1,8 @@
 package com.example.auth.api
 
+import com.example.audit.log.AuditAction
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogRepository
 import com.example.auth.AuthTestApplication
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
@@ -16,6 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -37,6 +41,9 @@ class AuthAdminApiTest {
 
     @Autowired
     private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
+    private lateinit var auditLogRepository: AuditLogRepository
 
     private lateinit var mockMvc: MockMvc
 
@@ -152,6 +159,63 @@ class AuthAdminApiTest {
             ).andExpect(status().isNoContent)
     }
 
+    @Test
+    fun `auth admin write operations create audit records`() {
+        val adminUser = createUserWithRole("ADMIN")
+        ensureRole("PERSON")
+
+        val createResponse =
+            mockMvc
+                .perform(
+                    post("/auth/users")
+                        .header("X-Auth-Token", adminUser.id.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""{"email":"audit-auth@example.com","passwordHash":"hash","isActive":true}"""),
+                ).andExpect(status().isCreated)
+                .andReturn()
+
+        val createdId = UUID.fromString(extractJsonField(createResponse.response.contentAsString, "id"))
+
+        mockMvc
+            .perform(
+                patch("/auth/users/$createdId/status")
+                    .header("X-Auth-Token", adminUser.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"active":false}"""),
+            ).andExpect(status().isOk)
+
+        mockMvc
+            .perform(
+                post("/auth/users/$createdId/roles/PERSON")
+                    .header("X-Auth-Token", adminUser.id.toString()),
+            ).andExpect(status().isCreated)
+
+        mockMvc
+            .perform(
+                delete("/auth/users/$createdId/roles/PERSON")
+                    .header("X-Auth-Token", adminUser.id.toString()),
+            ).andExpect(status().isNoContent)
+
+        val userLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.USER, createdId)
+        val allLogs = auditLogRepository.findAll()
+        org.junit.jupiter.api.Assertions
+            .assertTrue(userLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(userLogs.any { it.action == AuditAction.UPDATE })
+        org.junit.jupiter.api.Assertions.assertTrue(
+            allLogs.any {
+                it.entityType == AuditEntityType.USER_ROLE &&
+                    it.action == AuditAction.CREATE
+            },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            allLogs.any {
+                it.entityType == AuditEntityType.USER_ROLE &&
+                    it.action == AuditAction.DELETE
+            },
+        )
+    }
+
     private fun createUserWithRole(roleCode: String): UserEntity {
         val user = userRepository.saveAndFlush(UserEntity(email = "$roleCode-${UUID.randomUUID()}@example.com", passwordHash = "hash"))
         val role = ensureRole(roleCode)
@@ -164,6 +228,7 @@ class AuthAdminApiTest {
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 
     private fun cleanup() {
+        auditLogRepository.deleteAll()
         userRoleRepository.deleteAll()
         roleRepository.deleteAll()
         userRepository.deleteAll()

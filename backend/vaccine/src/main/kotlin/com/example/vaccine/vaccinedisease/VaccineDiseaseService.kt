@@ -1,5 +1,7 @@
 package com.example.vaccine.vaccinedisease
 
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogService
 import com.example.vaccine.disease.DiseaseRepository
 import com.example.vaccine.vaccine.VaccineRepository
 import org.springframework.http.HttpStatus
@@ -13,6 +15,7 @@ class VaccineDiseaseService(
     private val vaccineRepository: VaccineRepository,
     private val diseaseRepository: DiseaseRepository,
     private val vaccineDiseaseRepository: VaccineDiseaseRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
     fun listByVaccine(vaccineId: UUID): List<VaccineDiseaseEntity> {
@@ -24,6 +27,7 @@ class VaccineDiseaseService(
     fun createLink(
         vaccineId: UUID,
         diseaseId: Int,
+        performedBy: UUID,
     ) {
         requireVaccineExists(vaccineId)
         requireDiseaseExists(diseaseId)
@@ -35,12 +39,19 @@ class VaccineDiseaseService(
                 id = VaccineDiseaseId(vaccineId = vaccineId, diseaseId = diseaseId),
             ),
         )
+        auditLogService.logCreate(
+            userId = performedBy,
+            entityType = AuditEntityType.VACCINE_DISEASE,
+            entityKey = "$vaccineId:$diseaseId",
+            newValue = mapOf("vaccineId" to vaccineId.toString(), "diseaseId" to diseaseId),
+        )
     }
 
     @Transactional
     fun deleteLink(
         vaccineId: UUID,
         diseaseId: Int,
+        performedBy: UUID,
     ) {
         requireVaccineExists(vaccineId)
         requireDiseaseExists(diseaseId)
@@ -48,6 +59,12 @@ class VaccineDiseaseService(
         if (deleted == 0L) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Vaccine-disease link not found")
         }
+        auditLogService.logDelete(
+            userId = performedBy,
+            entityType = AuditEntityType.VACCINE_DISEASE,
+            entityKey = "$vaccineId:$diseaseId",
+            oldValue = mapOf("vaccineId" to vaccineId.toString(), "diseaseId" to diseaseId),
+        )
     }
 
     private fun requireVaccineExists(vaccineId: UUID) {

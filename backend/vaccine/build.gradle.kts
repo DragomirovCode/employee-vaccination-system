@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.swagger.annotations)
 
     implementation(project(":auth"))
+    implementation(project(":audit"))
 
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly(libs.h2)

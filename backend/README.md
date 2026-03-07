@@ -107,9 +107,9 @@ Default credentials:
 - `audit_log` table stores immutable audit records
 - captures:
   - `action`: CREATE/UPDATE/DELETE
-  - `entity_type`: VACCINATION/DOCUMENT
+  - `entity_type`: USER/USER_ROLE/DEPARTMENT/EMPLOYEE/VACCINE/DISEASE/VACCINE_DISEASE/VACCINATION/DOCUMENT
   - `entity_id`, `user_id`, `old_value`, `new_value`, `created_at`
-- integrated with `vaccination` module services for `vaccinations` and `documents`
+- integrated with write services in modules: `auth`, `employee`, `vaccine`, `vaccination`
 
 ## Security model (RBAC + scope)
 

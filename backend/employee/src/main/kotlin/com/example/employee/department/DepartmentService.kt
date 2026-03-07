@@ -1,5 +1,7 @@
 package com.example.employee.department
 
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogService
 import com.example.employee.person.EmployeeRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -11,6 +13,7 @@ import java.util.UUID
 class DepartmentService(
     private val departmentRepository: DepartmentRepository,
     private val employeeRepository: EmployeeRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
     fun list(): List<DepartmentEntity> = departmentRepository.findAll()
@@ -19,7 +22,10 @@ class DepartmentService(
     fun get(id: UUID): DepartmentEntity = findDepartment(id)
 
     @Transactional
-    fun create(command: CreateDepartmentCommand): DepartmentEntity {
+    fun create(
+        command: CreateDepartmentCommand,
+        performedBy: UUID,
+    ): DepartmentEntity {
         requireParentExists(command.parentId)
 
         val entity =
@@ -27,26 +33,46 @@ class DepartmentService(
                 name = command.name.trim(),
                 parentId = command.parentId,
             )
-        return departmentRepository.saveAndFlush(entity)
+        val saved = departmentRepository.saveAndFlush(entity)
+        auditLogService.logCreate(
+            userId = performedBy,
+            entityType = AuditEntityType.DEPARTMENT,
+            entityId = saved.id!!,
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional
     fun update(
         id: UUID,
         command: UpdateDepartmentCommand,
+        performedBy: UUID,
     ): DepartmentEntity {
         val department = findDepartment(id)
+        val oldPayload = department.toAuditPayload()
         requireParentExists(command.parentId)
         requireNoCycle(id, command.parentId)
 
         department.name = command.name.trim()
         department.parentId = command.parentId
-        return departmentRepository.saveAndFlush(department)
+        val saved = departmentRepository.saveAndFlush(department)
+        auditLogService.logUpdate(
+            userId = performedBy,
+            entityType = AuditEntityType.DEPARTMENT,
+            entityId = saved.id!!,
+            oldValue = oldPayload,
+            newValue = saved.toAuditPayload(),
+        )
+        return saved
     }
 
     @Transactional
-    fun delete(id: UUID) {
-        findDepartment(id)
+    fun delete(
+        id: UUID,
+        performedBy: UUID,
+    ) {
+        val existing = findDepartment(id)
         if (departmentRepository.existsByParentId(id)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Department has child departments")
         }
@@ -54,6 +80,12 @@ class DepartmentService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Department has employees")
         }
         departmentRepository.deleteById(id)
+        auditLogService.logDelete(
+            userId = performedBy,
+            entityType = AuditEntityType.DEPARTMENT,
+            entityId = id,
+            oldValue = existing.toAuditPayload(),
+        )
     }
 
     private fun requireParentExists(parentId: UUID?) {
@@ -86,6 +118,14 @@ class DepartmentService(
         departmentRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found")
         }
+
+    private fun DepartmentEntity.toAuditPayload(): Map<String, Any?> =
+        mapOf(
+            "id" to id?.toString(),
+            "name" to name,
+            "parentId" to parentId?.toString(),
+            "createdAt" to createdAt?.toString(),
+        )
 }
 
 data class CreateDepartmentCommand(

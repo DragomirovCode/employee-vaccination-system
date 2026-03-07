@@ -1,5 +1,8 @@
 package com.example.vaccine.api
 
+import com.example.audit.log.AuditAction
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogRepository
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleEntity
@@ -52,6 +55,9 @@ class VaccineApiTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var auditLogRepository: AuditLogRepository
 
     private lateinit var mockMvc: MockMvc
 
@@ -162,6 +168,67 @@ class VaccineApiTest {
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
 
+    @Test
+    fun `write operations create audit records for vaccine disease and links`() {
+        val hr = createUserWithRole("HR")
+
+        val vaccineResponse =
+            mockMvc
+                .perform(
+                    post("/vaccines")
+                        .header("X-Auth-Token", hr.id.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(vaccineBody("AuditVax")),
+                ).andExpect(status().isCreated)
+                .andReturn()
+
+        val vaccineId = UUID.fromString(extractJsonField(vaccineResponse.response.contentAsString, "id"))
+
+        val diseaseResponse =
+            mockMvc
+                .perform(
+                    post("/diseases")
+                        .header("X-Auth-Token", hr.id.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""{"name":"AuditDisease"}"""),
+                ).andExpect(status().isCreated)
+                .andReturn()
+
+        val diseaseId = extractJsonField(diseaseResponse.response.contentAsString, "id").toInt()
+
+        mockMvc
+            .perform(
+                post("/vaccines/$vaccineId/diseases/$diseaseId")
+                    .header("X-Auth-Token", hr.id.toString()),
+            ).andExpect(status().isCreated)
+
+        mockMvc
+            .perform(
+                delete("/vaccines/$vaccineId/diseases/$diseaseId")
+                    .header("X-Auth-Token", hr.id.toString()),
+            ).andExpect(status().isNoContent)
+
+        val logs = auditLogRepository.findAll()
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any { it.entityType == AuditEntityType.VACCINE && it.action == AuditAction.CREATE },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any { it.entityType == AuditEntityType.DISEASE && it.action == AuditAction.CREATE },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any {
+                it.entityType == AuditEntityType.VACCINE_DISEASE &&
+                    it.action == AuditAction.CREATE
+            },
+        )
+        org.junit.jupiter.api.Assertions.assertTrue(
+            logs.any {
+                it.entityType == AuditEntityType.VACCINE_DISEASE &&
+                    it.action == AuditAction.DELETE
+            },
+        )
+    }
+
     private fun createUserWithRole(roleCode: String): UserEntity {
         val user = userRepository.saveAndFlush(UserEntity(email = "$roleCode-${UUID.randomUUID()}@example.com", passwordHash = "hash"))
         val role = ensureRole(roleCode)
@@ -174,6 +241,7 @@ class VaccineApiTest {
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 
     private fun cleanup() {
+        auditLogRepository.deleteAll()
         vaccineDiseaseRepository.deleteAll()
         vaccineRepository.deleteAll()
         diseaseRepository.deleteAll()
@@ -193,4 +261,13 @@ class VaccineApiTest {
           "isActive":true
         }
         """.trimIndent()
+
+    private fun extractJsonField(
+        json: String,
+        field: String,
+    ): String {
+        val regex = """"$field"\s*:\s*("([^"]+)"|(\d+))""".toRegex()
+        val match = regex.find(json) ?: error("Field '$field' not found in json: $json")
+        return match.groupValues[2].ifBlank { match.groupValues[3] }
+    }
 }

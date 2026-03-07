@@ -1,5 +1,8 @@
 package com.example.employee.api
 
+import com.example.audit.log.AuditAction
+import com.example.audit.log.AuditEntityType
+import com.example.audit.log.AuditLogRepository
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleEntity
@@ -45,6 +48,9 @@ class EmployeeApiTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var auditLogRepository: AuditLogRepository
 
     private lateinit var mockMvc: MockMvc
 
@@ -165,6 +171,69 @@ class EmployeeApiTest {
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
 
+    @Test
+    fun `write operations create audit records for departments and employees`() {
+        val hr = createUserWithRole("HR")
+
+        val departmentResponse =
+            mockMvc
+                .perform(
+                    post("/departments")
+                        .header("X-Auth-Token", hr.id.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""{"name":"Audit Dept"}"""),
+                ).andExpect(status().isCreated)
+                .andReturn()
+
+        val departmentId = UUID.fromString(extractJsonField(departmentResponse.response.contentAsString, "id"))
+
+        val employeeResponse =
+            mockMvc
+                .perform(
+                    post("/employees")
+                        .header("X-Auth-Token", hr.id.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "departmentId":"$departmentId",
+                              "firstName":"Audit",
+                              "lastName":"Employee"
+                            }
+                            """.trimIndent(),
+                        ),
+                ).andExpect(status().isCreated)
+                .andReturn()
+
+        val employeeId = UUID.fromString(extractJsonField(employeeResponse.response.contentAsString, "id"))
+
+        mockMvc
+            .perform(
+                put("/employees/$employeeId")
+                    .header("X-Auth-Token", hr.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        """
+                        {
+                          "departmentId":"$departmentId",
+                          "firstName":"Audit-upd",
+                          "lastName":"Employee"
+                        }
+                        """.trimIndent(),
+                    ),
+            ).andExpect(status().isOk)
+
+        val departmentLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.DEPARTMENT, departmentId)
+        val employeeLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.EMPLOYEE, employeeId)
+
+        org.junit.jupiter.api.Assertions
+            .assertTrue(departmentLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(employeeLogs.any { it.action == AuditAction.CREATE })
+        org.junit.jupiter.api.Assertions
+            .assertTrue(employeeLogs.any { it.action == AuditAction.UPDATE })
+    }
+
     private fun createUserWithRole(roleCode: String): UserEntity {
         val user =
             userRepository.saveAndFlush(
@@ -183,10 +252,19 @@ class EmployeeApiTest {
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 
     private fun cleanup() {
+        auditLogRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
         userRoleRepository.deleteAll()
         roleRepository.deleteAll()
         userRepository.deleteAll()
+    }
+
+    private fun extractJsonField(
+        json: String,
+        field: String,
+    ): String {
+        val regex = """"$field"\s*:\s*"([^"]+)"""".toRegex()
+        return regex.find(json)?.groupValues?.get(1) ?: error("Field '$field' not found in json: $json")
     }
 }

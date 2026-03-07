@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.uuid.creator)
 
     implementation(project(":auth"))
+    implementation(project(":audit"))
 
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly(libs.h2)
