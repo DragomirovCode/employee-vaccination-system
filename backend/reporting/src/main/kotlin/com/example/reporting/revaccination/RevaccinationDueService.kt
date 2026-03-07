@@ -41,6 +41,33 @@ class RevaccinationDueService(
             }
     }
 
+    fun getDueInDaysForExport(
+        days: Int,
+        scope: ReportingAccessScope,
+    ): List<RevaccinationDueItem> {
+        require(days >= 0) { "days must be >= 0" }
+        val fromDate = LocalDate.now()
+        val toDate = fromDate.plusDays(days.toLong())
+
+        return queryRepository
+            .findDueInPeriodForExport(
+                fromDate = fromDate,
+                toDate = toDate,
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+            ).map { row ->
+                RevaccinationDueItem(
+                    employeeId = row.employeeId,
+                    fullName = buildFullName(row.lastName, row.firstName, row.middleName),
+                    departmentId = row.departmentId,
+                    vaccineName = row.vaccineName,
+                    lastVaccinationDate = row.vaccinationDate,
+                    revaccinationDate = row.revaccinationDate,
+                    daysLeft = ChronoUnit.DAYS.between(fromDate, row.revaccinationDate),
+                )
+            }
+    }
+
     private fun buildFullName(
         lastName: String,
         firstName: String,
