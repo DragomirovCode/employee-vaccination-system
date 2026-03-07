@@ -1,7 +1,6 @@
-package com.example.app
+﻿package com.example.app
 
 import com.example.auth.AuthService
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestHeader
@@ -15,11 +14,7 @@ class HelloController(
     fun hello(
         @RequestHeader("X-Auth-Token", required = false) token: String?,
     ): ResponseEntity<String> {
-        if (!authService.isTokenValid(token)) {
-            return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body("Unauthorized")
-        }
+        authService.requireAuthenticated(token)
         return ResponseEntity.ok("Hello from app module")
     }
 }

@@ -1,5 +1,10 @@
-package com.example.reporting.coverage
+﻿package com.example.reporting.coverage
 
+import com.example.auth.role.RoleEntity
+import com.example.auth.role.RoleRepository
+import com.example.auth.role.UserRoleEntity
+import com.example.auth.role.UserRoleId
+import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -35,6 +40,12 @@ class VaccinationCoverageControllerTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var roleRepository: RoleRepository
+
+    @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
     private lateinit var departmentRepository: DepartmentRepository
 
     @Autowired
@@ -52,12 +63,13 @@ class VaccinationCoverageControllerTest {
     }
 
     @Test
-    fun `returns vaccination coverage report`() {
-        val seed = seedData()
+    fun `returns vaccination coverage report for MEDICAL role`() {
+        val seed = seedData("MEDICAL")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage")
+                    .header("X-Auth-Token", seed.authUserId.toString())
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.departmentId.toString()),
@@ -70,23 +82,62 @@ class VaccinationCoverageControllerTest {
     }
 
     @Test
-    fun `returns bad request when dateFrom is after dateTo`() {
+    fun `returns unauthorized when auth token missing`() {
+        seedData("HR")
+
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage")
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `returns forbidden for PERSON role`() {
+        val seed = seedData("PERSON")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31"),
+            ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `returns bad request when dateFrom is after dateTo`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage")
+                    .header("X-Auth-Token", seed.authUserId.toString())
                     .param("dateFrom", "2026-12-31")
                     .param("dateTo", "2026-01-01"),
             ).andExpect(status().isBadRequest)
     }
 
-    private fun seedData(): SeededData {
+    private fun seedData(roleCode: String): SeededData {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
 
+        val authUser = userRepository.saveAndFlush(UserEntity(email = "coverage-$roleCode@example.com", passwordHash = "hash"))
         val performer = userRepository.saveAndFlush(UserEntity(email = "coverage-api@example.com", passwordHash = "hash"))
+        val role = ensureRole(roleCode)
+        userRoleRepository.saveAndFlush(
+            UserRoleEntity(
+                id = UserRoleId(userId = authUser.id, roleId = role.id),
+                assignedBy = performer.id,
+            ),
+        )
+
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Coverage Controller Department"))
         val employeeCovered =
             employeeRepository.saveAndFlush(
@@ -128,10 +179,18 @@ class VaccinationCoverageControllerTest {
             ),
         )
 
-        return SeededData(departmentId = department.id!!)
+        return SeededData(
+            authUserId = authUser.id!!,
+            departmentId = department.id!!,
+        )
     }
+
+    private fun ensureRole(code: String): RoleEntity =
+        roleRepository.findByCode(code)
+            ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
 }
 
 private data class SeededData(
+    val authUserId: UUID,
     val departmentId: UUID,
 )
