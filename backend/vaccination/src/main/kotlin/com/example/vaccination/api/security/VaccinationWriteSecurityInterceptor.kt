@@ -22,17 +22,20 @@ class VaccinationWriteSecurityInterceptor(
         }
 
         val method = request.method.uppercase()
-        if (method !in WRITE_METHODS) {
-            return true
-        }
-
-        val principal = authService.requireAnyRole(request.getHeader("X-Auth-Token"), WRITE_ROLES)
+        val principal =
+            when {
+                method in WRITE_METHODS -> authService.requireAnyRole(request.getHeader("X-Auth-Token"), WRITE_ROLES)
+                method in READ_METHODS -> authService.requireAnyRole(request.getHeader("X-Auth-Token"), READ_ROLES)
+                else -> return true
+            }
         request.setAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
         return true
     }
 
     private companion object {
         val WRITE_ROLES = setOf(AppRole.MEDICAL, AppRole.ADMIN)
+        val READ_ROLES = setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)
         val WRITE_METHODS = setOf("POST", "PUT", "DELETE")
+        val READ_METHODS = setOf("GET")
     }
 }

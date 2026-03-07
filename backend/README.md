@@ -149,6 +149,19 @@ Vaccine module business rules:
 - link creation with unknown `vaccineId` or `diseaseId` is rejected with `400`
 - deleting vaccine/disease with existing links is rejected with `409`
 
+Vaccination read API:
+- `GET /vaccinations/{id}` - vaccination card
+- `GET /vaccinations` - list with filters: `employeeId`, `vaccineId`, `dateFrom`, `dateTo`, `page`, `size`
+- `GET /employees/{employeeId}/vaccinations` - employee vaccination history
+- `GET /vaccinations/{vaccinationId}/documents` - documents by vaccination
+- `GET /documents/{id}` - document metadata card
+
+Vaccination read access scope:
+- `PERSON` - only own records
+- `HR` - own department and all descendant departments
+- `MEDICAL`, `ADMIN` - full access
+- invalid date range (`dateFrom > dateTo`) returns `400`
+
 ## Unified API error format
 
 All API errors are returned as JSON with fields:
