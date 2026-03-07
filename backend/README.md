@@ -90,11 +90,14 @@ Default credentials:
 - endpoint:
   - `GET /reports/revaccination-due?days=30&departmentId=<uuid>&page=0&size=20`
   - `GET /reports/vaccination-coverage?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>`
+  - `GET /reports/vaccination-coverage-by-vaccine?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>`
   - `GET /reports/revaccination-due/export?days=30&departmentId=<uuid>&format=csv|xlsx|pdf`
   - `GET /reports/vaccination-coverage/export?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>&format=csv|xlsx|pdf`
+  - `GET /reports/vaccination-coverage-by-vaccine/export?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>&format=csv|xlsx|pdf`
 - response fields:
   - `employeeId`, `fullName`, `departmentId`, `vaccineName`
   - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
+  - `vaccineId`, `vaccineName`, `employeesTotal`, `employeesCovered`, `coveragePercent`
  - export:
   - formats: `csv`, `xlsx`, `pdf`
   - response headers include `Content-Disposition: attachment` and format-specific `Content-Type`
@@ -127,8 +130,10 @@ Role matrix for reporting endpoints:
 Endpoints:
 - `GET /reports/revaccination-due`
 - `GET /reports/vaccination-coverage`
+- `GET /reports/vaccination-coverage-by-vaccine`
 - `GET /reports/revaccination-due/export`
 - `GET /reports/vaccination-coverage/export`
+- `GET /reports/vaccination-coverage-by-vaccine/export`
 
 Scope is enforced in query/service layer, not only in controllers.
 

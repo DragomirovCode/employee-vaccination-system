@@ -160,6 +160,133 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
+    @GetMapping("/vaccination-coverage-by-vaccine")
+    @Operation(
+        summary = "Get vaccination coverage by vaccines",
+        description = "Returns vaccination coverage metrics grouped by vaccine for a selected period",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Coverage report",
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        array = ArraySchema(schema = Schema(implementation = VaccinationCoverageByVaccineItem::class)),
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+        ],
+    )
+    fun getVaccinationCoverageByVaccine(
+        request: HttpServletRequest,
+        @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
+        @RequestParam
+        dateFrom: LocalDate,
+        @Parameter(description = "Period end date (inclusive)", example = "2026-12-31")
+        @RequestParam
+        dateTo: LocalDate,
+        @Parameter(description = "Optional department filter", example = "550e8400-e29b-41d4-a716-446655440000")
+        @RequestParam(required = false)
+        departmentId: UUID?,
+    ): List<VaccinationCoverageByVaccineItem> {
+        if (dateFrom.isAfter(dateTo)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
+        }
+
+        val scope = requireScope(request)
+
+        return service.getCoverageByVaccine(
+            dateFrom = dateFrom,
+            dateTo = dateTo,
+            scope = scope,
+        )
+    }
+
+    @GetMapping("/vaccination-coverage-by-vaccine/export")
+    @Operation(summary = "Export vaccination coverage by vaccines report (csv, xlsx, pdf)")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Report export (csv/xlsx/pdf)"),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+        ],
+    )
+    fun exportVaccinationCoverageByVaccine(
+        request: HttpServletRequest,
+        @RequestParam dateFrom: LocalDate,
+        @RequestParam dateTo: LocalDate,
+        @RequestParam(required = false) departmentId: UUID?,
+        @RequestParam(defaultValue = "csv") format: String,
+    ): ResponseEntity<ByteArray> {
+        if (dateFrom.isAfter(dateTo)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
+        }
+        val reportFormat =
+            ReportFormat.fromRaw(format)
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
+        val scope = requireScope(request)
+        val rows = service.getCoverageByVaccine(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val reportFile =
+            reportExportService.export(
+                format = reportFormat,
+                fileNameBase = "vaccination-coverage-by-vaccine",
+                headers =
+                    listOf(
+                        "vaccineId",
+                        "vaccineName",
+                        "employeesTotal",
+                        "employeesCovered",
+                        "coveragePercent",
+                    ),
+                rows =
+                    rows.map {
+                        listOf(
+                            it.vaccineId,
+                            it.vaccineName,
+                            it.employeesTotal,
+                            it.employeesCovered,
+                            it.coveragePercent,
+                        )
+                    },
+            )
+
+        return ResponseEntity
+            .ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${reportFile.fileName}\"")
+            .contentType(MediaType.parseMediaType(reportFile.contentType))
+            .body(reportFile.bytes)
+    }
+
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")

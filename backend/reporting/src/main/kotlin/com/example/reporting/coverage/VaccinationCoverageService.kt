@@ -48,6 +48,40 @@ class VaccinationCoverageService(
         }
     }
 
+    fun getCoverageByVaccine(
+        dateFrom: LocalDate,
+        dateTo: LocalDate,
+        scope: ReportingAccessScope,
+    ): List<VaccinationCoverageByVaccineItem> {
+        require(!dateFrom.isAfter(dateTo)) { "dateFrom must be <= dateTo" }
+
+        val employeesTotal =
+            queryRepository.countEmployeesInScope(
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+            )
+        if (employeesTotal == 0L) {
+            return emptyList()
+        }
+
+        return queryRepository
+            .findVaccineCovered(
+                dateFrom = dateFrom,
+                dateTo = dateTo,
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+                today = LocalDate.now(),
+            ).map { covered ->
+                VaccinationCoverageByVaccineItem(
+                    vaccineId = covered.vaccineId,
+                    vaccineName = covered.vaccineName,
+                    employeesTotal = employeesTotal,
+                    employeesCovered = covered.employeesCovered,
+                    coveragePercent = calculateCoverage(covered.employeesCovered, employeesTotal),
+                )
+            }
+    }
+
     private fun calculateCoverage(
         covered: Long,
         total: Long,
