@@ -159,6 +159,22 @@ Vaccine module business rules:
 - link creation with unknown `vaccineId` or `diseaseId` is rejected with `400`
 - deleting vaccine/disease with existing links is rejected with `409`
 
+Auth admin API (`ADMIN` only):
+- users:
+  - `GET /auth/users`, `GET /auth/users/{id}`
+  - `POST /auth/users`, `PUT /auth/users/{id}`
+  - `PATCH /auth/users/{id}/status`
+- roles:
+  - `GET /auth/roles`
+  - `GET /auth/users/{id}/roles`
+  - `POST /auth/users/{id}/roles/{roleCode}`
+  - `DELETE /auth/users/{id}/roles/{roleCode}`
+
+Auth admin business rules:
+- duplicate `email` is rejected with `409`
+- duplicate user-role assignment is rejected with `409`
+- role assignment stores `assigned_by` as current admin user id
+
 Vaccination read API:
 - `GET /vaccinations/{id}` - vaccination card
 - `GET /vaccinations` - list with filters: `employeeId`, `vaccineId`, `dateFrom`, `dateTo`, `page`, `size`
