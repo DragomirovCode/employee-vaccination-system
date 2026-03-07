@@ -43,10 +43,26 @@ class DocumentContentController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Document content uploaded"),
-            ApiResponse(responseCode = "400", description = "Invalid request", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Document not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Document not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun upload(
@@ -71,9 +87,21 @@ class DocumentContentController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Document content stream"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Document or content not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Document or content not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun download(
@@ -98,9 +126,21 @@ class DocumentContentController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "Document content deleted"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Document or content not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Document or content not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun delete(
