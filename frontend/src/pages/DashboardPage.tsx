@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiGet } from "../shared/api/client";
+import { useI18n } from "../shared/i18n/I18nContext";
 import { ApiHttpError, NotificationPage } from "../shared/api/types";
 
 export function DashboardPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [data, setData] = useState<NotificationPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function DashboardPage() {
         if (!cancelled) setData(response);
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : "Unexpected API error";
+        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("dashboard.unexpectedApiError");
         setError(message);
       } finally {
         if (!cancelled) setLoading(false);
@@ -37,11 +39,11 @@ export function DashboardPage() {
   return (
     <section className="grid">
       <article className="card">
-        <h2>Notifications</h2>
-        <p className="caption">This screen demonstrates protected API calls with unified error handling.</p>
-        {loading ? <p>Loading...</p> : null}
+        <h2>{t("dashboard.notifications")}</h2>
+        <p className="caption">{t("dashboard.notificationsHint")}</p>
+        {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
-        {!loading && !error && data && data.content.length === 0 ? <p>No notifications yet.</p> : null}
+        {!loading && !error && data && data.content.length === 0 ? <p>{t("dashboard.noNotifications")}</p> : null}
         {!loading && !error && data && data.content.length > 0 ? (
           <ul className="list">
             {data.content.map((item) => (
@@ -54,8 +56,8 @@ export function DashboardPage() {
         ) : null}
       </article>
       <article className="card">
-        <h2>Session</h2>
-        <p className="caption">Role-aware route guards are enabled. Try opening /admin-sandbox.</p>
+        <h2>{t("dashboard.session")}</h2>
+        <p className="caption">{t("dashboard.sessionHint")}</p>
         <pre>{JSON.stringify(session, null, 2)}</pre>
       </article>
     </section>

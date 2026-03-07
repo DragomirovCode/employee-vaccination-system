@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { AppRole, normalizeAuthToken } from "../features/auth/session";
 import { apiGet } from "../shared/api/client";
+import { useI18n } from "../shared/i18n/I18nContext";
+import { LanguageSwitch } from "../shared/i18n/LanguageSwitch";
 import { ApiHttpError } from "../shared/api/types";
 
 function extractRoles(payload: unknown): AppRole[] {
@@ -45,6 +47,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { t } = useI18n();
   const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,7 +61,7 @@ export function LoginPage() {
 
     const normalizedToken = normalizeAuthToken(token);
     if (!normalizedToken) {
-      setError("Token is required");
+      setError(t("login.tokenRequired"));
       return;
     }
 
@@ -79,7 +82,7 @@ export function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (e) {
       if (e instanceof ApiHttpError && e.status === 401) {
-        setError("Session expired. Please sign in again");
+        setError(t("login.sessionExpired"));
       } else if (e instanceof ApiHttpError && e.status === 403) {
         login({
           token: normalizedToken,
@@ -90,11 +93,11 @@ export function LoginPage() {
       } else if (e instanceof ApiHttpError) {
         setError(e.payload?.message ?? e.message);
       } else if (e instanceof TypeError) {
-        setError("Network/CORS error. Check backend URL and CORS for X-Auth-Token header.");
+        setError(t("common.networkCorsError"));
       } else if (e instanceof Error) {
         setError(e.message);
       } else {
-        setError("Unable to sign in. Try again.");
+        setError(t("login.unableToSignIn"));
       }
     } finally {
       setSubmitting(false);
@@ -104,21 +107,24 @@ export function LoginPage() {
   return (
     <section className="center">
       <form className="card auth-card" onSubmit={onSubmit}>
-        <h2>Sign in</h2>
-        <p className="caption">Enter user UUID or Bearer UUID token.</p>
-        {reason === "expired" ? <p className="warn">Session expired. Please sign in again.</p> : null}
+        <div className="auth-lang auth-lang-inside">
+          <LanguageSwitch />
+        </div>
+        <h2>{t("login.title")}</h2>
+        <p className="caption">{t("login.hint")}</p>
+        {reason === "expired" ? <p className="warn">{t("login.sessionExpired")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
         <label>
-          User token
+          {t("login.tokenLabel")}
           <input
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="550e8400-e29b-41d4-a716-446655440000"
+            placeholder={t("login.tokenPlaceholder")}
             autoFocus
           />
         </label>
         <button type="submit" disabled={submitting}>
-          {submitting ? "Signing in..." : "Sign in"}
+          {submitting ? t("login.submitting") : t("login.submit")}
         </button>
       </form>
     </section>

@@ -67,14 +67,58 @@ a:hover {
   gap: 0.6rem;
 }
 
-.session code {
-  max-width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.14);
-  padding: 0.2rem 0.45rem;
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.lang-btn {
+  border: 0;
   border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  min-width: 44px;
+  background: transparent;
+  color: #effff6;
+  font-weight: 700;
+}
+
+.lang-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.lang-btn.is-active {
+  background: #effff6;
+  color: #0f472f;
+}
+
+.auth-lang {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-lang-inside {
+  margin: -0.2rem 0 0.5rem;
+}
+
+.auth-lang-inside .lang-switch {
+  background: #eef5ee;
+}
+
+.auth-lang-inside .lang-btn {
+  color: #0f472f;
+}
+
+.auth-lang-inside .lang-btn:hover {
+  background: #dce9dc;
+}
+
+.auth-lang-inside .lang-btn.is-active {
+  background: #0f472f;
+  color: #effff6;
 }
 
 button {

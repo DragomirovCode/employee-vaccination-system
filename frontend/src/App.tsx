@@ -8,6 +8,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { RequireRole } from "./features/auth/RequireRole";
 import { useAuth } from "./features/auth/AuthContext";
+import { useI18n } from "./shared/i18n/I18nContext";
 
 function EventBridge() {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ function EventBridge() {
 }
 
 export function App() {
+  const { t } = useI18n();
+
   return (
     <>
       <EventBridge />
@@ -52,8 +55,8 @@ export function App() {
             element={
               <RequireRole allowedRoles={["ADMIN"]}>
                 <section className="card">
-                  <h2>Admin Sandbox</h2>
-                  <p>This route demonstrates role-aware guards.</p>
+                  <h2>{t("admin.title")}</h2>
+                  <p>{t("admin.description")}</p>
                 </section>
               </RequireRole>
             }
