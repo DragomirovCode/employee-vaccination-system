@@ -163,7 +163,9 @@ class EmployeeController(
             ),
         ],
     )
-    fun delete(@PathVariable id: UUID) {
+    fun delete(
+        @PathVariable id: UUID,
+    ) {
         employeeService.delete(id)
     }
 }

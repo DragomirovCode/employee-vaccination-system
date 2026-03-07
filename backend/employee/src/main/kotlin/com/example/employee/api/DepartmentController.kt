@@ -144,7 +144,9 @@ class DepartmentController(
             ),
         ],
     )
-    fun delete(@PathVariable id: UUID) {
+    fun delete(
+        @PathVariable id: UUID,
+    ) {
         departmentService.delete(id)
     }
 }
