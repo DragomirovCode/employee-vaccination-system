@@ -16,9 +16,9 @@ import com.example.vaccination.vaccination.VaccinationEntity
 import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.vaccine.VaccineEntity
 import com.example.vaccine.vaccine.VaccineRepository
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
@@ -157,8 +157,7 @@ class VaccinationCoverageControllerTest {
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     ),
                 ),
-            )
-            .andExpect {
+            ).andExpect {
                 val bytes = it.response.contentAsByteArray
                 assertTrue(
                     bytes.size >= 2 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte(),
