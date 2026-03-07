@@ -16,11 +16,11 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.time.LocalDate
@@ -36,9 +36,21 @@ class VaccinationReadController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Vaccination card"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Vaccination not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Vaccination not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun getById(
@@ -51,9 +63,21 @@ class VaccinationReadController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Vaccinations page"),
-            ApiResponse(responseCode = "400", description = "Invalid request", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun list(
@@ -93,8 +117,16 @@ class VaccinationReadController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Vaccination history"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun listByEmployee(
