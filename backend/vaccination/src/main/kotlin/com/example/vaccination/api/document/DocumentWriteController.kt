@@ -2,6 +2,7 @@
 
 import com.example.auth.AuthenticatedPrincipal
 import com.example.vaccination.api.security.VaccinationSecurityContext
+import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.document.CreateDocumentCommand
 import com.example.vaccination.document.DocumentService
 import com.example.vaccination.document.UpdateDocumentCommand
@@ -27,6 +28,7 @@ import java.util.UUID
 @Tag(name = "Documents", description = "Write operations for vaccination documents")
 class DocumentWriteController(
     private val documentService: DocumentService,
+    private val scopeService: VaccinationWriteScopeService,
 ) {
     @PostMapping
     @Operation(summary = "Create document metadata")
@@ -42,6 +44,7 @@ class DocumentWriteController(
         @RequestBody body: DocumentWriteRequest,
     ): DocumentWriteResponse {
         val principal = requirePrincipal(request)
+        scopeService.assertDocumentCreateAllowed(principal, body.vaccinationId)
         val created =
             documentService.create(
                 CreateDocumentCommand(
@@ -72,6 +75,7 @@ class DocumentWriteController(
         @RequestBody body: DocumentWriteRequest,
     ): DocumentWriteResponse {
         val principal = requirePrincipal(request)
+        scopeService.assertDocumentUpdateAllowed(principal, id, body.vaccinationId)
         val updated =
             documentService.update(
                 id = id,
@@ -104,6 +108,7 @@ class DocumentWriteController(
         @PathVariable id: UUID,
     ) {
         val principal = requirePrincipal(request)
+        scopeService.assertDocumentDeleteAllowed(principal, id)
         documentService.delete(id = id, deletedBy = principal.userId)
     }
 
