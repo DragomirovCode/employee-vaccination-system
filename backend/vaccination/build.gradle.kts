@@ -14,9 +14,12 @@ dependencies {
     testRuntimeOnly(bootBom)
 
     implementation(libs.spring.context)
+    implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.flyway.core)
+    implementation(libs.swagger.annotations)
     implementation(libs.kotlin.reflect)
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation(libs.uuid.creator)
 
     implementation(project(":audit"))
