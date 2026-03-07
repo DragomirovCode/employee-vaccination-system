@@ -133,6 +133,22 @@ Employee module business rules:
 - Employee `departmentId` must reference existing department (`400` on invalid reference)
 - `employees.user_id` must be unique when present (`409` on conflict)
 
+Vaccine module API:
+- vaccines:
+  - `GET /vaccines`, `GET /vaccines/{id}` - any authenticated user
+  - `POST /vaccines`, `PUT /vaccines/{id}`, `DELETE /vaccines/{id}` - `HR`, `ADMIN`
+- diseases:
+  - `GET /diseases`, `GET /diseases/{id}` - any authenticated user
+  - `POST /diseases`, `PUT /diseases/{id}`, `DELETE /diseases/{id}` - `HR`, `ADMIN`
+- vaccine-disease links:
+  - `GET /vaccines/{vaccineId}/diseases` - any authenticated user
+  - `POST /vaccines/{vaccineId}/diseases/{diseaseId}`, `DELETE /vaccines/{vaccineId}/diseases/{diseaseId}` - `HR`, `ADMIN`
+
+Vaccine module business rules:
+- duplicate `vaccine_id + disease_id` link is rejected with `409`
+- link creation with unknown `vaccineId` or `diseaseId` is rejected with `400`
+- deleting vaccine/disease with existing links is rejected with `409`
+
 ## Unified API error format
 
 All API errors are returned as JSON with fields:
