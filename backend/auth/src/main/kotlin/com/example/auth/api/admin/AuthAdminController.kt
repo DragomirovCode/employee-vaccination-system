@@ -49,9 +49,21 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "201", description = "User created"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "409", description = "Email conflict", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "Email conflict",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun createUser(
@@ -72,10 +84,26 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "User updated"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "User not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "409", description = "Email conflict", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "Email conflict",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun updateUser(
@@ -99,9 +127,21 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Status updated"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "User not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun setStatus(
@@ -118,7 +158,11 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "User roles"),
-            ApiResponse(responseCode = "404", description = "User not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "404",
+                description = "User not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun listUserRoles(
@@ -131,10 +175,26 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "201", description = "Role assigned"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "User or role not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "409", description = "Role already assigned", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "User or role not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "409",
+                description = "Role already assigned",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun assignRole(
@@ -152,9 +212,21 @@ class AuthAdminController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "Role removed"),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "404", description = "Assignment not found", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Assignment not found",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun unassignRole(

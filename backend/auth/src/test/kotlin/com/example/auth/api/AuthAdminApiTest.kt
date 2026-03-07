@@ -114,7 +114,9 @@ class AuthAdminApiTest {
         val adminUser = createUserWithRole("ADMIN")
         val targetUser = userRepository.saveAndFlush(UserEntity(email = "target@example.com", passwordHash = "hash"))
         val personRole = ensureRole("PERSON")
-        userRoleRepository.saveAndFlush(UserRoleEntity(id = UserRoleId(userId = targetUser.id, roleId = personRole.id), assignedBy = adminUser.id))
+        userRoleRepository.saveAndFlush(
+            UserRoleEntity(id = UserRoleId(userId = targetUser.id, roleId = personRole.id), assignedBy = adminUser.id),
+        )
 
         mockMvc
             .perform(
