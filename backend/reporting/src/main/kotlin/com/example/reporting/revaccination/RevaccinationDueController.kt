@@ -100,9 +100,21 @@ class RevaccinationDueController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "CSV export"),
-            ApiResponse(responseCode = "400", description = "Invalid request parameters", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun exportRevaccinationDue(

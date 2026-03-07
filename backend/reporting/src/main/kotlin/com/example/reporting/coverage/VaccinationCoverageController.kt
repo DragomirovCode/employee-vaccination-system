@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -96,9 +96,21 @@ class VaccinationCoverageController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "CSV export"),
-            ApiResponse(responseCode = "400", description = "Invalid request parameters", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "401", description = "Unauthorized", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
-            ApiResponse(responseCode = "403", description = "Forbidden", content = [Content(schema = Schema(implementation = ApiErrorResponse::class))]),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request parameters",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun exportVaccinationCoverage(
