@@ -18,6 +18,8 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.kotlin.reflect)
     implementation(libs.swagger.annotations)
+    implementation("org.apache.poi:poi-ooxml:5.4.1")
+    implementation("com.github.librepdf:openpdf:1.3.39")
 
     implementation(project(":employee"))
     implementation(project(":vaccine"))

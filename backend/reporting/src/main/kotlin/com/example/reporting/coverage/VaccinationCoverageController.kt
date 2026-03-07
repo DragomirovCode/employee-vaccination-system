@@ -3,7 +3,8 @@ package com.example.reporting.coverage
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
 import com.example.reporting.access.ReportingSecurityContext
-import com.example.reporting.export.CsvReportExporter
+import com.example.reporting.export.ReportExportService
+import com.example.reporting.export.ReportFormat
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -30,7 +31,7 @@ import java.util.UUID
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
-    private val csvReportExporter: CsvReportExporter,
+    private val reportExportService: ReportExportService,
 ) {
     @GetMapping("/vaccination-coverage")
     @Operation(
@@ -92,10 +93,10 @@ class VaccinationCoverageController(
     }
 
     @GetMapping("/vaccination-coverage/export")
-    @Operation(summary = "Export vaccination coverage report as CSV")
+    @Operation(summary = "Export vaccination coverage report (csv, xlsx, pdf)")
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "CSV export"),
+            ApiResponse(responseCode = "200", description = "Report export (csv/xlsx/pdf)"),
             ApiResponse(
                 responseCode = "400",
                 description = "Invalid request parameters",
@@ -123,13 +124,15 @@ class VaccinationCoverageController(
         if (dateFrom.isAfter(dateTo)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "dateFrom must be <= dateTo")
         }
-        if (!format.equals("csv", ignoreCase = true)) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Only csv export format is supported")
-        }
+        val reportFormat =
+            ReportFormat.fromRaw(format)
+                ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
         val scope = requireScope(request)
         val rows = service.getCoverageByDepartment(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
-        val csvBytes =
-            csvReportExporter.export(
+        val reportFile =
+            reportExportService.export(
+                format = reportFormat,
+                fileNameBase = "vaccination-coverage",
                 headers =
                     listOf(
                         "departmentId",
@@ -152,9 +155,9 @@ class VaccinationCoverageController(
 
         return ResponseEntity
             .ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"vaccination-coverage.csv\"")
-            .contentType(MediaType.parseMediaType("text/csv"))
-            .body(csvBytes)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${reportFile.fileName}\"")
+            .contentType(MediaType.parseMediaType(reportFile.contentType))
+            .body(reportFile.bytes)
     }
 
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =

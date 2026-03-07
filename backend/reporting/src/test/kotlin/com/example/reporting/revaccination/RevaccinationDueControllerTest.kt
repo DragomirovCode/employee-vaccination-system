@@ -18,6 +18,7 @@ import com.example.vaccine.vaccine.VaccineEntity
 import com.example.vaccine.vaccine.VaccineRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
@@ -138,6 +139,74 @@ class RevaccinationDueControllerTest {
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("employeeId,fullName,departmentId")))
+    }
+
+    @Test
+    fun `exports revaccination due report as xlsx`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30")
+                    .param("format", "xlsx"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.xlsx\""))
+            .andExpect(
+                header().string(
+                    "Content-Type",
+                    org.hamcrest.Matchers.containsString(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                ),
+            )
+            .andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 2 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte(),
+                    "Expected XLSX zip signature (PK)",
+                )
+            }
+    }
+
+    @Test
+    fun `exports revaccination due report as pdf`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30")
+                    .param("format", "pdf"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.pdf\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/pdf")))
+            .andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 4 &&
+                        bytes[0] == '%'.code.toByte() &&
+                        bytes[1] == 'P'.code.toByte() &&
+                        bytes[2] == 'D'.code.toByte() &&
+                        bytes[3] == 'F'.code.toByte(),
+                    "Expected PDF signature (%PDF)",
+                )
+            }
+    }
+
+    @Test
+    fun `export returns bad request for unsupported format`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .param("days", "30")
+                    .param("format", "xml"),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test
