@@ -127,8 +127,10 @@ class NotificationApiTest {
             .andExpect(jsonPath("$.isRead").value(true))
 
         val updated = notificationRepository.findById(notification.id!!).orElseThrow()
-        org.junit.jupiter.api.Assertions.assertEquals(true, updated.isRead)
-        org.junit.jupiter.api.Assertions.assertNotNull(updated.readAt)
+        org.junit.jupiter.api.Assertions
+            .assertEquals(true, updated.isRead)
+        org.junit.jupiter.api.Assertions
+            .assertNotNull(updated.readAt)
     }
 
     @Test
@@ -183,9 +185,12 @@ class NotificationApiTest {
         val unread =
             notificationRepository.findByUserIdAndIsReadFalse(
                 userId = user.id!!,
-                pageable = org.springframework.data.domain.PageRequest.of(0, 10),
+                pageable =
+                    org.springframework.data.domain.PageRequest
+                        .of(0, 10),
             )
-        org.junit.jupiter.api.Assertions.assertEquals(0, unread.totalElements)
+        org.junit.jupiter.api.Assertions
+            .assertEquals(0, unread.totalElements)
     }
 
     private fun cleanup() {
