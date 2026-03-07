@@ -9,6 +9,7 @@ dependencies {
 
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.flyway)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.flyway.core)
     runtimeOnly(libs.flyway.database.postgresql)
