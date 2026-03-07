@@ -5,4 +5,6 @@ import java.util.UUID
 
 interface DocumentRepository : JpaRepository<DocumentEntity, UUID> {
     fun findAllByVaccinationId(vaccinationId: UUID): List<DocumentEntity>
+
+    fun findAllByVaccinationIdOrderByUploadedAtDesc(vaccinationId: UUID): List<DocumentEntity>
 }

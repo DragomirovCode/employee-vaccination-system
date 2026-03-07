@@ -9,6 +9,8 @@ class VaccinationWebMvcConfiguration(
     private val vaccinationWriteSecurityInterceptor: VaccinationWriteSecurityInterceptor,
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(vaccinationWriteSecurityInterceptor).addPathPatterns("/vaccinations/**", "/documents/**")
+        registry
+            .addInterceptor(vaccinationWriteSecurityInterceptor)
+            .addPathPatterns("/vaccinations/**", "/documents/**", "/employees/**/vaccinations")
     }
 }
