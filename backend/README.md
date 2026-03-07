@@ -90,14 +90,14 @@ Default credentials:
 - endpoint:
   - `GET /reports/revaccination-due?days=30&departmentId=<uuid>&page=0&size=20`
   - `GET /reports/vaccination-coverage?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>`
-  - `GET /reports/revaccination-due/export?days=30&departmentId=<uuid>&format=csv`
-  - `GET /reports/vaccination-coverage/export?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>&format=csv`
+  - `GET /reports/revaccination-due/export?days=30&departmentId=<uuid>&format=csv|xlsx|pdf`
+  - `GET /reports/vaccination-coverage/export?dateFrom=2026-01-01&dateTo=2026-12-31&departmentId=<uuid>&format=csv|xlsx|pdf`
 - response fields:
   - `employeeId`, `fullName`, `departmentId`, `vaccineName`
   - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
  - export:
-  - CSV format only (`format=csv`)
-  - response headers include `Content-Disposition: attachment` and `Content-Type: text/csv`
+  - formats: `csv`, `xlsx`, `pdf`
+  - response headers include `Content-Disposition: attachment` and format-specific `Content-Type`
 
 ## Audit module
 - `audit` module is included in backend multi-module build

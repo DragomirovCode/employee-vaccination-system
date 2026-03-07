@@ -16,6 +16,7 @@ import com.example.vaccination.vaccination.VaccinationEntity
 import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.vaccine.VaccineEntity
 import com.example.vaccine.vaccine.VaccineRepository
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -134,6 +135,76 @@ class VaccinationCoverageControllerTest {
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("departmentId,departmentName,employeesTotal")))
+    }
+
+    @Test
+    fun `exports vaccination coverage as xlsx`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "xlsx"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage.xlsx\""))
+            .andExpect(
+                header().string(
+                    "Content-Type",
+                    org.hamcrest.Matchers.containsString(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ),
+                ),
+            ).andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 2 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte(),
+                    "Expected XLSX zip signature (PK)",
+                )
+            }
+    }
+
+    @Test
+    fun `exports vaccination coverage as pdf`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "pdf"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage.pdf\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("application/pdf")))
+            .andExpect {
+                val bytes = it.response.contentAsByteArray
+                assertTrue(
+                    bytes.size >= 4 &&
+                        bytes[0] == '%'.code.toByte() &&
+                        bytes[1] == 'P'.code.toByte() &&
+                        bytes[2] == 'D'.code.toByte() &&
+                        bytes[3] == 'F'.code.toByte(),
+                    "Expected PDF signature (%PDF)",
+                )
+            }
+    }
+
+    @Test
+    fun `coverage export returns bad request for unsupported format`() {
+        val seed = seedData("MEDICAL")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("format", "xml"),
+            ).andExpect(status().isBadRequest)
     }
 
     @Test

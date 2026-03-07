@@ -7,13 +7,18 @@ class CsvReportExporter {
     fun export(
         headers: List<String>,
         rows: List<List<Any?>>,
-    ): ByteArray {
+        fileNameBase: String,
+    ): ReportFile {
         val builder = StringBuilder()
         builder.appendLine(headers.joinToString(",") { escape(it) })
         rows.forEach { row ->
             builder.appendLine(row.joinToString(",") { escape(it?.toString() ?: "") })
         }
-        return builder.toString().toByteArray(Charsets.UTF_8)
+        return ReportFile(
+            bytes = builder.toString().toByteArray(Charsets.UTF_8),
+            contentType = "text/csv",
+            fileName = "$fileNameBase.csv",
+        )
     }
 
     private fun escape(value: String): String {
