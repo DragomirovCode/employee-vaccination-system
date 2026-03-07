@@ -8,6 +8,8 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
@@ -27,9 +29,11 @@ class AuditLogEntity(
     var entityType: AuditEntityType? = null,
     @Column(name = "entity_id", nullable = false)
     var entityId: UUID? = null,
-    @Column(name = "old_value", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "old_value", columnDefinition = "jsonb")
     var oldValue: String? = null,
-    @Column(name = "new_value", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "new_value", columnDefinition = "jsonb")
     var newValue: String? = null,
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant? = null,
