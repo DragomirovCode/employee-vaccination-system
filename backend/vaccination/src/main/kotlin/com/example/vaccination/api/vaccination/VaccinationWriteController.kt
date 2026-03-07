@@ -1,6 +1,7 @@
 ﻿package com.example.vaccination.api.vaccination
 
 import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.api.ApiErrorResponse
 import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.vaccination.CreateVaccinationCommand
@@ -38,12 +39,20 @@ class VaccinationWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Vaccination created"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
             ApiResponse(
                 responseCode = "400",
                 description = "Invalid request",
-                content = [Content(schema = Schema(hidden = true))],
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
             ),
         ],
     )
@@ -75,8 +84,21 @@ class VaccinationWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Vaccination updated"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Invalid request",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun update(
@@ -111,8 +133,16 @@ class VaccinationWriteController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "204", description = "Vaccination deleted"),
-            ApiResponse(responseCode = "401", description = "Unauthorized"),
-            ApiResponse(responseCode = "403", description = "Forbidden"),
+            ApiResponse(
+                responseCode = "401",
+                description = "Unauthorized",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "Forbidden",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun delete(
