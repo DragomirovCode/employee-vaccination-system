@@ -10,7 +10,8 @@ class AppWebMvcConfiguration(
     private val appSecurityInterceptor: AppSecurityInterceptor,
 ) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
-        registry.addMapping("/**")
+        registry
+            .addMapping("/**")
             .allowedOrigins("http://localhost:5173")
             .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             .allowedHeaders("X-Auth-Token", "Content-Type", "Authorization")
