@@ -9,6 +9,8 @@ class AuthAdminWebMvcConfiguration(
     private val authAdminSecurityInterceptor: AuthAdminSecurityInterceptor,
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(authAdminSecurityInterceptor).addPathPatterns("/auth/**")
+        registry
+            .addInterceptor(authAdminSecurityInterceptor)
+            .addPathPatterns("/auth/users/**", "/auth/roles/**")
     }
 }

@@ -7,41 +7,10 @@ import { useI18n } from "../shared/i18n/I18nContext";
 import { LanguageSwitch } from "../shared/i18n/LanguageSwitch";
 import { ApiHttpError } from "../shared/api/types";
 
-function extractRoles(payload: unknown): AppRole[] {
-  const allowed = new Set<AppRole>(["PERSON", "HR", "MEDICAL", "ADMIN"]);
-  const roles = new Set<AppRole>();
-
-  const walk = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      value.forEach((item) => walk(item));
-      return;
-    }
-    if (!value || typeof value !== "object") return;
-
-    const obj = value as Record<string, unknown>;
-    const maybeRole = typeof obj.role === "string" ? obj.role : undefined;
-    const maybeRoles = Array.isArray(obj.roles) ? obj.roles : undefined;
-
-    if (maybeRole) {
-      const normalized = maybeRole.toUpperCase();
-      if (allowed.has(normalized as AppRole)) {
-        roles.add(normalized as AppRole);
-      }
-    }
-    if (maybeRoles) {
-      maybeRoles.forEach((role) => {
-        if (typeof role !== "string") return;
-        const normalized = role.toUpperCase();
-        if (allowed.has(normalized as AppRole)) {
-          roles.add(normalized as AppRole);
-        }
-      });
-    }
-  };
-
-  walk(payload);
-  return Array.from(roles);
-}
+type AuthMeResponse = {
+  userId: string;
+  roles: AppRole[];
+};
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -69,27 +38,20 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const users = await apiGet<unknown>("/auth/users", {
+      const me = await apiGet<AuthMeResponse>("/auth/me", {
         authToken: normalizedToken,
         suppressAuthEvents: true
       });
-      const roles = extractRoles(users);
-
       login({
         token: normalizedToken,
-        roles
+        roles: me.roles
       });
       navigate(redirectTo, { replace: true });
     } catch (e) {
       if (e instanceof ApiHttpError && e.status === 401) {
         setError(t("login.sessionExpired"));
       } else if (e instanceof ApiHttpError && e.status === 403) {
-        login({
-          token: normalizedToken,
-          roles: []
-        });
-        navigate(redirectTo, { replace: true });
-        return;
+        setError(e.payload?.message ?? e.message);
       } else if (e instanceof ApiHttpError) {
         setError(e.payload?.message ?? e.message);
       } else if (e instanceof TypeError) {
