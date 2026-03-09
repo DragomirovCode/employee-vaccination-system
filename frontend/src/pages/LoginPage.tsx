@@ -12,13 +12,18 @@ type AuthMeResponse = {
   roles: AppRole[];
 };
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const { t } = useI18n();
   const [token, setToken] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const redirectTo = (location.state as { from?: string } | undefined)?.from ?? "/";
@@ -30,12 +35,19 @@ export function LoginPage() {
 
     const normalizedToken = normalizeAuthToken(token);
     if (!normalizedToken) {
-      setError(t("login.tokenRequired"));
+      setErrorKey("login.tokenRequired");
+      setErrorMessage(null);
+      return;
+    }
+    if (!isUuid(normalizedToken)) {
+      setErrorKey("login.tokenNotFound");
+      setErrorMessage(null);
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setErrorKey(null);
+    setErrorMessage(null);
 
     try {
       const me = await apiGet<AuthMeResponse>("/auth/me", {
@@ -44,27 +56,36 @@ export function LoginPage() {
       });
       login({
         token: normalizedToken,
-        roles: me.roles
+        roles: me.roles,
+        userId: me.userId
       });
       navigate(redirectTo, { replace: true });
     } catch (e) {
       if (e instanceof ApiHttpError && e.status === 401) {
-        setError(t("login.sessionExpired"));
+        setErrorKey("login.tokenNotFound");
+        setErrorMessage(null);
       } else if (e instanceof ApiHttpError && e.status === 403) {
-        setError(e.payload?.message ?? e.message);
+        setErrorKey(null);
+        setErrorMessage(e.payload?.message ?? e.message);
       } else if (e instanceof ApiHttpError) {
-        setError(e.payload?.message ?? e.message);
+        setErrorKey(null);
+        setErrorMessage(e.payload?.message ?? e.message);
       } else if (e instanceof TypeError) {
-        setError(t("common.networkCorsError"));
+        setErrorKey("common.networkCorsError");
+        setErrorMessage(null);
       } else if (e instanceof Error) {
-        setError(e.message);
+        setErrorKey(null);
+        setErrorMessage(e.message);
       } else {
-        setError(t("login.unableToSignIn"));
+        setErrorKey("login.unableToSignIn");
+        setErrorMessage(null);
       }
     } finally {
       setSubmitting(false);
     }
   }
+
+  const error = errorMessage ?? (errorKey ? t(errorKey) : null);
 
   return (
     <section className="center">
@@ -73,7 +94,6 @@ export function LoginPage() {
           <LanguageSwitch />
         </div>
         <h2>{t("login.title")}</h2>
-        <p className="caption">{t("login.hint")}</p>
         {reason === "expired" ? <p className="warn">{t("login.sessionExpired")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
         <label>

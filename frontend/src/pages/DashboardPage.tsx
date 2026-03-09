@@ -40,7 +40,6 @@ export function DashboardPage() {
     <section className="grid">
       <article className="card">
         <h2>{t("dashboard.notifications")}</h2>
-        <p className="caption">{t("dashboard.notificationsHint")}</p>
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
         {!loading && !error && data && data.content.length === 0 ? <p>{t("dashboard.noNotifications")}</p> : null}
@@ -54,11 +53,6 @@ export function DashboardPage() {
             ))}
           </ul>
         ) : null}
-      </article>
-      <article className="card">
-        <h2>{t("dashboard.session")}</h2>
-        <p className="caption">{t("dashboard.sessionHint")}</p>
-        <pre>{JSON.stringify(session, null, 2)}</pre>
       </article>
     </section>
   );

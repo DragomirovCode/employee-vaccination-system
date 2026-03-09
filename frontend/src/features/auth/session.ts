@@ -3,6 +3,7 @@ export type AppRole = "PERSON" | "HR" | "MEDICAL" | "ADMIN";
 export type AuthSession = {
   token: string;
   roles: AppRole[];
+  userId: string;
 };
 
 const SESSION_KEY = "evs.frontend.session";
@@ -14,9 +15,10 @@ export function readSession(): AuthSession | null {
   try {
     const parsed = JSON.parse(raw) as Partial<AuthSession>;
     if (!parsed.token || typeof parsed.token !== "string") return null;
+    if (!parsed.userId || typeof parsed.userId !== "string") return null;
     const token = normalizeAuthToken(parsed.token);
     if (!token) return null;
-    return { token, roles: normalizeRoles(parsed.roles) };
+    return { token, roles: normalizeRoles(parsed.roles), userId: parsed.userId.trim() };
   } catch {
     return null;
   }
