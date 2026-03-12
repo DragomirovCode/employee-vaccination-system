@@ -61,7 +61,7 @@ Default credentials:
 - `MINIO_BUCKET` (default `evs-documents`)
 
 ## Starter seed data
-- On application startup, Flyway migration `V9__seed_initial_data.sql` fills all main tables with demo data.
+- On application startup, Flyway migration `V8__seed_initial_data.sql` fills all main tables with demo data.
 - Seeded users for quick API checks (`X-Auth-Token` accepts the UUID directly):
   - `admin@evs.local` - `ADMIN` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10`
   - `hr@evs.local` - `HR` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11`

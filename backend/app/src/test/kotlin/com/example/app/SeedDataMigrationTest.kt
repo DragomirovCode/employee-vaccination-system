@@ -26,17 +26,17 @@ class SeedDataMigrationTest {
                 val expectedMinimums =
                     mapOf(
                         "roles" to 4,
-                        "users" to 7,
-                        "user_roles" to 7,
-                        "departments" to 5,
-                        "employees" to 6,
+                        "users" to 5,
+                        "user_roles" to 5,
+                        "departments" to 7,
+                        "employees" to 12,
                         "diseases" to 3,
                         "vaccines" to 3,
                         "vaccine_diseases" to 3,
-                        "vaccinations" to 3,
-                        "documents" to 2,
+                        "vaccinations" to 6,
+                        "documents" to 4,
                         "notifications" to 2,
-                        "audit_log" to 2,
+                        "audit_log" to 4,
                     )
 
                 expectedMinimums.forEach { (tableName, minCount) ->
