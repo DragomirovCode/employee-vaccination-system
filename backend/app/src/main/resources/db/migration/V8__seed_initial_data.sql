@@ -358,7 +358,7 @@ SELECT '6f1f9d6c-65ec-4706-8233-000000000001', '018f4fd2-75f8-7f2e-b95e-9df7ac8e
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000001');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000002', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'DOCUMENT_READY',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000002', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
        'Medical document available', 'Your influenza vaccination certificate is available for download.', FALSE,
        TIMESTAMP '2026-03-11 09:45:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000002');
@@ -370,13 +370,13 @@ SELECT '6f1f9d6c-65ec-4706-8233-000000000003', '018f4fd2-75f8-7f2e-b95e-9df7ac8e
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000003');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000004', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'REMINDER',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000004', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
        'Health check reminder', 'Please confirm your annual occupational health check this week.', FALSE,
        TIMESTAMP '2026-03-09 10:30:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000004');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000005', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SCHEDULE',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000005', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
        'Vaccination room booking', 'Your follow-up appointment is reserved for 2026-03-17 at 10:00.', FALSE,
        TIMESTAMP '2026-03-08 15:20:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000005');
@@ -388,7 +388,7 @@ SELECT '6f1f9d6c-65ec-4706-8233-000000000006', '018f4fd2-75f8-7f2e-b95e-9df7ac8e
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000006');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000007', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'DOCUMENT_READY',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000007', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SYSTEM',
        'Certificate uploaded', 'Your influenza vaccination certificate has been attached to the record.', TRUE,
        TIMESTAMP '2026-03-11 08:35:00', TIMESTAMP '2026-03-11 09:00:00', NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000007');
@@ -400,13 +400,13 @@ SELECT '6f1f9d6c-65ec-4706-8233-000000000008', '018f4fd2-75f8-7f2e-b95e-9df7ac8e
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000008');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000009', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'REMINDER',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000009', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SYSTEM',
        'Medical office reminder', 'Please bring your previous vaccination certificate to the next visit.', FALSE,
        TIMESTAMP '2026-03-09 16:40:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000009');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
-SELECT '6f1f9d6c-65ec-4706-8233-000000000010', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SCHEDULE',
+SELECT '6f1f9d6c-65ec-4706-8233-000000000010', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SYSTEM',
        'Appointment confirmed', 'Your revaccination appointment is booked for 2026-03-18 at 09:30.', TRUE,
        TIMESTAMP '2026-03-02 08:00:00', TIMESTAMP '2026-03-02 12:00:00', NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000010');
