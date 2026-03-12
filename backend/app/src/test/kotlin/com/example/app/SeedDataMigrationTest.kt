@@ -49,29 +49,31 @@ class SeedDataMigrationTest {
                 }
 
                 val adminEmail =
-                    statement.executeQuery(
-                        """
-                        SELECT email
-                        FROM users
-                        WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10'
-                        """.trimIndent(),
-                    ).use { rs ->
-                        rs.next()
-                        rs.getString(1)
-                    }
+                    statement
+                        .executeQuery(
+                            """
+                            SELECT email
+                            FROM users
+                            WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10'
+                            """.trimIndent(),
+                        ).use { rs ->
+                            rs.next()
+                            rs.getString(1)
+                        }
                 assertEquals("admin@evs.local", adminEmail)
 
                 val dueNotificationCount =
-                    statement.executeQuery(
-                        """
-                        SELECT COUNT(*)
-                        FROM notifications
-                        WHERE type = 'REVACCINATION_DUE'
-                        """.trimIndent(),
-                    ).use { rs ->
-                        rs.next()
-                        rs.getInt(1)
-                    }
+                    statement
+                        .executeQuery(
+                            """
+                            SELECT COUNT(*)
+                            FROM notifications
+                            WHERE type = 'REVACCINATION_DUE'
+                            """.trimIndent(),
+                        ).use { rs ->
+                            rs.next()
+                            rs.getInt(1)
+                        }
                 assertTrue(dueNotificationCount >= 2)
             }
         }
