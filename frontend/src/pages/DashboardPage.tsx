@@ -37,9 +37,14 @@ export function DashboardPage() {
   }, [session]);
 
   return (
-    <section className="grid">
+    <section className="stack-lg">
       <article className="card">
-        <h2>{t("dashboard.notifications")}</h2>
+        <div className="page-head">
+          <div>
+            <h2>{t("dashboard.notifications")}</h2>
+            <p className="muted">{t("dashboard.notificationsHint")}</p>
+          </div>
+        </div>
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
         {!loading && !error && data && data.content.length === 0 ? <p>{t("dashboard.noNotifications")}</p> : null}

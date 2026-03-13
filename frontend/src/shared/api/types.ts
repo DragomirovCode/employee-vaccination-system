@@ -37,3 +37,42 @@ export type NotificationPage = {
   size: number;
   number: number;
 };
+
+export type PageResponse<T> = {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+};
+
+export type RevaccinationDueItem = {
+  employeeId: string;
+  fullName: string;
+  departmentId: string;
+  vaccineName: string;
+  lastVaccinationDate: string;
+  revaccinationDate: string;
+  daysLeft: number;
+};
+
+export type DepartmentDto = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  createdAt: string;
+};
+
+export type EmployeeDto = {
+  id: string;
+  userId: string | null;
+  departmentId: string;
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
+  birthDate: string | null;
+  position: string | null;
+  hireDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
