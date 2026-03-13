@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiGet } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, PageResponse, RevaccinationDueItem } from "../shared/api/types";
@@ -11,6 +12,14 @@ function getStatus(daysLeft: number): "overdue" | "soon" | "planned" {
   if (daysLeft < 0) return "overdue";
   if (daysLeft <= 7) return "soon";
   return "planned";
+}
+
+function buildHistoryLink(employeeId: string, vaccineName: string, lastVaccinationDate: string): string {
+  const params = new URLSearchParams({
+    vaccineName,
+    vaccinationDate: lastVaccinationDate
+  });
+  return `/employees/${employeeId}/vaccinations?${params.toString()}`;
 }
 
 export function RevaccinationDuePage() {
@@ -146,7 +155,16 @@ export function RevaccinationDuePage() {
                   <article key={`${item.employeeId}-${item.vaccineName}-${item.revaccinationDate}`} className={`due-item is-${status}`}>
                     <div className="due-item-head">
                       <div>
-                        {!isPersonView ? <h3>{item.fullName}</h3> : null}
+                        {!isPersonView ? (
+                          <h3>
+                            <Link
+                              to={buildHistoryLink(item.employeeId, item.vaccineName, item.lastVaccinationDate)}
+                              className="inline-link"
+                            >
+                              {item.fullName}
+                            </Link>
+                          </h3>
+                        ) : null}
                         <p className="muted">{item.vaccineName}</p>
                       </div>
                       <span className={`status-pill is-${status}`}>
@@ -173,6 +191,19 @@ export function RevaccinationDuePage() {
                         <div>
                           <dt>{t("revaccination.department")}</dt>
                           <dd>{departments[item.departmentId] ?? t("revaccination.departmentUnknown")}</dd>
+                        </div>
+                      ) : null}
+                      {isPersonView ? (
+                        <div>
+                          <dt>{t("revaccination.details")}</dt>
+                          <dd>
+                            <Link
+                              to={buildHistoryLink(item.employeeId, item.vaccineName, item.lastVaccinationDate)}
+                              className="inline-link"
+                            >
+                              {t("revaccination.details")}
+                            </Link>
+                          </dd>
                         </div>
                       ) : null}
                     </dl>
