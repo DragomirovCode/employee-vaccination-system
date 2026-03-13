@@ -16,6 +16,7 @@ export function AppLayout() {
   const canOpenAdminSandbox = Boolean(session?.roles.includes("ADMIN"));
   const canOpenCoverage = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const canOpenEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "ADMIN"));
+  const canOpenVaccines = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
   const navClassName = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : undefined);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -68,6 +69,11 @@ export function AppLayout() {
           {canOpenEmployees ? (
             <NavLink to="/employees" className={navClassName}>
               {t("layout.employees")}
+            </NavLink>
+          ) : null}
+          {canOpenVaccines ? (
+            <NavLink to="/vaccines" className={navClassName}>
+              {t("layout.vaccines")}
             </NavLink>
           ) : null}
           <NavLink to="/notifications" className={navClassName}>

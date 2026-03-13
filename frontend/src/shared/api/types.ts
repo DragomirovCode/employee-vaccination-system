@@ -134,3 +134,14 @@ export type VaccinationCoverageVaccineItem = {
   employeesCovered: number;
   coveragePercent: number;
 };
+
+export type DiseaseDto = {
+  id: number;
+  name: string;
+  description: string | null;
+};
+
+export type VaccineDiseaseLinkDto = {
+  vaccineId: string;
+  diseaseId: number;
+};
