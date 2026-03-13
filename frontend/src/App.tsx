@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
+import { EmployeeVaccinationsPage } from "./pages/EmployeeVaccinationsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -51,6 +52,7 @@ export function App() {
           }
         >
           <Route index element={<RevaccinationDuePage />} />
+          <Route path="employees/:employeeId/vaccinations" element={<EmployeeVaccinationsPage />} />
           <Route path="notifications" element={<DashboardPage />} />
           <Route
             path="admin-sandbox"

@@ -76,3 +76,41 @@ export type EmployeeDto = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type VaccineDto = {
+  id: string;
+  name: string;
+  manufacturer: string | null;
+  validityDays: number;
+  dosesRequired: number;
+  daysBetween: number | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type VaccinationReadDto = {
+  id: string;
+  employeeId: string;
+  vaccineId: string;
+  performedBy: string;
+  vaccinationDate: string;
+  doseNumber: number;
+  batchNumber: string | null;
+  expirationDate: string | null;
+  nextDoseDate: string | null;
+  revaccinationDate: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentDto = {
+  id: string;
+  vaccinationId: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedBy: string;
+  uploadedAt: string;
+};

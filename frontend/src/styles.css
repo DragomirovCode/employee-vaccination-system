@@ -23,6 +23,11 @@ a:hover {
   text-decoration: underline;
 }
 
+.inline-link {
+  color: #0b5b3a;
+  font-weight: 600;
+}
+
 .shell {
   min-height: 100vh;
   padding: 1rem;
@@ -202,6 +207,22 @@ button:hover {
   font-weight: 700;
 }
 
+.notice-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d6e6d9;
+  border-radius: 14px;
+  background: #f2f8f3;
+}
+
+.notice-bar p {
+  margin: 0;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -282,6 +303,59 @@ button:hover {
 
 .due-item-head h3 {
   margin: 0;
+}
+
+.history-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.history-item {
+  padding: 1rem;
+  border: 1px solid #dce7dc;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f8fbf8);
+}
+
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.9rem;
+}
+
+.history-head h3,
+.history-block h4 {
+  margin: 0;
+}
+
+.history-block {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e1eae1;
+}
+
+.doc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.doc-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: #f4f8f4;
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
 }
 
 .status-pill {
@@ -383,8 +457,14 @@ input {
 
   .page-head,
   .due-item-head,
+  .history-head,
+  .notice-bar,
   .pagination {
     grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .doc-list li {
     display: grid;
   }
 
