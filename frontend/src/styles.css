@@ -245,6 +245,18 @@ button:hover {
   gap: 0.6rem;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
 .list {
   list-style: none;
   padding: 0;
@@ -441,6 +453,45 @@ input {
   background: #f9fdf9;
 }
 
+.notification-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid #dce7dc;
+  background: linear-gradient(180deg, #ffffff, #f8fbf8);
+}
+
+.notification-item.is-unread {
+  border-color: #e7d5a8;
+  background: linear-gradient(180deg, #fffdf5, #fff8e7);
+}
+
+.notification-item.is-read {
+  opacity: 0.88;
+}
+
+.notification-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.6rem;
+}
+
+.notification-head h3 {
+  margin: 0;
+}
+
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+}
+
 .warn {
   color: #8c1f2d;
   font-weight: 600;
@@ -458,6 +509,7 @@ input {
   .page-head,
   .due-item-head,
   .history-head,
+  .notification-head,
   .notice-bar,
   .pagination {
     grid-template-columns: 1fr;

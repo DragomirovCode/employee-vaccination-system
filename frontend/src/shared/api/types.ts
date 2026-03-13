@@ -38,6 +38,10 @@ export type NotificationPage = {
   number: number;
 };
 
+export type NotificationBulkReadResponse = {
+  updated: number;
+};
+
 export type PageResponse<T> = {
   content: T[];
   totalElements: number;
