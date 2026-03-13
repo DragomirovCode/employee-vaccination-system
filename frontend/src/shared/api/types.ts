@@ -145,3 +145,17 @@ export type VaccineDiseaseLinkDto = {
   vaccineId: string;
   diseaseId: number;
 };
+
+export type VaccinationWriteRequest = {
+  employeeId: string;
+  vaccineId: string;
+  vaccinationDate: string;
+  doseNumber: number;
+  batchNumber: string | null;
+  expirationDate: string | null;
+  notes: string | null;
+};
+
+export type VaccinationWriteResponse = {
+  id: string;
+};
