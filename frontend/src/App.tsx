@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { CoverageReportPage } from "./pages/CoverageReportPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DiseasesPage } from "./pages/DiseasesPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
 import { EmployeeVaccinationsPage } from "./pages/EmployeeVaccinationsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
@@ -76,6 +77,14 @@ export function App() {
             element={
               <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
                 <VaccinesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="diseases"
+            element={
+              <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
+                <DiseasesPage />
               </RequireRole>
             }
           />
