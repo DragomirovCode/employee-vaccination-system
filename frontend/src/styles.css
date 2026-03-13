@@ -245,6 +245,24 @@ button:hover {
   gap: 0.6rem;
 }
 
+.segmented-control {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: #eef5ee;
+  gap: 0.2rem;
+}
+
+.segmented-control button {
+  background: transparent;
+  color: #0f472f;
+}
+
+.segmented-control button.is-active {
+  background: #0f472f;
+  color: #effff6;
+}
+
 .checkbox-row {
   display: inline-flex;
   align-items: center;
@@ -492,6 +510,66 @@ input {
   margin-top: 0.8rem;
 }
 
+select {
+  width: 100%;
+  border: 1px solid #b7cbbb;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font-size: 1rem;
+  background: #f9fdf9;
+}
+
+.coverage-table {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.coverage-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(120px, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #dce7dc;
+  background: #fcfefc;
+}
+
+.coverage-row-head {
+  font-weight: 700;
+  color: #49614f;
+  background: #f2f8f3;
+}
+
+.coverage-name {
+  font-weight: 600;
+}
+
+.coverage-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.coverage-pill.is-low {
+  background: #f9d8dc;
+  color: #8c1f2d;
+}
+
+.coverage-pill.is-medium {
+  background: #f6e7b6;
+  color: #7c5a00;
+}
+
+.coverage-pill.is-high {
+  background: #deefe2;
+  color: #1f6b46;
+}
+
 .warn {
   color: #8c1f2d;
   font-weight: 600;
@@ -514,6 +592,10 @@ input {
   .pagination {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .coverage-row {
+    grid-template-columns: 1fr;
   }
 
   .doc-list li {
