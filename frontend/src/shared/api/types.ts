@@ -159,3 +159,15 @@ export type VaccinationWriteRequest = {
 export type VaccinationWriteResponse = {
   id: string;
 };
+
+export type DocumentWriteRequest = {
+  vaccinationId: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+};
+
+export type DocumentWriteResponse = {
+  id: string;
+};

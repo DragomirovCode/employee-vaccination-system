@@ -27,17 +27,19 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   const requestHeaders: Record<string, string> = { ...headers };
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
   if (!skipAuth) {
     requestHeaders["X-Auth-Token"] = token;
   }
-  if (body !== undefined && !requestHeaders["Content-Type"]) {
+  if (body !== undefined && !isFormData && !requestHeaders["Content-Type"]) {
     requestHeaders["Content-Type"] = "application/json";
   }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body)
+    body:
+      body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
   });
 
   if (res.ok) {
@@ -80,6 +82,50 @@ export function apiPatch<T>(path: string, body?: unknown, options: Omit<ApiReque
 
 export function apiDelete<T>(path: string, options: Omit<ApiRequestOptions, "method" | "body"> = {}): Promise<T> {
   return apiRequest<T>(path, { ...options, method: "DELETE" });
+}
+
+export function apiPostForm<T>(path: string, body: FormData, options: Omit<ApiRequestOptions, "method" | "body"> = {}): Promise<T> {
+  return apiRequest<T>(path, { ...options, method: "POST", body });
+}
+
+export async function apiGetBlob(
+  path: string,
+  options: Omit<ApiRequestOptions, "method" | "body"> = {}
+): Promise<{ blob: Blob; contentType: string; contentDisposition: string | null }> {
+  const { headers = {}, skipAuth = false, authToken, suppressAuthEvents = false } = options;
+  const token = normalizeAuthToken(authToken ?? readSession()?.token ?? "");
+
+  if (!skipAuth && !token) {
+    if (!suppressAuthEvents) emitAuthEvents(401);
+    throw new ApiHttpError(401, {
+      code: "UNAUTHORIZED",
+      message: "Session token is missing",
+      path,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  const requestHeaders: Record<string, string> = { ...headers };
+  if (!skipAuth) {
+    requestHeaders["X-Auth-Token"] = token;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "GET",
+    headers: requestHeaders
+  });
+
+  if (!res.ok) {
+    const payload = await parseApiError(res, path);
+    if (!suppressAuthEvents) emitAuthEvents(res.status);
+    throw new ApiHttpError(res.status, payload);
+  }
+
+  return {
+    blob: await res.blob(),
+    contentType: res.headers.get("content-type") ?? "application/octet-stream",
+    contentDisposition: res.headers.get("content-disposition")
+  };
 }
 
 async function parseApiError(response: Response, path: string): Promise<ApiErrorResponse> {

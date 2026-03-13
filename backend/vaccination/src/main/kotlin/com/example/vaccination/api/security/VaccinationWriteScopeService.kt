@@ -23,7 +23,7 @@ class VaccinationWriteScopeService(
         principal: AuthenticatedPrincipal,
         employeeId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -35,7 +35,7 @@ class VaccinationWriteScopeService(
         vaccinationId: UUID,
         requestedEmployeeId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -47,7 +47,7 @@ class VaccinationWriteScopeService(
         principal: AuthenticatedPrincipal,
         vaccinationId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -58,7 +58,7 @@ class VaccinationWriteScopeService(
         principal: AuthenticatedPrincipal,
         vaccinationId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -70,7 +70,7 @@ class VaccinationWriteScopeService(
         documentId: UUID,
         requestedVaccinationId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -82,7 +82,7 @@ class VaccinationWriteScopeService(
         principal: AuthenticatedPrincipal,
         documentId: UUID,
     ) {
-        if (isAdmin(principal)) {
+        if (hasFullWriteAccess(principal)) {
             return
         }
         val allowedDepartmentIds = medicalAllowedDepartments(principal)
@@ -169,4 +169,7 @@ class VaccinationWriteScopeService(
     }
 
     private fun isAdmin(principal: AuthenticatedPrincipal): Boolean = principal.roles.contains(AppRole.ADMIN)
+
+    private fun hasFullWriteAccess(principal: AuthenticatedPrincipal): Boolean =
+        principal.roles.contains(AppRole.ADMIN) || principal.roles.contains(AppRole.MEDICAL)
 }

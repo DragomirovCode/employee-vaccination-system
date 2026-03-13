@@ -1,11 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { apiDelete, apiGet, apiPost, apiPut } from "../shared/api/client";
+import { apiDelete, apiGet, apiGetBlob, apiPost, apiPostForm, apiPut } from "../shared/api/client";
 import {
   ApiHttpError,
   DepartmentDto,
   DocumentDto,
+  DocumentWriteRequest,
+  DocumentWriteResponse,
   EmployeeDto,
   VaccinationReadDto,
   VaccinationWriteRequest,
@@ -64,12 +66,33 @@ export function EmployeeVaccinationsPage() {
   const [items, setItems] = useState<VaccinationReadDto[]>([]);
   const [vaccineNames, setVaccineNames] = useState<Record<string, string>>({});
   const [documentsByVaccination, setDocumentsByVaccination] = useState<Record<string, DocumentDto[]>>({});
+  const [documentErrors, setDocumentErrors] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const [formState, setFormState] = useState<VaccinationFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+
+  async function fetchDocumentsForVaccination(vaccinationId: string): Promise<DocumentDto[]> {
+    return apiGet<DocumentDto[]>(`/vaccinations/${vaccinationId}/documents`);
+  }
+
+  async function refreshDocumentsForVaccination(vaccinationId: string): Promise<void> {
+    const refreshedDocuments = await fetchDocumentsForVaccination(vaccinationId);
+    setDocumentsByVaccination((current) => ({
+      ...current,
+      [vaccinationId]: refreshedDocuments
+    }));
+  }
+
+  function setDocumentError(vaccinationId: string, message: string | null) {
+    setDocumentErrors((current) => ({
+      ...current,
+      [vaccinationId]: message
+    }));
+  }
 
   useEffect(() => {
     if (!employeeId) {
@@ -104,7 +127,7 @@ export function EmployeeVaccinationsPage() {
 
         const documentsEntries = await Promise.all(
           vaccinations.map(async (vaccination) => {
-            const documents = await apiGet<DocumentDto[]>(`/vaccinations/${vaccination.id}/documents`);
+            const documents = await fetchDocumentsForVaccination(vaccination.id);
             return [vaccination.id, documents] as const;
           })
         );
@@ -202,6 +225,7 @@ export function EmployeeVaccinationsPage() {
               [updatedItem.id]: []
             }
       );
+      setDocumentError(updatedItem.id, null);
       setFormState(EMPTY_FORM);
     } catch (e) {
       const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccinationEditor.unexpectedApiError");
@@ -230,6 +254,93 @@ export function EmployeeVaccinationsPage() {
       setFormError(message);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function uploadDocument(vaccinationId: string, file: File) {
+    setDocumentBusyId(vaccinationId);
+    setDocumentError(vaccinationId, null);
+    let createdDocumentId: string | null = null;
+    try {
+      const metadataPayload: DocumentWriteRequest = {
+        vaccinationId,
+        fileName: file.name,
+        filePath: `pending/${file.name}`,
+        fileSize: file.size,
+        mimeType: file.type || "application/octet-stream"
+      };
+      const created = await apiPost<DocumentWriteResponse>("/documents", metadataPayload);
+      createdDocumentId = created.id;
+      const formData = new FormData();
+      formData.append("file", file);
+      const updatedDocument = await apiPostForm<DocumentDto>(`/documents/${created.id}/content`, formData);
+      setDocumentsByVaccination((current) => ({
+        ...current,
+        [vaccinationId]: [...(current[vaccinationId] ?? []).filter((item) => item.id !== updatedDocument.id), updatedDocument]
+      }));
+      window.setTimeout(() => {
+        void refreshDocumentsForVaccination(vaccinationId).catch(() => undefined);
+      }, 1500);
+    } catch (e) {
+      if (createdDocumentId) {
+        try {
+          await apiDelete(`/documents/${createdDocumentId}`);
+        } catch {
+          // Ignore cleanup failure and show the original upload error.
+        }
+      }
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("documents.unexpectedApiError");
+      setDocumentError(vaccinationId, message);
+    } finally {
+      setDocumentBusyId(null);
+    }
+  }
+
+  async function downloadDocument(fileDocument: DocumentDto) {
+    setDocumentBusyId(fileDocument.id);
+    setDocumentError(fileDocument.vaccinationId, null);
+    try {
+      const { blob, contentDisposition } = await apiGetBlob(`/documents/${fileDocument.id}/content`);
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      const fileNameMatch = contentDisposition?.match(/filename="?(.*?)"?$/i);
+      link.href = url;
+      link.download = fileNameMatch?.[1] || fileDocument.fileName;
+      link.style.display = "none";
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("documents.unexpectedApiError");
+      setDocumentError(fileDocument.vaccinationId, message);
+    } finally {
+      setDocumentBusyId(null);
+    }
+  }
+
+  async function deleteDocument(vaccinationId: string, documentId: string) {
+    setDocumentBusyId(documentId);
+    setDocumentError(vaccinationId, null);
+    try {
+      try {
+        await apiDelete(`/documents/${documentId}/content`);
+      } catch (e) {
+        if (!(e instanceof ApiHttpError) || e.status !== 404) {
+          throw e;
+        }
+      }
+      await apiDelete(`/documents/${documentId}`);
+      setDocumentsByVaccination((current) => ({
+        ...current,
+        [vaccinationId]: (current[vaccinationId] ?? []).filter((item) => item.id !== documentId)
+      }));
+      await refreshDocumentsForVaccination(vaccinationId);
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("documents.unexpectedApiError");
+      setDocumentError(vaccinationId, message);
+    } finally {
+      setDocumentBusyId(null);
     }
   }
 
@@ -315,18 +426,56 @@ export function EmployeeVaccinationsPage() {
 
                   <div className="history-block">
                     <h4>{t("employeeVaccinations.documents")}</h4>
+                    {documentErrors[item.id] ? <p className="warn">{documentErrors[item.id]}</p> : null}
                     {documents.length === 0 ? <p>{t("employeeVaccinations.noDocuments")}</p> : null}
                     {documents.length > 0 ? (
                       <ul className="doc-list">
                         {documents.map((document) => (
                           <li key={document.id}>
-                            <span>{document.fileName}</span>
-                            <span className="muted">
-                              {document.mimeType}, {formatBytes(document.fileSize, locale)}
-                            </span>
+                            <div className="doc-meta">
+                              <strong>{document.fileName}</strong>
+                              <span className="muted">{formatBytes(document.fileSize, locale)}</span>
+                            </div>
+                            <div className="doc-actions">
+                              <button
+                                type="button"
+                                className="button-secondary"
+                                onClick={() => downloadDocument(document)}
+                                disabled={documentBusyId === document.id}
+                              >
+                                {documentBusyId === document.id ? t("documents.downloading") : t("documents.download")}
+                              </button>
+                              {canManageVaccinations ? (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteDocument(item.id, document.id)}
+                                  disabled={documentBusyId === document.id}
+                                >
+                                  {documentBusyId === document.id ? t("documents.deleting") : t("documents.delete")}
+                                </button>
+                              ) : null}
+                            </div>
                           </li>
                         ))}
                       </ul>
+                    ) : null}
+                    {canManageVaccinations ? (
+                      <div className="document-upload">
+                        <label className="upload-button">
+                          <input
+                            type="file"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                void uploadDocument(item.id, file);
+                                e.target.value = "";
+                              }
+                            }}
+                            disabled={documentBusyId === item.id}
+                          />
+                          <span>{documentBusyId === item.id ? t("documents.uploading") : t("documents.add")}</span>
+                        </label>
+                      </div>
                     ) : null}
                   </div>
 
