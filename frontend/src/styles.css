@@ -510,6 +510,30 @@ input {
   margin-top: 0.8rem;
 }
 
+.employee-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.employee-item {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid #dce7dc;
+  background: linear-gradient(180deg, #ffffff, #f8fbf8);
+}
+
+.employee-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.85rem;
+}
+
+.employee-head h3 {
+  margin: 0;
+}
+
 select {
   width: 100%;
   border: 1px solid #b7cbbb;
@@ -588,6 +612,7 @@ select {
   .due-item-head,
   .history-head,
   .notification-head,
+  .employee-head,
   .notice-bar,
   .pagination {
     grid-template-columns: 1fr;
