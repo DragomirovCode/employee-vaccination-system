@@ -9,6 +9,7 @@ import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RevaccinationDuePage } from "./pages/RevaccinationDuePage";
+import { VaccinesPage } from "./pages/VaccinesPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { RequireRole } from "./features/auth/RequireRole";
 import { useAuth } from "./features/auth/AuthContext";
@@ -67,6 +68,14 @@ export function App() {
             element={
               <RequireRole allowedRoles={["HR", "ADMIN"]}>
                 <EmployeesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="vaccines"
+            element={
+              <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
+                <VaccinesPage />
               </RequireRole>
             }
           />

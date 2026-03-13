@@ -534,6 +534,47 @@ input {
   margin: 0;
 }
 
+.vaccine-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.vaccine-item {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid #dce7dc;
+  background: linear-gradient(180deg, #ffffff, #f8fbf8);
+}
+
+.vaccine-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.85rem;
+}
+
+.vaccine-head h3 {
+  margin: 0;
+}
+
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-item {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #eef6f0;
+  color: #1b5137;
+  font-weight: 600;
+}
+
 select {
   width: 100%;
   border: 1px solid #b7cbbb;
@@ -613,6 +654,7 @@ select {
   .history-head,
   .notification-head,
   .employee-head,
+  .vaccine-head,
   .notice-bar,
   .pagination {
     grid-template-columns: 1fr;
