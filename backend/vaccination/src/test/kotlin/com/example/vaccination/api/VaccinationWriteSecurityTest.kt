@@ -117,10 +117,8 @@ class VaccinationWriteSecurityTest {
     }
 
     @Test
-    fun `medical cannot create vaccination outside scope and no audit created`() {
+    fun `medical can create vaccination outside own department tree`() {
         val seed = seedScopeData()
-        val beforeAudit = auditLogRepository.count()
-        val beforeVaccinations = vaccinationRepository.count()
 
         mockMvc
             .perform(
@@ -128,10 +126,9 @@ class VaccinationWriteSecurityTest {
                     .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId)),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isOk)
 
-        assertEquals(beforeVaccinations, vaccinationRepository.count())
-        assertEquals(beforeAudit, auditLogRepository.count())
+        assertEquals(1, vaccinationRepository.count())
     }
 
     @Test
@@ -150,10 +147,9 @@ class VaccinationWriteSecurityTest {
     }
 
     @Test
-    fun `medical cannot update vaccination outside scope and data unchanged`() {
+    fun `medical can update vaccination outside own department tree`() {
         val seed = seedScopeData()
         val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId, notes = "before")
-        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
@@ -161,35 +157,30 @@ class VaccinationWriteSecurityTest {
                     .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId, notes = "after")),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isOk)
 
-        val unchanged = vaccinationRepository.findById(existing.id!!).orElseThrow()
-        assertEquals("before", unchanged.notes)
-        assertEquals(beforeAudit, auditLogRepository.count())
+        val updated = vaccinationRepository.findById(existing.id!!).orElseThrow()
+        assertEquals("after", updated.notes)
     }
 
     @Test
-    fun `medical cannot delete vaccination outside scope`() {
+    fun `medical can delete vaccination outside own department tree`() {
         val seed = seedScopeData()
         val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
-        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
                 delete("/vaccinations/${existing.id}")
                     .header("X-Auth-Token", seed.medicalUserId.toString()),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isNoContent)
 
-        assertEquals(true, vaccinationRepository.findById(existing.id!!).isPresent)
-        assertEquals(beforeAudit, auditLogRepository.count())
+        assertEquals(false, vaccinationRepository.findById(existing.id!!).isPresent)
     }
 
     @Test
-    fun `medical cannot create document outside scope`() {
+    fun `medical can create document outside own department tree`() {
         val seed = seedScopeData()
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
-        val beforeAudit = auditLogRepository.count()
-        val beforeDocs = documentRepository.count()
 
         mockMvc
             .perform(
@@ -197,18 +188,16 @@ class VaccinationWriteSecurityTest {
                     .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(documentBody(externalVaccination.id!!)),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isOk)
 
-        assertEquals(beforeDocs, documentRepository.count())
-        assertEquals(beforeAudit, auditLogRepository.count())
+        assertEquals(1, documentRepository.count())
     }
 
     @Test
-    fun `medical cannot update document outside scope`() {
+    fun `medical can update document outside own department tree`() {
         val seed = seedScopeData()
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
         val doc = createDocument(externalVaccination.id!!, seed.adminUserId, fileName = "before.pdf")
-        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
@@ -216,28 +205,25 @@ class VaccinationWriteSecurityTest {
                     .header("X-Auth-Token", seed.medicalUserId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(documentBody(externalVaccination.id!!, fileName = "after.pdf")),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isOk)
 
-        val unchanged = documentRepository.findById(doc.id!!).orElseThrow()
-        assertEquals("before.pdf", unchanged.fileName)
-        assertEquals(beforeAudit, auditLogRepository.count())
+        val updated = documentRepository.findById(doc.id!!).orElseThrow()
+        assertEquals("after.pdf", updated.fileName)
     }
 
     @Test
-    fun `medical cannot delete document outside scope`() {
+    fun `medical can delete document outside own department tree`() {
         val seed = seedScopeData()
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
         val doc = createDocument(externalVaccination.id!!, seed.adminUserId)
-        val beforeAudit = auditLogRepository.count()
 
         mockMvc
             .perform(
                 delete("/documents/${doc.id}")
                     .header("X-Auth-Token", seed.medicalUserId.toString()),
-            ).andExpect(status().isForbidden)
+            ).andExpect(status().isNoContent)
 
-        assertEquals(true, documentRepository.findById(doc.id!!).isPresent)
-        assertEquals(beforeAudit, auditLogRepository.count())
+        assertEquals(false, documentRepository.findById(doc.id!!).isPresent)
     }
 
     private fun seedScopeData(): ScopeSeed {
