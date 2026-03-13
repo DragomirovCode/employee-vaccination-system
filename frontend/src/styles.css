@@ -582,6 +582,22 @@ input {
   font-weight: 600;
 }
 
+.disease-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.disease-item {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid #dce7dc;
+  background: linear-gradient(180deg, #ffffff, #f8fbf8);
+}
+
+.disease-item h3 {
+  margin: 0 0 0.45rem;
+}
+
 .editor-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
