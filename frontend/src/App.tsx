@@ -5,6 +5,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { RevaccinationDuePage } from "./pages/RevaccinationDuePage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { RequireRole } from "./features/auth/RequireRole";
 import { useAuth } from "./features/auth/AuthContext";
@@ -49,7 +50,8 @@ export function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<DashboardPage />} />
+          <Route index element={<RevaccinationDuePage />} />
+          <Route path="notifications" element={<DashboardPage />} />
           <Route
             path="admin-sandbox"
             element={
