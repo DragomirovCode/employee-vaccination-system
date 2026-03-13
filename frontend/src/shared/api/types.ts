@@ -118,3 +118,19 @@ export type DocumentDto = {
   uploadedBy: string;
   uploadedAt: string;
 };
+
+export type VaccinationCoverageDepartmentItem = {
+  departmentId: string;
+  departmentName: string;
+  employeesTotal: number;
+  employeesCovered: number;
+  coveragePercent: number;
+};
+
+export type VaccinationCoverageVaccineItem = {
+  vaccineId: string;
+  vaccineName: string;
+  employeesTotal: number;
+  employeesCovered: number;
+  coveragePercent: number;
+};

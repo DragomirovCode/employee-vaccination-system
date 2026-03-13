@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
+import { CoverageReportPage } from "./pages/CoverageReportPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { EmployeeVaccinationsPage } from "./pages/EmployeeVaccinationsPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
@@ -52,6 +53,14 @@ export function App() {
           }
         >
           <Route index element={<RevaccinationDuePage />} />
+          <Route
+            path="reports/coverage"
+            element={
+              <RequireRole allowedRoles={["HR", "MEDICAL", "ADMIN"]}>
+                <CoverageReportPage />
+              </RequireRole>
+            }
+          />
           <Route path="employees/:employeeId/vaccinations" element={<EmployeeVaccinationsPage />} />
           <Route path="notifications" element={<DashboardPage />} />
           <Route

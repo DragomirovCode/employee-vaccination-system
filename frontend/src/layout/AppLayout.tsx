@@ -14,6 +14,7 @@ export function AppLayout() {
   const { session, logout } = useAuth();
   const { t } = useI18n();
   const canOpenAdminSandbox = Boolean(session?.roles.includes("ADMIN"));
+  const canOpenCoverage = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const navClassName = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : undefined);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -58,6 +59,11 @@ export function AppLayout() {
           <NavLink to="/" end className={navClassName}>
             {t("layout.revaccination")}
           </NavLink>
+          {canOpenCoverage ? (
+            <NavLink to="/reports/coverage" className={navClassName}>
+              {t("layout.coverage")}
+            </NavLink>
+          ) : null}
           <NavLink to="/notifications" className={navClassName}>
             {t("layout.notifications")}
           </NavLink>
