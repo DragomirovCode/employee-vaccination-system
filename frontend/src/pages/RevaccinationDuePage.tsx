@@ -1,12 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { apiGet } from "../shared/api/client";
+import { apiGet, apiGetBlob } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, PageResponse, RevaccinationDueItem } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
 const DEFAULT_DAYS = 30;
 const PAGE_SIZE = 10;
+type ExportFormat = "csv" | "xlsx" | "pdf";
 
 function getStatus(daysLeft: number): "overdue" | "soon" | "planned" {
   if (daysLeft < 0) return "overdue";
@@ -32,6 +33,8 @@ export function RevaccinationDuePage() {
   const [page, setPage] = useState(0);
   const [appliedDays, setAppliedDays] = useState(DEFAULT_DAYS);
   const [draftDays, setDraftDays] = useState(String(DEFAULT_DAYS));
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +102,36 @@ export function RevaccinationDuePage() {
     setAppliedDays(nextDays);
   }
 
+  async function exportReport() {
+    setError(null);
+    setExporting(true);
+    try {
+      const { blob, contentDisposition } = await apiGetBlob(
+        `/reports/revaccination-due/export?days=${appliedDays}&format=${exportFormat}`,
+        {
+          headers: {
+            "Accept-Language": locale
+          }
+        }
+      );
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      const fileNameMatch = contentDisposition?.match(/filename="?(.*?)"?$/i);
+      link.href = url;
+      link.download = fileNameMatch?.[1] || `revaccination-due.${exportFormat}`;
+      link.style.display = "none";
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("revaccination.exportError");
+      setError(message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const formatter = new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-US");
   const totalPages = data?.totalPages ?? 0;
   const canGoPrevious = page > 0 && !loading;
@@ -132,6 +165,19 @@ export function RevaccinationDuePage() {
           <div className="toolbar-actions">
             <button type="submit" disabled={loading}>
               {t("revaccination.apply")}
+            </button>
+          </div>
+          <label className="toolbar-field">
+            <span>{t("revaccination.exportFormat")}</span>
+            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as ExportFormat)} disabled={exporting}>
+              <option value="csv">CSV</option>
+              <option value="xlsx">XLSX</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </label>
+          <div className="toolbar-actions">
+            <button type="button" className="button-secondary" onClick={() => void exportReport()} disabled={exporting}>
+              {exporting ? t("revaccination.exportDownloading") : t("revaccination.export")}
             </button>
           </div>
         </form>

@@ -138,7 +138,22 @@ class RevaccinationDueControllerTest {
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("employeeId,fullName,departmentId")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Employee,Department,Vaccine,Last vaccination date,Revaccination date,Days left")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("User Auth,Root,Influenza")))
+    }
+
+    @Test
+    fun `exports revaccination due report as csv in russian`() {
+        val seeded = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/revaccination-due/export")
+                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .header("Accept-Language", "ru")
+                    .param("days", "30"),
+            ).andExpect(status().isOk)
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Сотрудник,Подразделение,Вакцина,Дата последней вакцинации,Дата ревакцинации,Осталось дней")))
     }
 
     @Test

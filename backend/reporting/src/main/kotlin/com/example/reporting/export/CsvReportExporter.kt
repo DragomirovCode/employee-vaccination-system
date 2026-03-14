@@ -1,6 +1,7 @@
 package com.example.reporting.export
 
 import org.springframework.stereotype.Component
+import java.io.ByteArrayOutputStream
 
 @Component
 class CsvReportExporter {
@@ -14,9 +15,17 @@ class CsvReportExporter {
         rows.forEach { row ->
             builder.appendLine(row.joinToString(",") { escape(it?.toString() ?: "") })
         }
+        val bytes =
+            ByteArrayOutputStream().use { output ->
+                // UTF-8 BOM helps Excel/Windows open localized CSV files with the correct encoding.
+                output.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
+                output.write(builder.toString().toByteArray(Charsets.UTF_8))
+                output.toByteArray()
+            }
+
         return ReportFile(
-            bytes = builder.toString().toByteArray(Charsets.UTF_8),
-            contentType = "text/csv",
+            bytes = bytes,
+            contentType = "text/csv; charset=UTF-8",
             fileName = "$fileNameBase.csv",
         )
     }

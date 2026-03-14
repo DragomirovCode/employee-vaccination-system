@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { apiGet } from "../shared/api/client";
+import { apiGet, apiGetBlob } from "../shared/api/client";
 import {
   ApiHttpError,
   DepartmentDto,
@@ -9,6 +9,7 @@ import {
 import { useI18n } from "../shared/i18n/I18nContext";
 
 type CoverageMode = "department" | "vaccine";
+type ExportFormat = "csv" | "xlsx" | "pdf";
 
 function getDefaultDateRange() {
   const now = new Date();
@@ -26,7 +27,7 @@ function getCoverageTone(coveragePercent: number): "low" | "medium" | "high" {
 }
 
 export function CoverageReportPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const defaults = getDefaultDateRange();
   const [mode, setMode] = useState<CoverageMode>("department");
   const [dateFrom, setDateFrom] = useState(defaults.dateFrom);
@@ -39,6 +40,8 @@ export function CoverageReportPage() {
   const [items, setItems] = useState<Array<VaccinationCoverageDepartmentItem | VaccinationCoverageVaccineItem>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +124,48 @@ export function CoverageReportPage() {
     setDepartmentId(draftDepartmentId);
   }
 
+  async function exportReport() {
+    setError(null);
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        dateFrom,
+        dateTo,
+        format: exportFormat
+      });
+      if (departmentId) {
+        params.set("departmentId", departmentId);
+      }
+
+      const path =
+        mode === "department"
+          ? `/reports/vaccination-coverage/export?${params.toString()}`
+          : `/reports/vaccination-coverage-by-vaccine/export?${params.toString()}`;
+
+      const { blob, contentDisposition } = await apiGetBlob(path, {
+        headers: {
+          "Accept-Language": locale
+        }
+      });
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      const fallbackName = mode === "department" ? `vaccination-coverage.${exportFormat}` : `vaccination-coverage-by-vaccine.${exportFormat}`;
+      const fileNameMatch = contentDisposition?.match(/filename="?(.*?)"?$/i);
+      link.href = url;
+      link.download = fileNameMatch?.[1] || fallbackName;
+      link.style.display = "none";
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("coverage.exportError");
+      setError(message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <section className="stack-lg">
       <article className="card">
@@ -170,6 +215,19 @@ export function CoverageReportPage() {
           <div className="toolbar-actions">
             <button type="submit" disabled={loading}>
               {t("coverage.apply")}
+            </button>
+          </div>
+          <label className="toolbar-field">
+            <span>{t("coverage.exportFormat")}</span>
+            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as ExportFormat)} disabled={exporting}>
+              <option value="csv">CSV</option>
+              <option value="xlsx">XLSX</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </label>
+          <div className="toolbar-actions">
+            <button type="button" className="button-secondary" onClick={() => void exportReport()} disabled={exporting}>
+              {exporting ? t("coverage.exportDownloading") : t("coverage.export")}
             </button>
           </div>
         </form>

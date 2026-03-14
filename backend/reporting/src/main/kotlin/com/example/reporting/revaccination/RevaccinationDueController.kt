@@ -2,6 +2,7 @@ package com.example.reporting.revaccination
 
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
+import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.access.ReportingSecurityContext
 import com.example.reporting.export.ReportExportService
 import com.example.reporting.export.ReportFormat
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
+import java.util.Locale
 
 @RestController
 @RequestMapping("/reports")
@@ -132,32 +134,13 @@ class RevaccinationDueController(
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
         val scope = requireScope(request)
         val rows = service.getDueInDaysForExport(days = days, scope = scope)
+        val exportView = ReportExportViewModels.revaccinationDue(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
                 format = reportFormat,
                 fileNameBase = "revaccination-due",
-                headers =
-                    listOf(
-                        "employeeId",
-                        "fullName",
-                        "departmentId",
-                        "vaccineName",
-                        "lastVaccinationDate",
-                        "revaccinationDate",
-                        "daysLeft",
-                    ),
-                rows =
-                    rows.map {
-                        listOf(
-                            it.employeeId,
-                            it.fullName,
-                            it.departmentId,
-                            it.vaccineName,
-                            it.lastVaccinationDate,
-                            it.revaccinationDate,
-                            it.daysLeft,
-                        )
-                    },
+                headers = exportView.headers,
+                rows = exportView.rows,
             )
 
         return ResponseEntity
@@ -170,4 +153,10 @@ class RevaccinationDueController(
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
+
+    private fun resolveExportLocale(request: HttpServletRequest): Locale =
+        request.getHeader("Accept-Language")
+            ?.takeIf { it.isNotBlank() }
+            ?.let(Locale::forLanguageTag)
+            ?: Locale.ENGLISH
 }

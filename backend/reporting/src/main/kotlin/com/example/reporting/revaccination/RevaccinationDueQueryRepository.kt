@@ -40,11 +40,12 @@ class RevaccinationDueQueryRepository(
                 .createQuery(
                     """
                     SELECT new com.example.reporting.revaccination.RevaccinationDueRow(
-                        e.id, e.firstName, e.lastName, e.middleName, e.departmentId,
+                        e.id, e.firstName, e.lastName, e.middleName, e.departmentId, d.name,
                         vac.name, v.vaccinationDate, v.revaccinationDate
                     )
                     FROM VaccinationEntity v
                     JOIN EmployeeEntity e ON e.id = v.employeeId
+                    JOIN DepartmentEntity d ON d.id = e.departmentId
                     JOIN VaccineEntity vac ON vac.id = v.vaccineId
                     WHERE $whereClause
                     ORDER BY v.revaccinationDate ASC, e.lastName ASC, e.firstName ASC
@@ -119,11 +120,12 @@ class RevaccinationDueQueryRepository(
                 .createQuery(
                     """
                     SELECT new com.example.reporting.revaccination.RevaccinationDueRow(
-                        e.id, e.firstName, e.lastName, e.middleName, e.departmentId,
+                        e.id, e.firstName, e.lastName, e.middleName, e.departmentId, d.name,
                         vac.name, v.vaccinationDate, v.revaccinationDate
                     )
                     FROM VaccinationEntity v
                     JOIN EmployeeEntity e ON e.id = v.employeeId
+                    JOIN DepartmentEntity d ON d.id = e.departmentId
                     JOIN VaccineEntity vac ON vac.id = v.vaccineId
                     WHERE $whereClause
                     ORDER BY v.revaccinationDate ASC, e.lastName ASC, e.firstName ASC
