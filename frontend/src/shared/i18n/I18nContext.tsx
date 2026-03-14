@@ -333,7 +333,19 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.saveError": "Не удалось сохранить пользователя",
     "adminUsers.statusError": "Не удалось обновить статус пользователя",
     "adminUsers.copyTokenError": "Не удалось скопировать токен",
-    "adminUsers.emailConflict": "Пользователь с таким email уже существует"
+    "adminUsers.emailConflict": "Пользователь с таким email уже существует",
+    "adminRoles.title": "Роли",
+    "adminRoles.description": "Назначение и снятие ролей пользователя.",
+    "adminRoles.available": "Доступные роли",
+    "adminRoles.assign": "Назначить роль",
+    "adminRoles.remove": "Снять роль",
+    "adminRoles.select": "Выберите роль",
+    "adminRoles.roleAlreadyAssigned": "Роль уже назначена",
+    "adminRoles.updateError": "Не удалось обновить роли пользователя",
+    "adminRoles.validation": "Выберите роль",
+    "adminRoles.emptyTitle": "Нет назначенных ролей",
+    "adminRoles.emptyDescription": "У этого пользователя пока нет ролей.",
+    "adminRoles.updating": "Обновление..."
   },
   en: {
     "common.loading": "Loading...",
@@ -657,7 +669,19 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.saveError": "Failed to save user",
     "adminUsers.statusError": "Failed to update user status",
     "adminUsers.copyTokenError": "Failed to copy token",
-    "adminUsers.emailConflict": "A user with this email already exists"
+    "adminUsers.emailConflict": "A user with this email already exists",
+    "adminRoles.title": "Roles",
+    "adminRoles.description": "Assign and remove user roles.",
+    "adminRoles.available": "Available roles",
+    "adminRoles.assign": "Assign role",
+    "adminRoles.remove": "Remove role",
+    "adminRoles.select": "Select role",
+    "adminRoles.roleAlreadyAssigned": "Role is already assigned",
+    "adminRoles.updateError": "Failed to update user roles",
+    "adminRoles.validation": "Select a role",
+    "adminRoles.emptyTitle": "No roles assigned",
+    "adminRoles.emptyDescription": "This user has no roles yet.",
+    "adminRoles.updating": "Updating..."
   }
 };
 

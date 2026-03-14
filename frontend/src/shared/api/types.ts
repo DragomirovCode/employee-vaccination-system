@@ -114,6 +114,19 @@ export type AuthUserStatusRequest = {
   active: boolean;
 };
 
+export type AuthRoleDto = {
+  id: number;
+  code: string;
+  name: string;
+};
+
+export type AuthUserRoleDto = {
+  userId: string;
+  roleId: number;
+  assignedAt: string;
+  assignedBy: string | null;
+};
+
 export type VaccineDto = {
   id: string;
   name: string;

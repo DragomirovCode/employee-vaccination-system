@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { apiGet, apiPost, apiPut } from "../shared/api/client";
-import { ApiHttpError, AuthUserDto, AuthUserWriteRequest } from "../shared/api/types";
+import { apiDelete, apiGet, apiPost, apiPut } from "../shared/api/client";
+import { ApiHttpError, AuthRoleDto, AuthUserDto, AuthUserRoleDto, AuthUserWriteRequest } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
 type AdminUserFormState = {
@@ -33,6 +33,10 @@ export function AdminUserEditorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [roles, setRoles] = useState<AuthRoleDto[]>([]);
+  const [assignedRoles, setAssignedRoles] = useState<AuthUserRoleDto[]>([]);
+  const [roleDraft, setRoleDraft] = useState("");
+  const [roleBusyCode, setRoleBusyCode] = useState<string | null>(null);
   const isEditMode = Boolean(userId);
 
   useEffect(() => {
@@ -47,9 +51,15 @@ export function AdminUserEditorPage() {
       setLoading(true);
       setError(null);
       try {
-        const user = await apiGet<AuthUserDto>(`/auth/users/${userId}`);
+        const [user, rolesResponse, userRolesResponse] = await Promise.all([
+          apiGet<AuthUserDto>(`/auth/users/${userId}`),
+          apiGet<AuthRoleDto[]>("/auth/roles"),
+          apiGet<AuthUserRoleDto[]>(`/auth/users/${userId}/roles`)
+        ]);
         if (!cancelled) {
           setFormState(toFormState(user));
+          setRoles(rolesResponse);
+          setAssignedRoles(userRolesResponse);
         }
       } catch (e) {
         if (cancelled) return;
@@ -104,6 +114,62 @@ export function AdminUserEditorPage() {
     }
   }
 
+  async function assignRole() {
+    if (!userId || !roleDraft) {
+      setError(t("adminRoles.validation"));
+      return;
+    }
+
+    setRoleBusyCode(roleDraft);
+    setError(null);
+    try {
+      const created = await apiPost<AuthUserRoleDto>(`/auth/users/${userId}/roles/${roleDraft}`);
+      setAssignedRoles((current) => [...current, created]);
+      setRoleDraft("");
+    } catch (e) {
+      const message =
+        e instanceof ApiHttpError && e.status === 409
+          ? t("adminRoles.roleAlreadyAssigned")
+          : e instanceof ApiHttpError
+            ? e.payload?.message ?? e.message
+            : t("adminRoles.updateError");
+      setError(message);
+    } finally {
+      setRoleBusyCode(null);
+    }
+  }
+
+  async function unassignRole(roleCode: string) {
+    if (!userId) {
+      return;
+    }
+
+    setRoleBusyCode(roleCode);
+    setError(null);
+    try {
+      await apiDelete(`/auth/users/${userId}/roles/${roleCode}`);
+      const roleToRemove = roles.find((role) => role.code === roleCode);
+      if (!roleToRemove) {
+        return;
+      }
+      setAssignedRoles((current) => current.filter((item) => item.roleId !== roleToRemove.id));
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("adminRoles.updateError");
+      setError(message);
+    } finally {
+      setRoleBusyCode(null);
+    }
+  }
+
+  const assignedRoleIds = new Set(assignedRoles.map((item) => item.roleId));
+  const availableRoles = roles.filter((role) => !assignedRoleIds.has(role.id));
+  const assignedRoleDetails = assignedRoles
+    .map((assignment) => ({
+      assignment,
+      role: roles.find((role) => role.id === assignment.roleId)
+    }))
+    .filter((item): item is { assignment: AuthUserRoleDto; role: AuthRoleDto } => Boolean(item.role));
+
   return (
     <section className="stack-lg">
       <div className="page-actions">
@@ -153,6 +219,66 @@ export function AdminUserEditorPage() {
           </form>
         ) : null}
       </article>
+
+      {isEditMode && !loading ? (
+        <article className="card">
+          <div className="page-head">
+            <div>
+              <h3>{t("adminRoles.title")}</h3>
+              <p className="muted">{t("adminRoles.description")}</p>
+            </div>
+          </div>
+
+          {assignedRoleDetails.length === 0 ? (
+            <div className="empty-state">
+              <h3>{t("adminRoles.emptyTitle")}</h3>
+              <p>{t("adminRoles.emptyDescription")}</p>
+            </div>
+          ) : (
+            <ul className="tag-list">
+              {assignedRoleDetails.map(({ role }) => (
+                <li key={role.code} className="tag-item">
+                  <span>
+                    {role.name} ({role.code})
+                  </span>
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => void unassignRole(role.code)}
+                    disabled={roleBusyCode === role.code}
+                  >
+                    {roleBusyCode === role.code ? t("adminRoles.updating") : t("adminRoles.remove")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="toolbar">
+            <label className="toolbar-field">
+              <span>{t("adminRoles.available")}</span>
+              <select value={roleDraft} onChange={(e) => setRoleDraft(e.target.value)} disabled={Boolean(roleBusyCode)}>
+                <option value="">{t("adminRoles.select")}</option>
+                {availableRoles.map((role) => (
+                  <option key={role.code} value={role.code}>
+                    {role.name} ({role.code})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="toolbar-actions">
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => void assignRole()}
+                disabled={!roleDraft || availableRoles.length === 0 || Boolean(roleBusyCode)}
+              >
+                {roleBusyCode === roleDraft ? t("adminRoles.updating") : t("adminRoles.assign")}
+              </button>
+            </div>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 }
