@@ -18,7 +18,7 @@ on:
     branches: [ master ]
 
 jobs:
-  ci:
+  code-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,10 +46,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: chmod +x backend/gradlew
 
-      - name: Run ktlint and tests
+      - name: Run ktlint
         if: github.event_name == 'pull_request'
         working-directory: backend
-        run: ./gradlew ktlintCheck test
+        run: ./gradlew ktlintCheck
 
       # ------------------------------------------------
       # Commit validation (master)
@@ -57,6 +57,28 @@ jobs:
       - name: Check commit message
         if: github.event_name == 'push'
         run: bash scripts/check_commit.sh
+
+  backend-build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x backend/gradlew
+
+      - name: Build backend
+        working-directory: backend
+        run: ./gradlew build
 
   frontend-build:
     if: github.event_name == 'pull_request'
