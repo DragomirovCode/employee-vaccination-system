@@ -12,6 +12,21 @@ type AuthMeResponse = {
   roles: AppRole[];
 };
 
+function canAccessPath(pathname: string, roles: AppRole[]): boolean {
+  if (pathname === "/" || pathname.startsWith("/employees/") || pathname === "/notifications") return true;
+  if (pathname === "/reports/coverage") return roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN");
+  if (pathname === "/employees") return roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN");
+  if (pathname === "/vaccines" || pathname === "/diseases") {
+    return roles.some((role) => role === "MEDICAL" || role === "ADMIN");
+  }
+  if (pathname === "/admin-sandbox") return roles.includes("ADMIN");
+  return false;
+}
+
+function resolveRedirectPath(pathname: string, roles: AppRole[]): string {
+  return canAccessPath(pathname, roles) ? pathname : "/";
+}
+
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
@@ -59,7 +74,7 @@ export function LoginPage() {
         roles: me.roles,
         userId: me.userId
       });
-      navigate(redirectTo, { replace: true });
+      navigate(resolveRedirectPath(redirectTo, me.roles), { replace: true });
     } catch (e) {
       if (e instanceof ApiHttpError && e.status === 401) {
         setErrorKey("login.tokenNotFound");
