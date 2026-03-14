@@ -27,11 +27,11 @@ SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'medical@evs.local', 'seed-hash-m
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'employee.one@evs.local', 'seed-hash-employee-1', TRUE, TIMESTAMP '2026-03-01 09:15:00', TIMESTAMP '2026-03-01 09:15:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'petr.orlov@evs.local', 'seed-hash-employee-1', TRUE, TIMESTAMP '2026-03-01 09:15:00', TIMESTAMP '2026-03-01 09:15:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'employee.two@evs.local', 'seed-hash-employee-2', TRUE, TIMESTAMP '2026-03-01 09:20:00', TIMESTAMP '2026-03-01 09:20:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'polina.smirnova@evs.local', 'seed-hash-employee-2', TRUE, TIMESTAMP '2026-03-01 09:20:00', TIMESTAMP '2026-03-01 09:20:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14');
 
 INSERT INTO user_roles (user_id, role_id, assigned_at, assigned_by)
@@ -121,7 +121,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a10', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10', '8c0a2b90-e2ad-4e8b-b5b8-000000000001',
-       'Alice', 'Admin', NULL, DATE '1988-04-12', 'System Administrator', DATE '2021-02-01',
+       'Alina', 'Voronina', NULL, DATE '1988-04-12', 'System Administrator', DATE '2021-02-01',
        TIMESTAMP '2026-03-01 10:00:00', TIMESTAMP '2026-03-01 10:00:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a10');
 
@@ -129,7 +129,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a11', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11', '8c0a2b90-e2ad-4e8b-b5b8-000000000002',
-       'Helen', 'Hr', NULL, DATE '1990-08-21', 'HR Manager', DATE '2022-01-10',
+       'Elena', 'Morozova', NULL, DATE '1990-08-21', 'HR Manager', DATE '2022-01-10',
        TIMESTAMP '2026-03-01 10:05:00', TIMESTAMP '2026-03-01 10:05:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a11');
 
@@ -137,7 +137,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a12', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', '8c0a2b90-e2ad-4e8b-b5b8-000000000003',
-       'Megan', 'Medic', NULL, DATE '1985-11-05', 'Occupational Physician', DATE '2020-09-15',
+       'Marta', 'Lebedeva', NULL, DATE '1985-11-05', 'Occupational Physician', DATE '2020-09-15',
        TIMESTAMP '2026-03-01 10:10:00', TIMESTAMP '2026-03-01 10:10:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a12');
 
@@ -145,7 +145,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a13', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', '8c0a2b90-e2ad-4e8b-b5b8-000000000005',
-       'Peter', 'Person', NULL, DATE '1995-02-14', 'Machine Operator', DATE '2023-05-03',
+       'Petr', 'Orlov', NULL, DATE '1995-02-14', 'Machine Operator', DATE '2023-05-03',
        TIMESTAMP '2026-03-01 10:15:00', TIMESTAMP '2026-03-01 10:15:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a13');
 
@@ -153,7 +153,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a14', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', '8c0a2b90-e2ad-4e8b-b5b8-000000000005',
-       'Paula', 'Person', NULL, DATE '1993-06-18', 'Senior Operator', DATE '2022-11-18',
+       'Polina', 'Smirnova', NULL, DATE '1993-06-18', 'Senior Operator', DATE '2022-11-18',
        TIMESTAMP '2026-03-01 10:20:00', TIMESTAMP '2026-03-01 10:20:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a14');
 
@@ -161,7 +161,7 @@ INSERT INTO employees (
     id, user_id, department_id, first_name, last_name, middle_name, birth_date, position, hire_date, created_at, updated_at
 )
 SELECT '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a15', NULL, '8c0a2b90-e2ad-4e8b-b5b8-000000000004',
-       'Victor', 'Visitor', NULL, DATE '1982-09-30', 'Warehouse Specialist', DATE '2024-01-09',
+       'Viktor', 'Belov', NULL, DATE '1982-09-30', 'Warehouse Specialist', DATE '2024-01-09',
        TIMESTAMP '2026-03-01 10:25:00', TIMESTAMP '2026-03-01 10:25:00'
 WHERE NOT EXISTS (SELECT 1 FROM employees WHERE id = '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a15');
 
@@ -273,7 +273,7 @@ INSERT INTO vaccinations (
 )
 SELECT '7b53d4b0-c198-4700-b23f-000000000001', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a13', '4d8c9a54-1df5-4f65-91c0-000000000001',
        '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2025-10-01', 1, 'FLU-2025-001',
-       DATE '2026-09-30', NULL, DATE '2026-10-01', 'Annual influenza shot',
+       DATE '2026-09-30', NULL, DATE '2026-10-01', 'Seasonal influenza vaccination before autumn shift',
        TIMESTAMP '2025-10-01 09:30:00', TIMESTAMP '2025-10-01 09:30:00'
 WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000001');
 
@@ -283,7 +283,7 @@ INSERT INTO vaccinations (
 )
 SELECT '7b53d4b0-c198-4700-b23f-000000000002', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a14', '4d8c9a54-1df5-4f65-91c0-000000000001',
        '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2025-03-20', 1, 'FLU-2025-002',
-       DATE '2026-03-19', NULL, DATE '2026-03-20', 'Employee due for revaccination',
+       DATE '2026-03-19', NULL, DATE '2026-03-20', 'Scheduled revaccination before spring production peak',
        TIMESTAMP '2025-03-20 10:00:00', TIMESTAMP '2025-03-20 10:00:00'
 WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000002');
 
@@ -293,7 +293,7 @@ INSERT INTO vaccinations (
 )
 SELECT '7b53d4b0-c198-4700-b23f-000000000003', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a13', '4d8c9a54-1df5-4f65-91c0-000000000002',
        '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2026-02-01', 1, 'HEP-2026-001',
-       DATE '2027-01-31', DATE '2026-03-03', DATE '2029-02-01', 'Dose 1 of hepatitis B series',
+       DATE '2027-01-31', DATE '2026-03-03', DATE '2029-02-01', 'First dose of hepatitis B course for production access',
        TIMESTAMP '2026-02-01 11:00:00', TIMESTAMP '2026-02-01 11:00:00'
 WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000003');
 
@@ -313,7 +313,7 @@ INSERT INTO vaccinations (
 )
 SELECT '7b53d4b0-c198-4700-b23f-000000000011', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a24', '4d8c9a54-1df5-4f65-91c0-000000000003',
        '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2024-06-10', 1, 'TET-2024-011',
-       DATE '2034-06-08', NULL, DATE '2034-06-10', 'Initial tetanus booster for lab onboarding',
+       DATE '2034-06-08', NULL, DATE '2034-06-10', 'Initial tetanus booster for laboratory onboarding',
        TIMESTAMP '2024-06-10 14:15:00', TIMESTAMP '2024-06-10 14:15:00'
 WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000011');
 
@@ -323,19 +323,49 @@ INSERT INTO vaccinations (
 )
 SELECT '7b53d4b0-c198-4700-b23f-000000000012', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a25', '4d8c9a54-1df5-4f65-91c0-000000000002',
        '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2026-01-15', 1, 'HEP-2026-012',
-       DATE '2029-01-14', DATE '2026-02-14', DATE '2029-01-15', 'Hepatitis B course started for recruiter',
+       DATE '2029-01-14', DATE '2026-02-14', DATE '2029-01-15', 'Hepatitis B course started for recruiting team onboarding',
        TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 13:00:00'
 WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000012');
 
+INSERT INTO vaccinations (
+    id, employee_id, vaccine_id, performed_by, vaccination_date, dose_number, batch_number,
+    expiration_date, next_dose_date, revaccination_date, notes, created_at, updated_at
+)
+SELECT '7b53d4b0-c198-4700-b23f-000000000013', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a20', '4d8c9a54-1df5-4f65-91c0-000000000001',
+       '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2025-09-25', 1, 'FLU-2025-013',
+       DATE '2026-09-24', NULL, DATE '2026-09-25', 'Influenza vaccination before autumn quality audits',
+       TIMESTAMP '2025-09-25 08:45:00', TIMESTAMP '2025-09-25 08:45:00'
+WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000013');
+
+INSERT INTO vaccinations (
+    id, employee_id, vaccine_id, performed_by, vaccination_date, dose_number, batch_number,
+    expiration_date, next_dose_date, revaccination_date, notes, created_at, updated_at
+)
+SELECT '7b53d4b0-c198-4700-b23f-000000000014', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a21', '4d8c9a54-1df5-4f65-91c0-000000000003',
+       '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2025-08-08', 1, 'TET-2025-014',
+       DATE '2035-08-07', NULL, DATE '2035-08-08', 'Planned tetanus booster after safety training refresh',
+       TIMESTAMP '2025-08-08 15:10:00', TIMESTAMP '2025-08-08 15:10:00'
+WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000014');
+
+INSERT INTO vaccinations (
+    id, employee_id, vaccine_id, performed_by, vaccination_date, dose_number, batch_number,
+    expiration_date, next_dose_date, revaccination_date, notes, created_at, updated_at
+)
+SELECT '7b53d4b0-c198-4700-b23f-000000000015', '018f4fd2-85f8-7f2e-b95e-9df7ac8e3a22', '4d8c9a54-1df5-4f65-91c0-000000000001',
+       '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', DATE '2025-10-10', 1, 'FLU-2025-015',
+       DATE '2026-10-09', NULL, DATE '2026-10-10', 'Influenza vaccination before warehouse cold season',
+       TIMESTAMP '2025-10-10 10:20:00', TIMESTAMP '2025-10-10 10:20:00'
+WHERE NOT EXISTS (SELECT 1 FROM vaccinations WHERE id = '7b53d4b0-c198-4700-b23f-000000000015');
+
 INSERT INTO documents (id, vaccination_id, file_name, file_path, file_size, mime_type, uploaded_by, uploaded_at)
 SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000001', '7b53d4b0-c198-4700-b23f-000000000001', 'flu-certificate-peter.pdf',
-       'seed/flu-certificate-peter.pdf', 24576, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
+       'seed/flu-certificate-petr-orlov.pdf', 24576, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
        TIMESTAMP '2025-10-01 09:40:00'
 WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = '2fd5c3ec-0ee2-48ec-9d7a-000000000001');
 
 INSERT INTO documents (id, vaccination_id, file_name, file_path, file_size, mime_type, uploaded_by, uploaded_at)
-SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000002', '7b53d4b0-c198-4700-b23f-000000000002', 'flu-certificate-paula.pdf',
-       'seed/flu-certificate-paula.pdf', 28672, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
+SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000002', '7b53d4b0-c198-4700-b23f-000000000002', 'flu-certificate-polina-smirnova.pdf',
+       'seed/flu-certificate-polina-smirnova.pdf', 28672, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
        TIMESTAMP '2025-03-20 10:10:00'
 WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = '2fd5c3ec-0ee2-48ec-9d7a-000000000002');
 
@@ -351,21 +381,33 @@ SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000011', '7b53d4b0-c198-4700-b23f-00000000
        TIMESTAMP '2026-01-15 13:12:00'
 WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = '2fd5c3ec-0ee2-48ec-9d7a-000000000011');
 
+INSERT INTO documents (id, vaccination_id, file_name, file_path, file_size, mime_type, uploaded_by, uploaded_at)
+SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000012', '7b53d4b0-c198-4700-b23f-000000000013', 'flu-certificate-olivia-stone.pdf',
+       'seed/flu-certificate-olivia-stone.pdf', 24110, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
+       TIMESTAMP '2025-09-25 08:55:00'
+WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = '2fd5c3ec-0ee2-48ec-9d7a-000000000012');
+
+INSERT INTO documents (id, vaccination_id, file_name, file_path, file_size, mime_type, uploaded_by, uploaded_at)
+SELECT '2fd5c3ec-0ee2-48ec-9d7a-000000000013', '7b53d4b0-c198-4700-b23f-000000000015', 'flu-certificate-liam-novak.pdf',
+       'seed/flu-certificate-liam-novak.pdf', 23380, 'application/pdf', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12',
+       TIMESTAMP '2025-10-10 10:32:00'
+WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = '2fd5c3ec-0ee2-48ec-9d7a-000000000013');
+
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
 SELECT '6f1f9d6c-65ec-4706-8233-000000000001', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'REVACCINATION_DUE',
-       'Vaccination series continuation', 'Next hepatitis B dose is scheduled for 2026-03-03.', TRUE,
+       'Vaccination series continuation', 'Your next hepatitis B dose is scheduled for 2026-03-03.', TRUE,
        TIMESTAMP '2026-03-12 08:00:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000001');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
 SELECT '6f1f9d6c-65ec-4706-8233-000000000002', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
-       'Medical document available', 'Your influenza vaccination certificate is available for download.', FALSE,
+       'Medical document available', 'Your influenza vaccination certificate is available in the employee portal.', FALSE,
        TIMESTAMP '2026-03-11 09:45:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000002');
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
 SELECT '6f1f9d6c-65ec-4706-8233-000000000003', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
-       'Profile synced', 'Your employee profile was synced with the updated demo organization tree.', TRUE,
+       'Profile synced', 'Your employee profile was synchronized with the current organization structure.', TRUE,
        TIMESTAMP '2026-03-10 18:00:00', TIMESTAMP '2026-03-10 18:15:00', NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000003');
 
@@ -395,7 +437,7 @@ WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-823
 
 INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
 SELECT '6f1f9d6c-65ec-4706-8233-000000000008', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SYSTEM',
-       'Reminder settings updated', 'Demo reminder settings were enabled for your vaccination schedule.', FALSE,
+       'Reminder settings updated', 'Reminder settings were enabled for your vaccination schedule.', FALSE,
        TIMESTAMP '2026-03-10 12:20:00', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000008');
 
@@ -410,6 +452,18 @@ SELECT '6f1f9d6c-65ec-4706-8233-000000000010', '018f4fd2-75f8-7f2e-b95e-9df7ac8e
        'Appointment confirmed', 'Your revaccination appointment is booked for 2026-03-18 at 09:30.', TRUE,
        TIMESTAMP '2026-03-02 08:00:00', TIMESTAMP '2026-03-02 12:00:00', NULL
 WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000010');
+
+INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
+SELECT '6f1f9d6c-65ec-4706-8233-000000000011', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'SYSTEM',
+       'Certificate signed', 'The occupational health physician signed your influenza certificate.', FALSE,
+       TIMESTAMP '2026-03-13 10:10:00', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000011');
+
+INSERT INTO notifications (id, user_id, type, title, message, is_read, created_at, read_at, payload)
+SELECT '6f1f9d6c-65ec-4706-8233-000000000012', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'SYSTEM',
+       'Medical office updated', 'The medical office rescheduled your visit to 2026-03-19 at 11:00.', FALSE,
+       TIMESTAMP '2026-03-13 11:25:00', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE id = '6f1f9d6c-65ec-4706-8233-000000000012');
 
 INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
 SELECT '5a4e9828-89c8-4609-a4d3-000000000001', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10', 'CREATE', 'USER',
@@ -430,3 +484,18 @@ INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, old_value, n
 SELECT '5a4e9828-89c8-4609-a4d3-000000000011', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'CREATE', 'VACCINATION',
        '7b53d4b0-c198-4700-b23f-000000000010', NULL, NULL, TIMESTAMP '2025-11-15 09:01:00'
 WHERE NOT EXISTS (SELECT 1 FROM audit_log WHERE id = '5a4e9828-89c8-4609-a4d3-000000000011');
+
+INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
+SELECT '5a4e9828-89c8-4609-a4d3-000000000012', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'CREATE', 'VACCINATION',
+       '7b53d4b0-c198-4700-b23f-000000000013', NULL, NULL, TIMESTAMP '2025-09-25 08:46:00'
+WHERE NOT EXISTS (SELECT 1 FROM audit_log WHERE id = '5a4e9828-89c8-4609-a4d3-000000000012');
+
+INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
+SELECT '5a4e9828-89c8-4609-a4d3-000000000013', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'CREATE', 'DOCUMENT',
+       '2fd5c3ec-0ee2-48ec-9d7a-000000000012', NULL, NULL, TIMESTAMP '2025-09-25 08:56:00'
+WHERE NOT EXISTS (SELECT 1 FROM audit_log WHERE id = '5a4e9828-89c8-4609-a4d3-000000000013');
+
+INSERT INTO audit_log (id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
+SELECT '5a4e9828-89c8-4609-a4d3-000000000014', '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'CREATE', 'VACCINATION',
+       '7b53d4b0-c198-4700-b23f-000000000015', NULL, NULL, TIMESTAMP '2025-10-10 10:21:00'
+WHERE NOT EXISTS (SELECT 1 FROM audit_log WHERE id = '5a4e9828-89c8-4609-a4d3-000000000014');
