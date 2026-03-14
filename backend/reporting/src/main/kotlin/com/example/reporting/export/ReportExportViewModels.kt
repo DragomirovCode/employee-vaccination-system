@@ -16,7 +16,16 @@ object ReportExportViewModels {
         locale: Locale,
     ): ReportTableView =
         ReportTableView(
-            headers = localizedHeaders(locale, "Employee", "Department", "Vaccine", "Last vaccination date", "Revaccination date", "Days left"),
+            headers =
+                localizedHeaders(
+                    locale,
+                    "Employee",
+                    "Department",
+                    "Vaccine",
+                    "Last vaccination date",
+                    "Revaccination date",
+                    "Days left",
+                ),
             rows =
                 items.map {
                     listOf(

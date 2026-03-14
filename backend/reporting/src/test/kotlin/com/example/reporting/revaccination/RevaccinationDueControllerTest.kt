@@ -138,8 +138,11 @@ class RevaccinationDueControllerTest {
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Employee,Department,Vaccine,Last vaccination date,Revaccination date,Days left")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("User Auth,Root,Influenza")))
+            .andExpect(
+                content().string(
+                    org.hamcrest.Matchers.containsString("Employee,Department,Vaccine,Last vaccination date,Revaccination date,Days left"),
+                ),
+            ).andExpect(content().string(org.hamcrest.Matchers.containsString("User Auth,Root,Influenza")))
     }
 
     @Test
@@ -153,7 +156,13 @@ class RevaccinationDueControllerTest {
                     .header("Accept-Language", "ru")
                     .param("days", "30"),
             ).andExpect(status().isOk)
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Сотрудник,Подразделение,Вакцина,Дата последней вакцинации,Дата ревакцинации,Осталось дней")))
+            .andExpect(
+                content().string(
+                    org.hamcrest.Matchers.containsString(
+                        "Сотрудник,Подразделение,Вакцина,Дата последней вакцинации,Дата ревакцинации,Осталось дней",
+                    ),
+                ),
+            )
     }
 
     @Test

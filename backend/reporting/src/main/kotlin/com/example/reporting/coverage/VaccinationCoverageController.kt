@@ -3,8 +3,8 @@ package com.example.reporting.coverage
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
 import com.example.reporting.access.ReportingSecurityContext
-import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.export.ReportExportService
+import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.export.ReportFormat
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
-import java.util.UUID
 import java.util.Locale
+import java.util.UUID
 
 @RestController
 @RequestMapping("/reports")
@@ -264,7 +264,8 @@ class VaccinationCoverageController(
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
-        request.getHeader("Accept-Language")
+        request
+            .getHeader("Accept-Language")
             ?.takeIf { it.isNotBlank() }
             ?.let(Locale::forLanguageTag)
             ?: Locale.ENGLISH
