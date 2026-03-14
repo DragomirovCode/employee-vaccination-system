@@ -108,6 +108,15 @@ export type VaccineDto = {
   createdAt: string;
 };
 
+export type VaccineWriteRequest = {
+  name: string;
+  manufacturer: string | null;
+  validityDays: number;
+  dosesRequired: number;
+  daysBetween: number | null;
+  isActive: boolean;
+};
+
 export type VaccinationReadDto = {
   id: string;
   employeeId: string;
