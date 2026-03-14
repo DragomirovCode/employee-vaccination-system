@@ -13,7 +13,7 @@ COPY vaccination vaccination
 COPY reporting reporting
 COPY audit audit
 
-RUN chmod +x gradlew
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 RUN ./gradlew :app:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-jammy
