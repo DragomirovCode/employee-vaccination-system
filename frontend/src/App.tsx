@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { CoverageReportPage } from "./pages/CoverageReportPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DepartmentEditorPage } from "./pages/DepartmentEditorPage";
+import { DepartmentsPage } from "./pages/DepartmentsPage";
 import { DiseasesPage } from "./pages/DiseasesPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
 import { EmployeeVaccinationsPage } from "./pages/EmployeeVaccinationsPage";
@@ -71,6 +73,30 @@ export function App() {
             element={
               <RequireRole allowedRoles={["HR", "MEDICAL", "ADMIN"]}>
                 <EmployeesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="departments"
+            element={
+              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+                <DepartmentsPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="departments/new"
+            element={
+              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+                <DepartmentEditorPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="departments/:departmentId/edit"
+            element={
+              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+                <DepartmentEditorPage />
               </RequireRole>
             }
           />

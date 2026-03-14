@@ -17,6 +17,7 @@ export function AppLayout() {
   const canOpenAdminSandbox = Boolean(session?.roles.includes("ADMIN"));
   const canOpenCoverage = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const canOpenEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
+  const canOpenDepartments = Boolean(session?.roles.some((role) => role === "HR" || role === "ADMIN"));
   const canOpenVaccinationRegistry = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
   const canOpenVaccines = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
   const canOpenDiseases = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
@@ -77,6 +78,11 @@ export function AppLayout() {
           {canOpenEmployees ? (
             <NavLink to="/employees" className={navClassName}>
               {t("layout.employees")}
+            </NavLink>
+          ) : null}
+          {canOpenDepartments ? (
+            <NavLink to="/departments" className={navClassName}>
+              {t("layout.departments")}
             </NavLink>
           ) : null}
           {canOpenVaccinationRegistry ? (
