@@ -14,7 +14,7 @@ COMMIT_MESSAGE="$(git log -1 --pretty=%B | head -n 1)"
 
 MODULES="generic|auth|employee|vaccine|vaccination|reporting|audit"
 TYPES="feature|fix|docs|refactor|perf|test|config|security"
-SCOPES="docs|backend|frontend"
+SCOPES="docs|backend|frontend|devops"
 
 COMMIT_MASK="^MERGED:[[:space:]](((${SCOPES})[[:space:]]\|[[:space:]])?(${MODULES}))[[:space:]]\|[[:space:]](${TYPES})[[:space:]]\|[[:space:]]\#[[:digit:]]+[[:space:]]-[[:space:]].+"
 
