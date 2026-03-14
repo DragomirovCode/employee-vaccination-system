@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { apiDelete, apiGet } from "../shared/api/client";
+import { apiDelete, apiGet, apiPost } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto, VaccineDiseaseLinkDto, VaccineDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
@@ -14,6 +14,8 @@ export function VaccinesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [linkDrafts, setLinkDrafts] = useState<Record<string, string>>({});
+  const [linkBusyId, setLinkBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +90,55 @@ export function VaccinesPage() {
     }
   }
 
+  async function addDiseaseLink(vaccineId: string) {
+    const selectedDiseaseId = Number.parseInt(linkDrafts[vaccineId] ?? "", 10);
+    if (Number.isNaN(selectedDiseaseId)) {
+      setError(t("diseases.linkUpdateError"));
+      return;
+    }
+
+    setLinkBusyId(vaccineId);
+    setError(null);
+    try {
+      await apiPost(`/vaccines/${vaccineId}/diseases/${selectedDiseaseId}`);
+      setLinksByVaccine((current) => ({
+        ...current,
+        [vaccineId]: [...new Set([...(current[vaccineId] ?? []), selectedDiseaseId])]
+      }));
+      setLinkDrafts((current) => ({
+        ...current,
+        [vaccineId]: ""
+      }));
+    } catch (e) {
+      const message =
+        e instanceof ApiHttpError && e.status === 409
+          ? t("diseases.linkExists")
+          : e instanceof ApiHttpError
+            ? e.payload?.message ?? e.message
+            : t("diseases.linkUpdateError");
+      setError(message);
+    } finally {
+      setLinkBusyId(null);
+    }
+  }
+
+  async function removeDiseaseLink(vaccineId: string, diseaseId: number) {
+    setLinkBusyId(`${vaccineId}:${diseaseId}`);
+    setError(null);
+    try {
+      await apiDelete(`/vaccines/${vaccineId}/diseases/${diseaseId}`);
+      setLinksByVaccine((current) => ({
+        ...current,
+        [vaccineId]: (current[vaccineId] ?? []).filter((item) => item !== diseaseId)
+      }));
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.linkUpdateError");
+      setError(message);
+    } finally {
+      setLinkBusyId(null);
+    }
+  }
+
   return (
     <section className="stack-lg">
       <article className="card">
@@ -125,6 +176,7 @@ export function VaccinesPage() {
               const relatedDiseases = diseaseIds
                 .map((diseaseId) => diseasesMap[diseaseId])
                 .filter((item): item is DiseaseDto => Boolean(item));
+              const availableDiseases = diseases.filter((disease) => !diseaseIds.includes(disease.id));
 
               return (
                 <article key={vaccine.id} className="vaccine-item">
@@ -158,16 +210,55 @@ export function VaccinesPage() {
                   </dl>
 
                   <div className="history-block">
-                    <h4>{t("vaccines.diseases")}</h4>
+                    <h4>{t("diseases.linked")}</h4>
                     {relatedDiseases.length === 0 ? <p>{t("vaccines.noDiseases")}</p> : null}
                     {relatedDiseases.length > 0 ? (
                       <ul className="tag-list">
                         {relatedDiseases.map((disease) => (
                           <li key={disease.id} className="tag-item">
-                            {disease.name}
+                            <span>{disease.name}</span>
+                            {canManageVaccines ? (
+                              <button
+                                type="button"
+                                className="button-secondary"
+                                onClick={() => void removeDiseaseLink(vaccine.id, disease.id)}
+                                disabled={linkBusyId === `${vaccine.id}:${disease.id}`}
+                              >
+                                {t("diseases.removeLink")}
+                              </button>
+                            ) : null}
                           </li>
                         ))}
                       </ul>
+                    ) : null}
+                    {canManageVaccines ? (
+                      <div className="toolbar">
+                        <label className="toolbar-field">
+                          <span>{t("diseases.addToVaccine")}</span>
+                          <select
+                            value={linkDrafts[vaccine.id] ?? ""}
+                            onChange={(e) => setLinkDrafts((current) => ({ ...current, [vaccine.id]: e.target.value }))}
+                            disabled={linkBusyId === vaccine.id}
+                          >
+                            <option value="">{t("diseases.selectForVaccine")}</option>
+                            {availableDiseases.map((disease) => (
+                              <option key={disease.id} value={disease.id}>
+                                {disease.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="toolbar-actions">
+                          <button
+                            type="button"
+                            className="button-secondary"
+                            onClick={() => void addDiseaseLink(vaccine.id)}
+                            disabled={linkBusyId === vaccine.id || !linkDrafts[vaccine.id] || availableDiseases.length === 0}
+                          >
+                            {t("diseases.addToVaccine")}
+                          </button>
+                        </div>
+                      </div>
                     ) : null}
                   </div>
 

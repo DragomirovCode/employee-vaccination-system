@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
-import { apiGet } from "../shared/api/client";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../features/auth/AuthContext";
+import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
 export function DiseasesPage() {
+  const { session } = useAuth();
   const { t } = useI18n();
   const [diseases, setDiseases] = useState<DiseaseDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,11 +36,36 @@ export function DiseasesPage() {
       }
     }
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
   }, [t]);
+
+  const canManageDiseases = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
+
+  const sortedDiseases = useMemo(
+    () => [...diseases].sort((left, right) => left.name.localeCompare(right.name)),
+    [diseases]
+  );
+
+  async function deleteDisease(diseaseId: number) {
+    if (!window.confirm(t("diseases.deleteConfirm"))) {
+      return;
+    }
+
+    setDeletingId(diseaseId);
+    setError(null);
+    try {
+      await apiDelete(`/diseases/${diseaseId}`);
+      setDiseases((current) => current.filter((disease) => disease.id !== diseaseId));
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.deleteError");
+      setError(message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <section className="stack-lg">
@@ -46,27 +75,44 @@ export function DiseasesPage() {
             <h2>{t("diseases.title")}</h2>
             <p className="muted">{t("diseases.description")}</p>
           </div>
-          <span className="summary-pill">
-            {t("diseases.total")}: {diseases.length}
-          </span>
+          <div className="toolbar-actions">
+            <span className="summary-pill">
+              {t("diseases.total")}: {sortedDiseases.length}
+            </span>
+            {canManageDiseases ? (
+              <Link to="/diseases/new">
+                <button type="button" className="button-secondary">{t("diseases.create")}</button>
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && diseases.length === 0 ? (
+        {!loading && !error && sortedDiseases.length === 0 ? (
           <div className="empty-state">
             <h3>{t("diseases.emptyTitle")}</h3>
             <p>{t("diseases.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && diseases.length > 0 ? (
+        {!loading && !error && sortedDiseases.length > 0 ? (
           <div className="disease-list">
-            {diseases.map((disease) => (
+            {sortedDiseases.map((disease) => (
               <article key={disease.id} className="disease-item">
                 <h3>{disease.name}</h3>
                 <p>{disease.description ?? t("diseases.notSpecified")}</p>
+                {canManageDiseases ? (
+                  <div className="history-actions">
+                    <Link to={`/diseases/${disease.id}/edit`}>
+                      <button type="button" className="button-secondary">{t("diseases.edit")}</button>
+                    </Link>
+                    <button type="button" onClick={() => void deleteDisease(disease.id)} disabled={deletingId === disease.id}>
+                      {deletingId === disease.id ? t("diseases.deleting") : t("diseases.delete")}
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
