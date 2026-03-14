@@ -310,11 +310,11 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.editTitle": "Редактирование пользователя",
     "adminUsers.editorDescription": "Создание и редактирование учетных записей.",
     "adminUsers.email": "Email",
-    "adminUsers.uuid": "UUID",
+    "adminUsers.token": "Токен",
     "adminUsers.active": "Активен",
     "adminUsers.inactive": "Неактивен",
     "adminUsers.edit": "Редактировать",
-    "adminUsers.copyUuid": "Скопировать UUID",
+    "adminUsers.copyToken": "Скопировать токен",
     "adminUsers.copied": "Скопировано",
     "adminUsers.activate": "Активировать",
     "adminUsers.deactivate": "Деактивировать",
@@ -332,7 +332,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.unexpectedApiError": "Не удалось загрузить список пользователей",
     "adminUsers.saveError": "Не удалось сохранить пользователя",
     "adminUsers.statusError": "Не удалось обновить статус пользователя",
-    "adminUsers.copyError": "Не удалось скопировать UUID",
+    "adminUsers.copyTokenError": "Не удалось скопировать токен",
     "adminUsers.emailConflict": "Пользователь с таким email уже существует"
   },
   en: {
@@ -634,11 +634,11 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.editTitle": "Edit user",
     "adminUsers.editorDescription": "Create and edit user accounts.",
     "adminUsers.email": "Email",
-    "adminUsers.uuid": "UUID",
+    "adminUsers.token": "Token",
     "adminUsers.active": "Active",
     "adminUsers.inactive": "Inactive",
     "adminUsers.edit": "Edit",
-    "adminUsers.copyUuid": "Copy UUID",
+    "adminUsers.copyToken": "Copy token",
     "adminUsers.copied": "Copied",
     "adminUsers.activate": "Activate",
     "adminUsers.deactivate": "Deactivate",
@@ -656,7 +656,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "adminUsers.unexpectedApiError": "Failed to load users",
     "adminUsers.saveError": "Failed to save user",
     "adminUsers.statusError": "Failed to update user status",
-    "adminUsers.copyError": "Failed to copy UUID",
+    "adminUsers.copyTokenError": "Failed to copy token",
     "adminUsers.emailConflict": "A user with this email already exists"
   }
 };

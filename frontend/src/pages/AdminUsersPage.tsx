@@ -64,7 +64,7 @@ export function AdminUsersPage() {
     }
   }
 
-  async function copyUserId(userId: string) {
+  async function copyToken(userId: string) {
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(userId);
@@ -79,7 +79,7 @@ export function AdminUsersPage() {
       setCopiedUserId(userId);
       window.setTimeout(() => setCopiedUserId((current) => (current === userId ? null : current)), 2000);
     } catch {
-      setError(t("adminUsers.copyError"));
+      setError(t("adminUsers.copyTokenError"));
     }
   }
 
@@ -119,7 +119,7 @@ export function AdminUsersPage() {
                   <div>
                     <h3>{user.email}</h3>
                     <p className="muted">
-                      {t("adminUsers.uuid")}: <code>{user.id}</code>
+                      {t("adminUsers.token")}: <code>{user.id}</code>
                     </p>
                     <p className="muted">
                       {t("adminUsers.createdAt")}: {formatDateTime(user.createdAt, locale)}
@@ -137,8 +137,8 @@ export function AdminUsersPage() {
                   <Link to={`/admin/users/${user.id}/edit`}>
                     <button type="button" className="button-secondary">{t("adminUsers.edit")}</button>
                   </Link>
-                  <button type="button" className="button-secondary" onClick={() => void copyUserId(user.id)}>
-                    {copiedUserId === user.id ? t("adminUsers.copied") : t("adminUsers.copyUuid")}
+                  <button type="button" className="button-secondary" onClick={() => void copyToken(user.id)}>
+                    {copiedUserId === user.id ? t("adminUsers.copied") : t("adminUsers.copyToken")}
                   </button>
                   <button type="button" onClick={() => void toggleStatus(user)} disabled={statusBusyId === user.id}>
                     {statusBusyId === user.id
