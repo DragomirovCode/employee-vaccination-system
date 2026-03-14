@@ -168,6 +168,11 @@ export type DiseaseDto = {
   description: string | null;
 };
 
+export type DiseaseWriteRequest = {
+  name: string;
+  description: string | null;
+};
+
 export type VaccineDiseaseLinkDto = {
   vaccineId: string;
   diseaseId: number;
