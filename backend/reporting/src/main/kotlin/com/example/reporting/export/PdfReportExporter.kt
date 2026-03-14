@@ -2,9 +2,10 @@ package com.example.reporting.export
 
 import com.lowagie.text.Document
 import com.lowagie.text.DocumentException
+import com.lowagie.text.Font
 import com.lowagie.text.FontFactory
-import com.lowagie.text.Paragraph
 import com.lowagie.text.Phrase
+import com.lowagie.text.pdf.BaseFont
 import com.lowagie.text.pdf.PdfPCell
 import com.lowagie.text.pdf.PdfPTable
 import com.lowagie.text.pdf.PdfWriter
@@ -13,6 +14,10 @@ import java.io.ByteArrayOutputStream
 
 @Component
 class PdfReportExporter {
+    init {
+        FontFactory.registerDirectories()
+    }
+
     fun export(
         headers: List<String>,
         rows: List<List<Any?>>,
@@ -24,8 +29,6 @@ class PdfReportExporter {
                 try {
                     PdfWriter.getInstance(document, output)
                     document.open()
-                    document.add(Paragraph(fileNameBase.replace("-", " ").replaceFirstChar { it.uppercase() }))
-                    document.add(Paragraph(" "))
                     document.add(createTable(headers, rows))
                     document.close()
                     output.toByteArray()
@@ -51,18 +54,42 @@ class PdfReportExporter {
     ): PdfPTable {
         val table = PdfPTable(headers.size.coerceAtLeast(1))
         table.widthPercentage = 100f
+        val headerFont = resolveFont(10f, Font.BOLD)
+        val bodyFont = resolveFont(10f, Font.NORMAL)
 
         headers.forEach { header ->
-            val cell = PdfPCell(Phrase(header, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10f)))
+            val cell = PdfPCell(Phrase(header, headerFont))
             table.addCell(cell)
         }
 
         rows.forEach { row ->
             row.forEach { value ->
-                table.addCell(Phrase(value?.toString() ?: ""))
+                table.addCell(Phrase(value?.toString() ?: "", bodyFont))
             }
         }
 
         return table
+    }
+
+    private fun resolveFont(
+        size: Float,
+        style: Int,
+    ): Font {
+        val candidates =
+            listOf(
+                "Segoe UI",
+                "Arial",
+                "DejaVu Sans",
+                "Liberation Sans",
+            )
+
+        candidates.forEach { candidate ->
+            val font = FontFactory.getFont(candidate, BaseFont.IDENTITY_H, BaseFont.EMBEDDED, size, style)
+            if (font.baseFont != null) {
+                return font
+            }
+        }
+
+        return FontFactory.getFont(FontFactory.HELVETICA, size, style)
     }
 }

@@ -4,6 +4,7 @@ import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
 import com.example.reporting.access.ReportingSecurityContext
 import com.example.reporting.export.ReportExportService
+import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.export.ReportFormat
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
+import java.util.Locale
 import java.util.UUID
 
 @RestController
@@ -129,28 +131,13 @@ class VaccinationCoverageController(
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
         val scope = requireScope(request)
         val rows = service.getCoverageByDepartment(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val exportView = ReportExportViewModels.coverageByDepartment(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
                 format = reportFormat,
                 fileNameBase = "vaccination-coverage",
-                headers =
-                    listOf(
-                        "departmentId",
-                        "departmentName",
-                        "employeesTotal",
-                        "employeesCovered",
-                        "coveragePercent",
-                    ),
-                rows =
-                    rows.map {
-                        listOf(
-                            it.departmentId,
-                            it.departmentName,
-                            it.employeesTotal,
-                            it.employeesCovered,
-                            it.coveragePercent,
-                        )
-                    },
+                headers = exportView.headers,
+                rows = exportView.rows,
             )
 
         return ResponseEntity
@@ -256,28 +243,13 @@ class VaccinationCoverageController(
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
         val scope = requireScope(request)
         val rows = service.getCoverageByVaccine(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val exportView = ReportExportViewModels.coverageByVaccine(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
                 format = reportFormat,
                 fileNameBase = "vaccination-coverage-by-vaccine",
-                headers =
-                    listOf(
-                        "vaccineId",
-                        "vaccineName",
-                        "employeesTotal",
-                        "employeesCovered",
-                        "coveragePercent",
-                    ),
-                rows =
-                    rows.map {
-                        listOf(
-                            it.vaccineId,
-                            it.vaccineName,
-                            it.employeesTotal,
-                            it.employeesCovered,
-                            it.coveragePercent,
-                        )
-                    },
+                headers = exportView.headers,
+                rows = exportView.rows,
             )
 
         return ResponseEntity
@@ -290,4 +262,11 @@ class VaccinationCoverageController(
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
+
+    private fun resolveExportLocale(request: HttpServletRequest): Locale =
+        request
+            .getHeader("Accept-Language")
+            ?.takeIf { it.isNotBlank() }
+            ?.let(Locale::forLanguageTag)
+            ?: Locale.ENGLISH
 }

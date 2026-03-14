@@ -134,7 +134,9 @@ class VaccinationCoverageControllerTest {
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("departmentId,departmentName,employeesTotal")))
+            .andExpect(
+                content().string(org.hamcrest.Matchers.containsString("Department,Employees total,Employees covered,Coverage percent")),
+            ).andExpect(content().string(org.hamcrest.Matchers.containsString("Root,1,1,100.0")))
     }
 
     @Test
@@ -277,7 +279,8 @@ class VaccinationCoverageControllerTest {
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage-by-vaccine.csv\""))
             .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("vaccineId,vaccineName,employeesTotal")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Vaccine,Employees total,Employees covered,Coverage percent")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Coverage API Vax-A,3,3,100.0")))
     }
 
     @Test
