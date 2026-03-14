@@ -677,6 +677,28 @@ select {
   gap: 0.65rem;
 }
 
+.registry-table {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.registry-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.8fr) minmax(160px, 1.4fr) repeat(4, minmax(120px, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #dce7dc;
+  background: #fcfefc;
+}
+
+.registry-row-head {
+  font-weight: 700;
+  color: #49614f;
+  background: #f2f8f3;
+}
+
 .coverage-row {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(120px, 1fr));
@@ -750,6 +772,10 @@ select {
   }
 
   .coverage-row {
+    grid-template-columns: 1fr;
+  }
+
+  .registry-row {
     grid-template-columns: 1fr;
   }
 
