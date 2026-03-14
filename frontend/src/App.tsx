@@ -14,6 +14,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RevaccinationDuePage } from "./pages/RevaccinationDuePage";
 import { VaccinationRegistryPage } from "./pages/VaccinationRegistryPage";
+import { VaccineEditorPage } from "./pages/VaccineEditorPage";
 import { VaccinesPage } from "./pages/VaccinesPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { RequireRole } from "./features/auth/RequireRole";
@@ -129,6 +130,22 @@ export function App() {
             element={
               <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
                 <VaccinesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="vaccines/new"
+            element={
+              <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
+                <VaccineEditorPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="vaccines/:vaccineId/edit"
+            element={
+              <RequireRole allowedRoles={["MEDICAL", "ADMIN"]}>
+                <VaccineEditorPage />
               </RequireRole>
             }
           />

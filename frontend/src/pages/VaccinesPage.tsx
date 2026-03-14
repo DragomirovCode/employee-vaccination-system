@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { apiGet } from "../shared/api/client";
+import { Link } from "react-router-dom";
+import { useAuth } from "../features/auth/AuthContext";
+import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto, VaccineDiseaseLinkDto, VaccineDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
 export function VaccinesPage() {
+  const { session } = useAuth();
   const { t } = useI18n();
   const [vaccines, setVaccines] = useState<VaccineDto[]>([]);
   const [diseases, setDiseases] = useState<DiseaseDto[]>([]);
   const [linksByVaccine, setLinksByVaccine] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,16 +52,41 @@ export function VaccinesPage() {
       }
     }
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
   }, [t]);
 
+  const canManageVaccines = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
+
   const diseasesMap = useMemo(
     () => Object.fromEntries(diseases.map((disease) => [disease.id, disease])),
     [diseases]
   );
+
+  async function deleteVaccine(vaccineId: string) {
+    if (!window.confirm(t("vaccines.deleteConfirm"))) {
+      return;
+    }
+
+    setDeletingId(vaccineId);
+    setError(null);
+    try {
+      await apiDelete(`/vaccines/${vaccineId}`);
+      setVaccines((current) => current.filter((vaccine) => vaccine.id !== vaccineId));
+      setLinksByVaccine((current) => {
+        const next = { ...current };
+        delete next[vaccineId];
+        return next;
+      });
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.deleteError");
+      setError(message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <section className="stack-lg">
@@ -67,9 +96,16 @@ export function VaccinesPage() {
             <h2>{t("vaccines.title")}</h2>
             <p className="muted">{t("vaccines.description")}</p>
           </div>
-          <span className="summary-pill">
-            {t("vaccines.total")}: {vaccines.length}
-          </span>
+          <div className="toolbar-actions">
+            <span className="summary-pill">
+              {t("vaccines.total")}: {vaccines.length}
+            </span>
+            {canManageVaccines ? (
+              <Link to="/vaccines/new">
+                <button type="button" className="button-secondary">{t("vaccines.create")}</button>
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
@@ -134,6 +170,17 @@ export function VaccinesPage() {
                       </ul>
                     ) : null}
                   </div>
+
+                  {canManageVaccines ? (
+                    <div className="history-actions">
+                      <Link to={`/vaccines/${vaccine.id}/edit`}>
+                        <button type="button" className="button-secondary">{t("vaccines.edit")}</button>
+                      </Link>
+                      <button type="button" onClick={() => void deleteVaccine(vaccine.id)} disabled={deletingId === vaccine.id}>
+                        {deletingId === vaccine.id ? t("vaccines.deleting") : t("vaccines.delete")}
+                      </button>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
