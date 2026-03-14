@@ -81,6 +81,17 @@ export type EmployeeDto = {
   updatedAt: string;
 };
 
+export type EmployeeWriteRequest = {
+  userId: string | null;
+  departmentId: string;
+  firstName: string;
+  lastName: string;
+  middleName: string | null;
+  birthDate: string | null;
+  position: string | null;
+  hireDate: string | null;
+};
+
 export type VaccineDto = {
   id: string;
   name: string;

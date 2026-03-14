@@ -6,6 +6,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { DiseasesPage } from "./pages/DiseasesPage";
 import { EmployeesPage } from "./pages/EmployeesPage";
 import { EmployeeVaccinationsPage } from "./pages/EmployeeVaccinationsPage";
+import { EmployeeEditorPage } from "./pages/EmployeeEditorPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -70,6 +71,22 @@ export function App() {
             element={
               <RequireRole allowedRoles={["HR", "MEDICAL", "ADMIN"]}>
                 <EmployeesPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="employees/new"
+            element={
+              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+                <EmployeeEditorPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="employees/:employeeId/edit"
+            element={
+              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+                <EmployeeEditorPage />
               </RequireRole>
             }
           />

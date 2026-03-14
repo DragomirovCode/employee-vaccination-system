@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiGet } from "../shared/api/client";
+import { useAuth } from "../features/auth/AuthContext";
+import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, EmployeeDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
@@ -9,12 +10,14 @@ function formatEmployeeName(employee: EmployeeDto): string {
 }
 
 export function EmployeesPage() {
+  const { session } = useAuth();
   const { locale, t } = useI18n();
   const [employees, setEmployees] = useState<EmployeeDto[]>([]);
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,11 +43,13 @@ export function EmployeesPage() {
       }
     }
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
   }, [t]);
+
+  const canManageEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "ADMIN"));
 
   const departmentMap = useMemo(
     () => Object.fromEntries(departments.map((department) => [department.id, department.name])),
@@ -62,6 +67,24 @@ export function EmployeesPage() {
 
   const formatter = new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-US");
 
+  async function deleteEmployee(employeeId: string) {
+    if (!window.confirm(t("employees.deleteConfirm"))) {
+      return;
+    }
+
+    setDeletingId(employeeId);
+    setError(null);
+    try {
+      await apiDelete(`/employees/${employeeId}`);
+      setEmployees((current) => current.filter((employee) => employee.id !== employeeId));
+    } catch (e) {
+      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("employees.deleteError");
+      setError(message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className="stack-lg">
       <article className="card">
@@ -70,9 +93,16 @@ export function EmployeesPage() {
             <h2>{t("employees.title")}</h2>
             <p className="muted">{t("employees.description")}</p>
           </div>
-          <span className="summary-pill">
-            {t("employees.total")}: {filteredEmployees.length}
-          </span>
+          <div className="toolbar-actions">
+            <span className="summary-pill">
+              {t("employees.total")}: {filteredEmployees.length}
+            </span>
+            {canManageEmployees ? (
+              <Link to="/employees/new">
+                <button type="button" className="button-secondary">{t("employees.create")}</button>
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <div className="toolbar">
@@ -125,6 +155,17 @@ export function EmployeesPage() {
                     <dd>{employee.hireDate ? formatter.format(new Date(employee.hireDate)) : t("employees.notSpecified")}</dd>
                   </div>
                 </dl>
+
+                {canManageEmployees ? (
+                  <div className="history-actions">
+                    <Link to={`/employees/${employee.id}/edit`}>
+                      <button type="button" className="button-secondary">{t("employees.edit")}</button>
+                    </Link>
+                    <button type="button" onClick={() => void deleteEmployee(employee.id)} disabled={deletingId === employee.id}>
+                      {deletingId === employee.id ? t("employees.deleting") : t("employees.delete")}
+                    </button>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
