@@ -13,12 +13,16 @@ type AuthMeResponse = {
 };
 
 function canAccessPath(pathname: string, roles: AppRole[]): boolean {
-  if (pathname === "/" || pathname.startsWith("/employees/") || pathname === "/notifications") return true;
+  if (pathname === "/" || pathname === "/notifications") return true;
   if (pathname === "/reports/coverage") return roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN");
   if (pathname === "/employees") return roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN");
+  if (pathname === "/employees/new") return roles.some((role) => role === "HR" || role === "ADMIN");
+  if (/^\/employees\/[^/]+\/edit$/.test(pathname)) return roles.some((role) => role === "HR" || role === "ADMIN");
+  if (/^\/employees\/[^/]+\/vaccinations$/.test(pathname)) return true;
   if (pathname === "/vaccines" || pathname === "/diseases") {
     return roles.some((role) => role === "MEDICAL" || role === "ADMIN");
   }
+  if (pathname === "/vaccinations") return roles.some((role) => role === "MEDICAL" || role === "ADMIN");
   if (pathname === "/admin-sandbox") return roles.includes("ADMIN");
   return false;
 }
