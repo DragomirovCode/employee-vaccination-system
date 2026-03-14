@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiGet } from "../shared/api/client";
 import { ApiHttpError, EmployeeDto } from "../shared/api/types";
@@ -13,6 +13,7 @@ function formatEmployeeName(employee: EmployeeDto): string {
 export function AppLayout() {
   const { session, logout } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const canOpenAdminSandbox = Boolean(session?.roles.includes("ADMIN"));
   const canOpenCoverage = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const canOpenEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
@@ -20,6 +21,11 @@ export function AppLayout() {
   const canOpenDiseases = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
   const navClassName = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : undefined);
   const [displayName, setDisplayName] = useState<string>("");
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
 
   useEffect(() => {
     if (!session) {
@@ -94,7 +100,7 @@ export function AppLayout() {
         <div className="session">
           <span>{displayName}</span>
           <LanguageSwitch />
-          <button onClick={logout}>{t("common.signOut")}</button>
+          <button onClick={handleLogout}>{t("common.signOut")}</button>
         </div>
       </header>
       <main className="content">
