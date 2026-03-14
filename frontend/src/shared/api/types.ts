@@ -67,6 +67,11 @@ export type DepartmentDto = {
   createdAt: string;
 };
 
+export type DepartmentWriteRequest = {
+  name: string;
+  parentId: string | null;
+};
+
 export type EmployeeDto = {
   id: string;
   userId: string | null;
