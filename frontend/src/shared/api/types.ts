@@ -108,6 +108,8 @@ export type VaccinationReadDto = {
   updatedAt: string;
 };
 
+export type VaccinationPage = PageResponse<VaccinationReadDto>;
+
 export type DocumentDto = {
   id: string;
   vaccinationId: string;
