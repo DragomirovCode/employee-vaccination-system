@@ -74,7 +74,6 @@ class AuthAdminController(
             authAdminService.createUser(
                 CreateUserCommand(
                     email = body.email,
-                    passwordHash = body.passwordHash,
                     isActive = body.isActive,
                 ),
                 performedBy = requirePrincipal(request).userId,
@@ -119,7 +118,6 @@ class AuthAdminController(
                 command =
                     UpdateUserCommand(
                         email = body.email,
-                        passwordHash = body.passwordHash,
                         isActive = body.isActive,
                     ),
                 performedBy = requirePrincipal(request).userId,
@@ -249,7 +247,6 @@ class AuthAdminController(
 
 data class AuthUserWriteRequest(
     val email: String,
-    val passwordHash: String,
     val isActive: Boolean = true,
 )
 
