@@ -14,7 +14,7 @@ export function AppLayout() {
   const { session, logout } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const canOpenAdminSandbox = Boolean(session?.roles.includes("ADMIN"));
+  const canOpenAdminUsers = Boolean(session?.roles.includes("ADMIN"));
   const canOpenCoverage = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const canOpenEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "MEDICAL" || role === "ADMIN"));
   const canOpenDepartments = Boolean(session?.roles.some((role) => role === "HR" || role === "ADMIN"));
@@ -103,9 +103,9 @@ export function AppLayout() {
           <NavLink to="/notifications" className={navClassName}>
             {t("layout.notifications")}
           </NavLink>
-          {canOpenAdminSandbox ? (
-            <NavLink to="/admin-sandbox" className={navClassName}>
-              {t("layout.adminSandbox")}
+          {canOpenAdminUsers ? (
+            <NavLink to="/admin/users" className={navClassName}>
+              {t("layout.adminUsers")}
             </NavLink>
           ) : null}
         </nav>

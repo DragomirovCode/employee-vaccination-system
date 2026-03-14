@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { CoverageReportPage } from "./pages/CoverageReportPage";
+import { AdminUserEditorPage } from "./pages/AdminUserEditorPage";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DepartmentEditorPage } from "./pages/DepartmentEditorPage";
 import { DepartmentsPage } from "./pages/DepartmentsPage";
@@ -20,7 +22,6 @@ import { VaccinesPage } from "./pages/VaccinesPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { RequireRole } from "./features/auth/RequireRole";
 import { useAuth } from "./features/auth/AuthContext";
-import { useI18n } from "./shared/i18n/I18nContext";
 
 function EventBridge() {
   const navigate = useNavigate();
@@ -45,8 +46,6 @@ function EventBridge() {
 }
 
 export function App() {
-  const { t } = useI18n();
-
   return (
     <>
       <EventBridge />
@@ -180,10 +179,31 @@ export function App() {
             path="admin-sandbox"
             element={
               <RequireRole allowedRoles={["ADMIN"]}>
-                <section className="card">
-                  <h2>{t("admin.title")}</h2>
-                  <p>{t("admin.description")}</p>
-                </section>
+                <Navigate to="/admin/users" replace />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin/users"
+            element={
+              <RequireRole allowedRoles={["ADMIN"]}>
+                <AdminUsersPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin/users/new"
+            element={
+              <RequireRole allowedRoles={["ADMIN"]}>
+                <AdminUserEditorPage />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin/users/:userId/edit"
+            element={
+              <RequireRole allowedRoles={["ADMIN"]}>
+                <AdminUserEditorPage />
               </RequireRole>
             }
           />

@@ -38,7 +38,7 @@ class AuthAdminService(
             userRepository.saveAndFlush(
                 UserEntity(
                     email = command.email.trim(),
-                    passwordHash = command.passwordHash,
+                    passwordHash = "",
                     isActive = command.isActive,
                 ),
             )
@@ -61,7 +61,6 @@ class AuthAdminService(
         val oldPayload = user.toAuditPayload()
         requireUniqueEmail(command.email, id)
         user.email = command.email.trim()
-        user.passwordHash = command.passwordHash
         user.isActive = command.isActive
         val saved = userRepository.saveAndFlush(user)
         auditLogService.logUpdate(
@@ -196,12 +195,10 @@ class AuthAdminService(
 
 data class CreateUserCommand(
     val email: String,
-    val passwordHash: String,
     val isActive: Boolean,
 )
 
 data class UpdateUserCommand(
     val email: String,
-    val passwordHash: String,
     val isActive: Boolean,
 )

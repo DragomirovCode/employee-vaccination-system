@@ -69,7 +69,7 @@ class AuthAdminApiTest {
                 post("/auth/users")
                     .header("X-Auth-Token", hrUser.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"email":"new@example.com","passwordHash":"hash","isActive":true}"""),
+                    .content("""{"email":"new@example.com","isActive":true}"""),
             ).andExpect(status().isForbidden)
     }
 
@@ -83,7 +83,7 @@ class AuthAdminApiTest {
                     post("/auth/users")
                         .header("X-Auth-Token", adminUser.id.toString())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""{"email":"new-admin@example.com","passwordHash":"hash-1","isActive":true}"""),
+                        .content("""{"email":"new-admin@example.com","isActive":true}"""),
                 ).andExpect(status().isCreated)
                 .andExpect(jsonPath("$.email").value("new-admin@example.com"))
                 .andReturn()
@@ -95,7 +95,7 @@ class AuthAdminApiTest {
                 put("/auth/users/$createdId")
                     .header("X-Auth-Token", adminUser.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"email":"updated-admin@example.com","passwordHash":"hash-2","isActive":false}"""),
+                    .content("""{"email":"updated-admin@example.com","isActive":false}"""),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.email").value("updated-admin@example.com"))
             .andExpect(jsonPath("$.isActive").value(false))
@@ -111,7 +111,7 @@ class AuthAdminApiTest {
                 post("/auth/users")
                     .header("X-Auth-Token", adminUser.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"email":"dup@example.com","passwordHash":"hash","isActive":true}"""),
+                    .content("""{"email":"dup@example.com","isActive":true}"""),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -170,7 +170,7 @@ class AuthAdminApiTest {
                     post("/auth/users")
                         .header("X-Auth-Token", adminUser.id.toString())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""{"email":"audit-auth@example.com","passwordHash":"hash","isActive":true}"""),
+                        .content("""{"email":"audit-auth@example.com","isActive":true}"""),
                 ).andExpect(status().isCreated)
                 .andReturn()
 

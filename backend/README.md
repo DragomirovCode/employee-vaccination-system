@@ -198,6 +198,7 @@ Auth admin API (`ADMIN` only):
 
 Auth admin business rules:
 - duplicate `email` is rejected with `409`
+- admin create/update user payload uses `email` and `isActive`; `passwordHash` is not part of frontend-facing admin contract
 - duplicate user-role assignment is rejected with `409`
 - role assignment stores `assigned_by` as current admin user id
 

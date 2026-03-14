@@ -97,6 +97,23 @@ export type EmployeeWriteRequest = {
   hireDate: string | null;
 };
 
+export type AuthUserDto = {
+  id: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthUserWriteRequest = {
+  email: string;
+  isActive: boolean;
+};
+
+export type AuthUserStatusRequest = {
+  active: boolean;
+};
+
 export type VaccineDto = {
   id: string;
   name: string;
