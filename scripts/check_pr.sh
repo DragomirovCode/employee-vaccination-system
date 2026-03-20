@@ -38,7 +38,7 @@ fi
 # ------------------------------------------------
 MODULES="generic|auth|employee|vaccine|vaccination|reporting|audit"
 TYPES="feature|fix|docs|refactor"
-SCOPES="docs|backend|frontend|devops|generic"
+SCOPES="docs|backend|frontend|devops|ci"
 
 # ------------------------------------------------
 # Регулярное выражение заголовка
