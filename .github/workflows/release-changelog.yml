@@ -1,0 +1,111 @@
+name: Release Changelog
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  cut-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+          fetch-depth: 0
+
+      - name: Build release block
+        env:
+          CURRENT_TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if grep -Eq "^## ${CURRENT_TAG//./\\.} - " CHANGELOG.md; then
+            echo "Release header already exists"
+            exit 0
+          fi
+
+          current_commit="$(git rev-list -n 1 "$CURRENT_TAG")"
+          previous_tag="$(git describe --tags --abbrev=0 "$current_commit^" 2>/dev/null || true)"
+
+          if [ -n "$previous_tag" ]; then
+            range="$previous_tag..$CURRENT_TAG"
+          else
+            range="$CURRENT_TAG"
+          fi
+
+          release_date="$(date -u +%F)"
+          block_file="$(mktemp)"
+          printf '## %s - %s\n' "$CURRENT_TAG" "$release_date" > "$block_file"
+
+          found_entries=0
+          while IFS=$'\t' read -r commit_date subject; do
+            [ -n "${subject:-}" ] || continue
+
+            if [[ "$subject" =~ ^MERGED:[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]+\#([0-9]+)[[:space:]]+-[[:space:]]+(.+)$ ]]; then
+              scope="$(echo "${BASH_REMATCH[1]}" | xargs)"
+              module="$(echo "${BASH_REMATCH[2]}" | xargs)"
+              type="$(echo "${BASH_REMATCH[3]}" | xargs)"
+              issue_number="${BASH_REMATCH[4]}"
+              description="$(echo "${BASH_REMATCH[5]}" | xargs)"
+              prefix="$scope | $module | $type"
+            elif [[ "$subject" =~ ^MERGED:[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]+([^|]+)[[:space:]]+\|[[:space:]]+\#([0-9]+)[[:space:]]+-[[:space:]]+(.+)$ ]]; then
+              module="$(echo "${BASH_REMATCH[1]}" | xargs)"
+              type="$(echo "${BASH_REMATCH[2]}" | xargs)"
+              issue_number="${BASH_REMATCH[3]}"
+              description="$(echo "${BASH_REMATCH[4]}" | xargs)"
+              prefix="$module | $type"
+            else
+              continue
+            fi
+
+            issue_url="https://github.com/$REPOSITORY/issues/$issue_number"
+            printf -- '- %s | %s | #%s - %s ([link](%s))\n' \
+              "$commit_date" "$prefix" "$issue_number" "$description" "$issue_url" >> "$block_file"
+            found_entries=1
+          done < <(git log --reverse --format='%cs%x09%s' "$range")
+
+          if [ "$found_entries" -eq 0 ]; then
+            echo "No MERGED commits found for release range: $range"
+            exit 0
+          fi
+
+          printf '\n' >> "$block_file"
+
+          tmp_file="$(mktemp)"
+          awk -v block_file="$block_file" '
+            BEGIN {
+              while ((getline line < block_file) > 0) {
+                block = block line ORS
+              }
+              close(block_file)
+            }
+            NR == 1 {
+              print
+              print ""
+              printf "%s", block
+              next
+            }
+            { print }
+          ' CHANGELOG.md > "$tmp_file"
+          mv "$tmp_file" CHANGELOG.md
+
+      - name: Commit release changelog
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet CHANGELOG.md; then
+            echo "No release changelog changes to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for ${{ github.event.release.tag_name }} [skip ci]"
+          git push origin HEAD:${{ github.event.release.target_commitish }}
