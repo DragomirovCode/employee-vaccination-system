@@ -6,6 +6,11 @@ import { ApiHttpError, DiseaseDto, VaccineDiseaseLinkDto, VaccineDto } from "../
 import { useI18n } from "../shared/i18n/I18nContext";
 import { matchesSearchQuery } from "../shared/search";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 export function VaccinesPage() {
   const { session } = useAuth();
   const { t } = useI18n();
@@ -14,8 +19,8 @@ export function VaccinesPage() {
   const [linksByVaccine, setLinksByVaccine] = useState<Record<string, number[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<UiError | null>(null);
+  const [actionError, setActionError] = useState<UiError | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [linkDrafts, setLinkDrafts] = useState<Record<string, string>>({});
   const [linkBusyId, setLinkBusyId] = useState<string | null>(null);
@@ -48,8 +53,9 @@ export function VaccinesPage() {
         setLinksByVaccine(Object.fromEntries(linksEntries));
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.unexpectedApiError");
-        setLoadError(message);
+        const nextError =
+          e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "vaccines.unexpectedApiError" };
+        setLoadError(nextError);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -61,7 +67,7 @@ export function VaccinesPage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   const canManageVaccines = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
 
@@ -106,8 +112,9 @@ export function VaccinesPage() {
         return next;
       });
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.deleteError");
-      setActionError(message);
+      const nextError =
+        e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "vaccines.deleteError" };
+      setActionError(nextError);
     } finally {
       setDeletingId(null);
     }
@@ -116,7 +123,7 @@ export function VaccinesPage() {
   async function addDiseaseLink(vaccineId: string) {
     const selectedDiseaseId = Number.parseInt(linkDrafts[vaccineId] ?? "", 10);
     if (Number.isNaN(selectedDiseaseId)) {
-      setActionError(t("diseases.linkUpdateError"));
+      setActionError({ translationKey: "diseases.linkUpdateError" });
       return;
     }
 
@@ -133,13 +140,13 @@ export function VaccinesPage() {
         [vaccineId]: ""
       }));
     } catch (e) {
-      const message =
+      const nextError =
         e instanceof ApiHttpError && e.status === 409
-          ? t("diseases.linkExists")
+          ? { translationKey: "diseases.linkExists" }
             : e instanceof ApiHttpError
-              ? e.payload?.message ?? e.message
-              : t("diseases.linkUpdateError");
-      setActionError(message);
+              ? { text: e.payload?.message ?? e.message }
+              : { translationKey: "diseases.linkUpdateError" };
+      setActionError(nextError);
     } finally {
       setLinkBusyId(null);
     }
@@ -155,13 +162,13 @@ export function VaccinesPage() {
         [vaccineId]: (current[vaccineId] ?? []).filter((item) => item !== diseaseId)
       }));
     } catch (e) {
-      const message =
+      const nextError =
         e instanceof ApiHttpError
           ? e.status === 409
-            ? t("diseases.linkRemoveConflict")
-            : e.payload?.message ?? e.message
-          : t("diseases.linkUpdateError");
-      setActionError(message);
+            ? { translationKey: "diseases.linkRemoveConflict" }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "diseases.linkUpdateError" };
+      setActionError(nextError);
     } finally {
       setLinkBusyId(null);
     }
@@ -200,8 +207,8 @@ export function VaccinesPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {loadError ? <p className="warn">{loadError}</p> : null}
-        {actionError ? <p className="warn">{actionError}</p> : null}
+        {loadError ? <p className="warn">{loadError.translationKey ? t(loadError.translationKey) : loadError.text}</p> : null}
+        {actionError ? <p className="warn">{actionError.translationKey ? t(actionError.translationKey) : actionError.text}</p> : null}
 
         {!loading && !loadError && filteredVaccines.length === 0 ? (
           <div className="empty-state">

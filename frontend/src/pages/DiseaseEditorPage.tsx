@@ -4,6 +4,11 @@ import { apiGet, apiPost, apiPut } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto, DiseaseWriteRequest } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 type DiseaseFormState = {
   name: string;
   description: string;
@@ -27,7 +32,7 @@ export function DiseaseEditorPage() {
   const { t } = useI18n();
   const [formState, setFormState] = useState<DiseaseFormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UiError | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const isEditMode = Boolean(diseaseId);
 
@@ -49,8 +54,9 @@ export function DiseaseEditorPage() {
         }
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.loadOneError");
-        setError(message);
+        const nextError =
+          e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "diseases.loadOneError" };
+        setError(nextError);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -62,12 +68,12 @@ export function DiseaseEditorPage() {
     return () => {
       cancelled = true;
     };
-  }, [diseaseId, t]);
+  }, [diseaseId]);
 
   async function submitForm(e: FormEvent) {
     e.preventDefault();
     if (!formState.name.trim()) {
-      setError(t("diseases.validation"));
+      setError({ translationKey: "diseases.validation" });
       return;
     }
 
@@ -86,13 +92,13 @@ export function DiseaseEditorPage() {
       }
       navigate("/diseases", { replace: true });
     } catch (e) {
-      const message =
+      const nextError =
         e instanceof ApiHttpError
           ? e.status === 409 && isEditMode
-            ? t("diseases.renameConflict")
-            : e.payload?.message ?? e.message
-          : t("diseases.unexpectedApiError");
-      setError(message);
+            ? { translationKey: "diseases.renameConflict" }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "diseases.unexpectedApiError" };
+      setError(nextError);
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +121,7 @@ export function DiseaseEditorPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {error ? <p className="warn">{error}</p> : null}
+        {error ? <p className="warn">{error.translationKey ? t(error.translationKey) : error.text}</p> : null}
 
         {!loading ? (
           <form className="editor-form" onSubmit={submitForm}>

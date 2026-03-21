@@ -6,14 +6,19 @@ import { ApiHttpError, DiseaseDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { matchesSearchQuery } from "../shared/search";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 export function DiseasesPage() {
   const { session } = useAuth();
   const { t } = useI18n();
   const [diseases, setDiseases] = useState<DiseaseDto[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<UiError | null>(null);
+  const [actionError, setActionError] = useState<UiError | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -30,8 +35,9 @@ export function DiseasesPage() {
         }
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.unexpectedApiError");
-        setLoadError(message);
+        const nextError =
+          e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "diseases.unexpectedApiError" };
+        setLoadError(nextError);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -43,7 +49,7 @@ export function DiseasesPage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   const canManageDiseases = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
 
@@ -66,13 +72,13 @@ export function DiseasesPage() {
       await apiDelete(`/diseases/${diseaseId}`);
       setDiseases((current) => current.filter((disease) => disease.id !== diseaseId));
     } catch (e) {
-      const message =
+      const nextError =
         e instanceof ApiHttpError
           ? e.status === 409
-            ? t("diseases.deleteConflict")
-            : e.payload?.message ?? e.message
-          : t("diseases.deleteError");
-      setActionError(message);
+            ? { translationKey: "diseases.deleteConflict" }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "diseases.deleteError" };
+      setActionError(nextError);
     } finally {
       setDeletingId(null);
     }
@@ -111,8 +117,8 @@ export function DiseasesPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {loadError ? <p className="warn">{loadError}</p> : null}
-        {actionError ? <p className="warn">{actionError}</p> : null}
+        {loadError ? <p className="warn">{loadError.translationKey ? t(loadError.translationKey) : loadError.text}</p> : null}
+        {actionError ? <p className="warn">{actionError.translationKey ? t(actionError.translationKey) : actionError.text}</p> : null}
 
         {!loading && !loadError && sortedDiseases.length === 0 ? (
           <div className="empty-state">

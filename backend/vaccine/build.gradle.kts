@@ -24,6 +24,8 @@ dependencies {
     implementation(project(":auth"))
     implementation(project(":audit"))
 
+    testImplementation(project(":employee"))
+    testImplementation(project(":vaccination"))
     testImplementation(libs.spring.boot.starter.test)
     testRuntimeOnly(libs.h2)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
