@@ -3,6 +3,7 @@
 ## v0.9.3 - 2026-03-21
 - 2026-03-21 | devops | generic | feature | #156 - [FEATURE] Перевод автодеплой на ghcr.io ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/156))
 
+
 ## v0.9.2 - 2026-03-21
 - 2026-03-21 | backend | vaccination | fix | #141 - [BUG] Не работает удаление/редактирование вакцины ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/141))
 - 2026-03-21 | backend | vaccination | fix | #142 - [BUG] не работает уведомление ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/142))
