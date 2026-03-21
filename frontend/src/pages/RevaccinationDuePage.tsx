@@ -8,7 +8,14 @@ import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 const DEFAULT_DAYS = 30;
 const PAGE_SIZE = 10;
+const DAYS_STORAGE_KEY = "evs.revaccination.days";
 type ExportFormat = "csv" | "xlsx" | "pdf";
+
+function readCachedDays(): number {
+  const raw = window.localStorage.getItem(DAYS_STORAGE_KEY);
+  const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isNaN(parsed) || parsed < 0 ? DEFAULT_DAYS : parsed;
+}
 
 function getStatus(daysLeft: number): "overdue" | "soon" | "planned" {
   if (daysLeft < 0) return "overdue";
@@ -27,13 +34,14 @@ function buildHistoryLink(employeeId: string, vaccineName: string, lastVaccinati
 export function RevaccinationDuePage() {
   const { session } = useAuth();
   const { locale, t } = useI18n();
+  const initialDays = readCachedDays();
   const [data, setData] = useState<PageResponse<RevaccinationDueItem> | null>(null);
   const [departments, setDepartments] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-  const [appliedDays, setAppliedDays] = useState(DEFAULT_DAYS);
-  const [draftDays, setDraftDays] = useState(String(DEFAULT_DAYS));
+  const [appliedDays, setAppliedDays] = useState(initialDays);
+  const [draftDays, setDraftDays] = useState(String(initialDays));
   const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,6 +110,7 @@ export function RevaccinationDuePage() {
     setError(null);
     setPage(0);
     setAppliedDays(nextDays);
+    window.localStorage.setItem(DAYS_STORAGE_KEY, String(nextDays));
   }
 
   async function exportReport() {
@@ -176,7 +185,13 @@ export function RevaccinationDuePage() {
               min="0"
               step="1"
               value={draftDays}
-              onChange={(e) => setDraftDays(e.target.value)}
+              onChange={(e) => {
+                setDraftDays(e.target.value);
+                const nextDays = Number.parseInt(e.target.value, 10);
+                if (!Number.isNaN(nextDays) && nextDays >= 0) {
+                  window.localStorage.setItem(DAYS_STORAGE_KEY, String(nextDays));
+                }
+              }}
             />
           </label>
           <div className="toolbar-actions">
