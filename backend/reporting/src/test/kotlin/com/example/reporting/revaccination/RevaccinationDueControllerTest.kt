@@ -306,6 +306,7 @@ class RevaccinationDueControllerTest {
                 performedBy = performer.id,
                 vaccinationDate = today.minusDays(200),
                 doseNumber = 1,
+                expirationDate = today.plusDays(30),
                 revaccinationDate = today.plusDays(3),
             ),
         )
@@ -316,6 +317,7 @@ class RevaccinationDueControllerTest {
                 performedBy = performer.id,
                 vaccinationDate = today.minusDays(170),
                 doseNumber = 1,
+                expirationDate = today.plusDays(30),
                 revaccinationDate = today.plusDays(5),
             ),
         )
@@ -326,6 +328,7 @@ class RevaccinationDueControllerTest {
                 performedBy = performer.id,
                 vaccinationDate = today.minusDays(150),
                 doseNumber = 1,
+                expirationDate = today.plusDays(30),
                 revaccinationDate = today.plusDays(7),
             ),
         )
