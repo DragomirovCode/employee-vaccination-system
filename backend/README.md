@@ -163,7 +163,8 @@ Employee module API:
   - `POST /departments`, `PUT /departments/{id}`, `DELETE /departments/{id}` - `HR`, `ADMIN`
 - employees:
   - `GET /employees`, `GET /employees/{id}` - any authenticated user
-  - `POST /employees`, `PUT /employees/{id}`, `DELETE /employees/{id}` - `HR`, `ADMIN`
+  - `POST /employees`, `PUT /employees/{id}` - `HR`, `ADMIN`
+  - `DELETE /employees/{id}` - `ADMIN`
 
 Employee module business rules:
 - Department hierarchy cycles are rejected with `400`

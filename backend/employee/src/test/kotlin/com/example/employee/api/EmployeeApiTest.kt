@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -169,6 +170,42 @@ class EmployeeApiTest {
                     ),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
+    }
+
+    @Test
+    fun `employee delete is forbidden for hr`() {
+        val hr = createUserWithRole("HR")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
+        val employeeId =
+            UUID.fromString(
+                extractJsonField(
+                    mockMvc
+                        .perform(
+                            post("/employees")
+                                .header("X-Auth-Token", hr.id.toString())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                    """
+                                    {
+                                      "departmentId":"${department.id}",
+                                      "firstName":"Delete",
+                                      "lastName":"Target"
+                                    }
+                                    """.trimIndent(),
+                                ),
+                        ).andExpect(status().isCreated)
+                        .andReturn()
+                        .response
+                        .contentAsString,
+                    "id",
+                ),
+            )
+
+        mockMvc
+            .perform(
+                delete("/employees/$employeeId")
+                    .header("X-Auth-Token", hr.id.toString()),
+            ).andExpect(status().isForbidden)
     }
 
     @Test

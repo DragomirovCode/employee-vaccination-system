@@ -52,6 +52,7 @@ export function EmployeesPage() {
   }, [t]);
 
   const canManageEmployees = Boolean(session?.roles.some((role) => role === "HR" || role === "ADMIN"));
+  const canDeleteEmployees = Boolean(session?.roles.some((role) => role === "ADMIN"));
 
   const departmentMap = useMemo(
     () => Object.fromEntries(departments.map((department) => [department.id, department.name])),
@@ -181,9 +182,11 @@ export function EmployeesPage() {
                     <Link to={`/employees/${employee.id}/edit`}>
                       <button type="button" className="button-secondary">{t("employees.edit")}</button>
                     </Link>
-                    <button type="button" onClick={() => void deleteEmployee(employee.id)} disabled={deletingId === employee.id}>
-                      {deletingId === employee.id ? t("employees.deleting") : t("employees.delete")}
-                    </button>
+                    {canDeleteEmployees ? (
+                      <button type="button" onClick={() => void deleteEmployee(employee.id)} disabled={deletingId === employee.id}>
+                        {deletingId === employee.id ? t("employees.deleting") : t("employees.delete")}
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </article>
