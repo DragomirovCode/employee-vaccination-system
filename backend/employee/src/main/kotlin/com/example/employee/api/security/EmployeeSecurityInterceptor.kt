@@ -26,17 +26,22 @@ class EmployeeSecurityInterceptor(
 
         val method = request.method.uppercase()
         val principal =
-            if (method in WRITE_METHODS) {
-                authService.requireAnyRole(request.getHeader("X-Auth-Token"), WRITE_ROLES)
-            } else {
-                authService.requireAuthenticated(request.getHeader("X-Auth-Token"))
+            when {
+                method in ADMIN_ONLY_WRITE_METHODS ->
+                    authService.requireAnyRole(request.getHeader("X-Auth-Token"), setOf(AppRole.ADMIN))
+
+                method in GENERAL_WRITE_METHODS ->
+                    authService.requireAnyRole(request.getHeader("X-Auth-Token"), GENERAL_WRITE_ROLES)
+
+                else -> authService.requireAuthenticated(request.getHeader("X-Auth-Token"))
             }
         request.setAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
         return true
     }
 
     private companion object {
-        val WRITE_METHODS = setOf("POST", "PUT", "DELETE")
-        val WRITE_ROLES = setOf(AppRole.HR, AppRole.ADMIN)
+        val ADMIN_ONLY_WRITE_METHODS = setOf("DELETE")
+        val GENERAL_WRITE_METHODS = setOf("POST", "PUT")
+        val GENERAL_WRITE_ROLES = setOf(AppRole.HR, AppRole.ADMIN)
     }
 }
