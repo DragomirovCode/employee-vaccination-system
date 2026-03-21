@@ -37,6 +37,6 @@ class VaccineSecurityInterceptor(
 
     private companion object {
         val WRITE_METHODS = setOf("POST", "PUT", "DELETE")
-        val WRITE_ROLES = setOf(AppRole.HR, AppRole.ADMIN)
+        val WRITE_ROLES = setOf(AppRole.MEDICAL, AppRole.ADMIN)
     }
 }
