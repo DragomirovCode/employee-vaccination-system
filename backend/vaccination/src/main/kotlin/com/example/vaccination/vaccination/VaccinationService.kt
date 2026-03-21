@@ -211,7 +211,7 @@ data class CreateVaccinationCommand(
     val vaccinationDate: LocalDate,
     val doseNumber: Int,
     val batchNumber: String? = null,
-    val expirationDate: LocalDate? = null,
+    val expirationDate: LocalDate,
     val notes: String? = null,
 )
 
@@ -222,6 +222,6 @@ data class UpdateVaccinationCommand(
     val vaccinationDate: LocalDate,
     val doseNumber: Int,
     val batchNumber: String? = null,
-    val expirationDate: LocalDate? = null,
+    val expirationDate: LocalDate,
     val notes: String? = null,
 )

@@ -188,6 +188,7 @@ class VaccinationReadSecurityTest {
                     performedBy = performer.id,
                     vaccinationDate = LocalDate.of(2026, 1, 10),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                     revaccinationDate = LocalDate.of(2027, 1, 10),
                 ),
             )
@@ -200,6 +201,7 @@ class VaccinationReadSecurityTest {
                     performedBy = performer.id,
                     vaccinationDate = LocalDate.of(2026, 2, 10),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 2, 1),
                     revaccinationDate = LocalDate.of(2027, 2, 10),
                 ),
             )

@@ -155,7 +155,7 @@ export type VaccinationReadDto = {
   vaccinationDate: string;
   doseNumber: number;
   batchNumber: string | null;
-  expirationDate: string | null;
+  expirationDate: string;
   nextDoseDate: string | null;
   revaccinationDate: string | null;
   notes: string | null;

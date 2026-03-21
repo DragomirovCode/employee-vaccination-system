@@ -165,7 +165,7 @@ data class VaccinationWriteRequest(
     val vaccinationDate: LocalDate,
     val doseNumber: Int,
     val batchNumber: String? = null,
-    val expirationDate: LocalDate? = null,
+    val expirationDate: LocalDate,
     val notes: String? = null,
 )
 

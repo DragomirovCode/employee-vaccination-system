@@ -65,7 +65,7 @@ class MigrationTest {
 
                 val vaccinationId = UUID.randomUUID()
                 statement.executeUpdate(
-                    "INSERT INTO vaccinations (id, employee_id, vaccine_id, performed_by, vaccination_date, dose_number, batch_number, expiration_date, next_dose_date, revaccination_date, notes, created_at, updated_at) VALUES ('$vaccinationId', '$employeeId', '$vaccineId', '$performedBy', DATE '2026-03-01', 1, 'B-1', NULL, NULL, DATE '2027-03-01', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                    "INSERT INTO vaccinations (id, employee_id, vaccine_id, performed_by, vaccination_date, dose_number, batch_number, expiration_date, next_dose_date, revaccination_date, notes, created_at, updated_at) VALUES ('$vaccinationId', '$employeeId', '$vaccineId', '$performedBy', DATE '2026-03-01', 1, 'B-1', DATE '2027-01-01', NULL, DATE '2027-03-01', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                 )
 
                 statement.executeUpdate(

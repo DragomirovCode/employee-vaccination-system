@@ -56,6 +56,7 @@ class VaccinationServiceTest {
     fun `calculates next dose and revaccination dates`() {
         notificationRepository.deleteAll()
         auditLogRepository.deleteAll()
+        documentRepository.deleteAll()
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
@@ -90,6 +91,7 @@ class VaccinationServiceTest {
                     performedBy = user.id!!,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                 ),
             )
 
@@ -105,6 +107,7 @@ class VaccinationServiceTest {
                     performedBy = user.id!!,
                     vaccinationDate = LocalDate.of(2026, 4, 1),
                     doseNumber = 2,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                 ),
             )
 
@@ -119,8 +122,8 @@ class VaccinationServiceTest {
     fun `creates vaccination notifications when employee has linked user`() {
         notificationRepository.deleteAll()
         auditLogRepository.deleteAll()
-        vaccinationRepository.deleteAll()
         documentRepository.deleteAll()
+        vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
         userRepository.deleteAll()
@@ -154,6 +157,7 @@ class VaccinationServiceTest {
                 performedBy = medic.id!!,
                 vaccinationDate = LocalDate.of(2026, 3, 1),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2027, 1, 1),
             ),
         )
 
@@ -194,6 +198,7 @@ class VaccinationServiceTest {
                     performedBy = user.id!!,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                 ),
             )
         documentRepository.saveAndFlush(

@@ -188,6 +188,7 @@ class DocumentContentApiTest {
                     performedBy = performer.id,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                     revaccinationDate = LocalDate.of(2027, 3, 1),
                 ),
             )
@@ -200,6 +201,7 @@ class DocumentContentApiTest {
                     performedBy = performer.id,
                     vaccinationDate = LocalDate.of(2026, 4, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 2, 1),
                     revaccinationDate = LocalDate.of(2027, 4, 1),
                 ),
             )
