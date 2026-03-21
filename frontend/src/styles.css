@@ -347,6 +347,11 @@ button:hover {
   background: linear-gradient(180deg, #ffffff, #f8fbf8);
 }
 
+.history-item.is-editing {
+  border-color: #89b899;
+  box-shadow: 0 0 0 3px rgba(46, 141, 102, 0.12);
+}
+
 .history-head {
   display: flex;
   justify-content: space-between;
@@ -641,6 +646,11 @@ input {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.editor-card.is-editing {
+  border-color: #89b899;
+  box-shadow: 0 0 0 3px rgba(46, 141, 102, 0.12), 0 8px 22px rgba(14, 34, 21, 0.06);
 }
 
 .editor-form-span {

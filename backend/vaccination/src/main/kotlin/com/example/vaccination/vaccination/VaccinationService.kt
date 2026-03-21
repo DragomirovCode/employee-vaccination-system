@@ -6,6 +6,8 @@ import com.example.auth.notification.CreateNotificationCommand
 import com.example.auth.notification.NotificationService
 import com.example.auth.notification.NotificationType
 import com.example.employee.person.EmployeeRepository
+import com.example.vaccination.document.DocumentRepository
+import com.example.vaccination.storage.DocumentContentStorage
 import com.example.vaccine.vaccine.VaccineRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +21,8 @@ class VaccinationService(
     private val auditLogService: AuditLogService,
     private val employeeRepository: EmployeeRepository,
     private val notificationService: NotificationService,
+    private val documentRepository: DocumentRepository,
+    private val documentContentStorage: DocumentContentStorage,
 ) {
     @Transactional
     fun create(command: CreateVaccinationCommand): VaccinationEntity {
@@ -117,6 +121,10 @@ class VaccinationService(
                 .orElseThrow { IllegalArgumentException("Vaccination not found: $id") }
 
         val oldPayload = existing.toAuditPayload()
+        documentRepository.findAllByVaccinationId(id).forEach { document ->
+            documentContentStorage.delete(document.filePath)
+            documentRepository.delete(document)
+        }
         vaccinationRepository.delete(existing)
 
         auditLogService.logDelete(
