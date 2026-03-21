@@ -6,13 +6,19 @@ import { ApiHttpError, DepartmentDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { matchesSearchQuery } from "../shared/search";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 export function DepartmentsPage() {
   const { session } = useAuth();
   const { t } = useI18n();
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<UiError | null>(null);
+  const [actionError, setActionError] = useState<UiError | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,7 +26,7 @@ export function DepartmentsPage() {
 
     async function load() {
       setLoading(true);
-      setError(null);
+      setLoadError(null);
       try {
         const response = await apiGet<DepartmentDto[]>("/departments");
         if (!cancelled) {
@@ -28,8 +34,9 @@ export function DepartmentsPage() {
         }
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("departments.unexpectedApiError");
-        setError(message);
+        const nextError =
+          e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "departments.unexpectedApiError" };
+        setLoadError(nextError);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -64,13 +71,23 @@ export function DepartmentsPage() {
     }
 
     setDeletingId(departmentId);
-    setError(null);
+    setActionError(null);
     try {
       await apiDelete(`/departments/${departmentId}`);
       setDepartments((current) => current.filter((department) => department.id !== departmentId));
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("departments.deleteError");
-      setError(message);
+      const nextError =
+        e instanceof ApiHttpError
+          ? e.status === 409
+            ? {
+                translationKey:
+                  e.payload?.message === "Department has child departments"
+                    ? "departments.deleteHasChildrenConflict"
+                    : "departments.deleteHasEmployeesConflict"
+              }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "departments.deleteError" };
+      setActionError(nextError);
     } finally {
       setDeletingId(null);
     }
@@ -109,16 +126,17 @@ export function DepartmentsPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {error ? <p className="warn">{error}</p> : null}
+        {loadError ? <p className="warn">{loadError.translationKey ? t(loadError.translationKey) : loadError.text}</p> : null}
+        {actionError ? <p className="warn">{actionError.translationKey ? t(actionError.translationKey) : actionError.text}</p> : null}
 
-        {!loading && !error && sortedDepartments.length === 0 ? (
+        {!loading && !loadError && sortedDepartments.length === 0 ? (
           <div className="empty-state">
             <h3>{t("departments.emptyTitle")}</h3>
             <p>{t("departments.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && sortedDepartments.length > 0 ? (
+        {!loading && !loadError && sortedDepartments.length > 0 ? (
           <div className="employee-list">
             {sortedDepartments.map((department) => (
               <article key={department.id} className="employee-item">
