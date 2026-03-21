@@ -44,6 +44,8 @@ jobs:
           printf '## %s - %s\n' "$CURRENT_TAG" "$release_date" > "$block_file"
 
           found_entries=0
+          declare -A issue_entries
+          issue_order=()
           while IFS=$'\t' read -r commit_date subject; do
             [ -n "${subject:-}" ] || continue
 
@@ -64,9 +66,17 @@ jobs:
               continue
             fi
 
+            if [[ "$description" =~ [[:space:]]\|[[:space:]]revert$ ]]; then
+              continue
+            fi
+
             issue_url="https://github.com/$REPOSITORY/issues/$issue_number"
-            printf -- '- %s | %s | #%s - %s ([link](%s))\n' \
-              "$commit_date" "$prefix" "$issue_number" "$description" "$issue_url" >> "$block_file"
+            if [[ -z "${issue_entries[$issue_number]+x}" ]]; then
+              issue_order+=("$issue_number")
+            fi
+
+            printf -v issue_entries["$issue_number"] -- '- %s | %s | #%s - %s ([link](%s))\n' \
+              "$commit_date" "$prefix" "$issue_number" "$description" "$issue_url"
             found_entries=1
           done < <(git log --reverse --format='%cs%x09%s' "$range")
 
@@ -74,6 +84,10 @@ jobs:
             echo "No MERGED commits found for release range: $range"
             exit 0
           fi
+
+          for issue_number in "${issue_order[@]}"; do
+            printf '%s' "${issue_entries[$issue_number]}" >> "$block_file"
+          done
 
           printf '\n' >> "$block_file"
 

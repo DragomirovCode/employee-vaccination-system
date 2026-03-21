@@ -1,8 +1,6 @@
 # Changelog
 
 ## v0.9.3 - 2026-03-21
-- 2026-03-21 | ci | generic | feature | #156 - [FEATURE] Перевод автодеплой на ghcr.io ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/156))
-- 2026-03-21 | ci | generic | feature | #156 - [FEATURE] Перевод автодеплой на ghcr.io | revert ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/156))
 - 2026-03-21 | devops | generic | feature | #156 - [FEATURE] Перевод автодеплой на ghcr.io ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/156))
 
 
