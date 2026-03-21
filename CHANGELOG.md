@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.9.4 - 2026-03-21
+- 2026-03-21 | ci | generic | feature | #159 - [FEATURE] - Доработать CHANGELOG ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/159))
+- 2026-03-22 | backend | generic | feature | #161 - [FEATURE] Добавить человека читаемое сообщение при ошибке 409 для заболевания ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/161))
+- 2026-03-22 | frontend | generic | fix | #163 - [BUG] не корректная локализация при удалении вакцины ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/163))
+- 2026-03-22 | backend | generic | feature | #165 - [BUG] hr видит кнопку удаления сотрудников ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/165))
+- 2026-03-22 | frontend | generic | fix | #167 - [BUG] hr видит вкладку подразделения ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/167))
+- 2026-03-22 | backend | generic | fix | #169 - [BUG] hr может видеть сотрудников которые не относятся к его подразделению ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/169))
+- 2026-03-22 | frontend | generic | feature | #166 - [FEATURE] Улучшить отображение ошибок для подразделения ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/166))
+- 2026-03-22 | backend | generic | fix | #175 - [BUG] ошибка при удаление сотрудника ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/175))
+
+
 ## v0.9.3 - 2026-03-21
 - 2026-03-21 | devops | generic | feature | #156 - [FEATURE] Перевод автодеплой на ghcr.io ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/156))
 
