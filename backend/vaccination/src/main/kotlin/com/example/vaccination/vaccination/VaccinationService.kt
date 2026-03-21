@@ -55,9 +55,10 @@ class VaccinationService(
             entityId = saved.id!!,
             newValue = saved.toAuditPayload(),
         )
-        maybeCreateRevaccinationNotification(
+        maybeCreateVaccinationNotification(
             employeeId = command.employeeId,
             vaccinationId = saved.id!!,
+            vaccinationDate = saved.vaccinationDate!!,
             revaccinationDate = saved.revaccinationDate,
         )
 
@@ -101,9 +102,10 @@ class VaccinationService(
             oldValue = oldPayload,
             newValue = saved.toAuditPayload(),
         )
-        maybeCreateRevaccinationNotification(
+        maybeCreateVaccinationNotification(
             employeeId = command.employeeId,
             vaccinationId = saved.id!!,
+            vaccinationDate = saved.vaccinationDate!!,
             revaccinationDate = saved.revaccinationDate,
         )
 
@@ -171,24 +173,27 @@ class VaccinationService(
             "notes" to notes,
         )
 
-    private fun maybeCreateRevaccinationNotification(
+    private fun maybeCreateVaccinationNotification(
         employeeId: UUID,
         vaccinationId: UUID,
+        vaccinationDate: LocalDate,
         revaccinationDate: LocalDate?,
     ) {
-        if (revaccinationDate == null) {
-            return
-        }
-
         val userId = employeeRepository.findById(employeeId).orElse(null)?.userId ?: return
+        val message =
+            if (revaccinationDate != null) {
+                "Vaccination was recorded on $vaccinationDate. Revaccination is due on $revaccinationDate"
+            } else {
+                "Vaccination was recorded on $vaccinationDate"
+            }
         notificationService.create(
             CreateNotificationCommand(
                 userId = userId,
-                type = NotificationType.REVACCINATION_DUE,
-                title = "Upcoming revaccination",
-                message = "Revaccination is due on $revaccinationDate",
+                type = NotificationType.SYSTEM,
+                title = "Vaccination recorded",
+                message = message,
                 payload =
-                    """{"vaccinationId":"$vaccinationId","employeeId":"$employeeId","revaccinationDate":"$revaccinationDate"}""",
+                    """{"vaccinationId":"$vaccinationId","employeeId":"$employeeId","vaccinationDate":"$vaccinationDate","revaccinationDate":"$revaccinationDate"}""",
             ),
         )
     }
