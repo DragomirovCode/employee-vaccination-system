@@ -9,6 +9,8 @@ import com.example.employee.department.DepartmentEntity
 import com.example.employee.department.DepartmentRepository
 import com.example.employee.person.EmployeeEntity
 import com.example.employee.person.EmployeeRepository
+import com.example.vaccination.document.DocumentEntity
+import com.example.vaccination.document.DocumentRepository
 import com.example.vaccination.vaccination.CreateVaccinationCommand
 import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccination.vaccination.VaccinationService
@@ -46,6 +48,9 @@ class VaccinationServiceTest {
 
     @Autowired
     private lateinit var notificationRepository: NotificationRepository
+
+    @Autowired
+    private lateinit var documentRepository: DocumentRepository
 
     @Test
     fun `calculates next dose and revaccination dates`() {
@@ -115,6 +120,7 @@ class VaccinationServiceTest {
         notificationRepository.deleteAll()
         auditLogRepository.deleteAll()
         vaccinationRepository.deleteAll()
+        documentRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
         userRepository.deleteAll()
@@ -155,5 +161,54 @@ class VaccinationServiceTest {
         assertEquals(1, notifications.size)
         assertEquals(employeeUser.id, notifications.first().userId)
         assertEquals(NotificationType.REVACCINATION_DUE, notifications.first().type)
+    }
+
+    @Test
+    fun `deletes vaccination together with linked documents`() {
+        notificationRepository.deleteAll()
+        auditLogRepository.deleteAll()
+        documentRepository.deleteAll()
+        vaccinationRepository.deleteAll()
+        employeeRepository.deleteAll()
+        departmentRepository.deleteAll()
+        userRepository.deleteAll()
+        vaccineRepository.deleteAll()
+
+        val user = userRepository.saveAndFlush(UserEntity(email = "medic-delete@example.com", passwordHash = "hash"))
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Delete Dept"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "Delete",
+                    lastName = "Target",
+                ),
+            )
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "Delete vaccine", validityDays = 365, dosesRequired = 1))
+        val vaccination =
+            vaccinationService.create(
+                CreateVaccinationCommand(
+                    employeeId = employee.id!!,
+                    vaccineId = vaccine.id!!,
+                    performedBy = user.id!!,
+                    vaccinationDate = LocalDate.of(2026, 3, 1),
+                    doseNumber = 1,
+                ),
+            )
+        documentRepository.saveAndFlush(
+            DocumentEntity(
+                vaccinationId = vaccination.id,
+                fileName = "proof.pdf",
+                filePath = "documents/${vaccination.id}/proof.pdf",
+                fileSize = 123,
+                mimeType = "application/pdf",
+                uploadedBy = user.id,
+            ),
+        )
+
+        vaccinationService.delete(vaccination.id!!, user.id!!)
+
+        assertEquals(false, vaccinationRepository.findById(vaccination.id!!).isPresent)
+        assertEquals(0, documentRepository.findAllByVaccinationId(vaccination.id!!).size)
     }
 }

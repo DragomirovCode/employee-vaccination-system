@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet, apiGetBlob, apiPost, apiPostForm, apiPut } from "../shared/api/client";
@@ -74,6 +74,8 @@ export function EmployeeVaccinationsPage() {
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const [formState, setFormState] = useState<VaccinationFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const editorCardRef = useRef<HTMLElement | null>(null);
+  const vaccineFieldRef = useRef<HTMLSelectElement | null>(null);
 
   async function fetchDocumentsForVaccination(vaccinationId: string): Promise<DocumentDto[]> {
     return apiGet<DocumentDto[]>(`/vaccinations/${vaccinationId}/documents`);
@@ -170,14 +172,23 @@ export function EmployeeVaccinationsPage() {
     setSearchParams({});
   }
 
+  function focusEditor() {
+    window.requestAnimationFrame(() => {
+      editorCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => vaccineFieldRef.current?.focus(), 200);
+    });
+  }
+
   function startCreate() {
     setFormError(null);
     setFormState(EMPTY_FORM);
+    focusEditor();
   }
 
   function startEdit(item: VaccinationReadDto) {
     setFormError(null);
     setFormState(toFormState(item));
+    focusEditor();
   }
 
   function cancelEdit() {
@@ -385,7 +396,7 @@ export function EmployeeVaccinationsPage() {
             {visibleItems.map((item) => {
               const documents = documentsByVaccination[item.id] ?? [];
               return (
-                <article key={item.id} className="history-item">
+                <article key={item.id} className={`history-item ${formState.id === item.id ? "is-editing" : ""}`}>
                   <div className="history-head">
                     <div>
                       <h3>{vaccineNames[item.vaccineId] ?? t("employeeVaccinations.unknownVaccine")}</h3>
@@ -497,7 +508,7 @@ export function EmployeeVaccinationsPage() {
       </article>
 
       {canManageVaccinations ? (
-        <article className="card">
+        <article ref={editorCardRef} className={`card ${formState.id ? "editor-card is-editing" : "editor-card"}`}>
           <div className="page-head">
             <div>
               <h2>{formState.id ? t("vaccinationEditor.editTitle") : t("vaccinationEditor.createTitle")}</h2>
@@ -513,7 +524,11 @@ export function EmployeeVaccinationsPage() {
           <form className="editor-form" onSubmit={submitForm}>
             <label>
               {t("vaccinationEditor.vaccine")}
-              <select value={formState.vaccineId} onChange={(e) => setFormState((current) => ({ ...current, vaccineId: e.target.value }))}>
+              <select
+                ref={vaccineFieldRef}
+                value={formState.vaccineId}
+                onChange={(e) => setFormState((current) => ({ ...current, vaccineId: e.target.value }))}
+              >
                 <option value="">{t("vaccinationEditor.selectVaccine")}</option>
                 {Object.entries(vaccineNames).map(([id, name]) => (
                   <option key={id} value={id}>
