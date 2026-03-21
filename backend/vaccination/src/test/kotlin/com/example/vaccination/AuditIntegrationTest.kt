@@ -70,15 +70,15 @@ class AuditIntegrationTest {
         vaccinationService.update(
             id = created.id!!,
             command =
-                    UpdateVaccinationCommand(
-                        employeeId = seed.employee.id!!,
-                        vaccineId = seed.vaccine.id!!,
-                        performedBy = seed.user.id!!,
-                        vaccinationDate = LocalDate.of(2026, 3, 2),
-                        doseNumber = 1,
-                        expirationDate = LocalDate.of(2027, 1, 2),
-                        notes = "updated",
-                    ),
+                UpdateVaccinationCommand(
+                    employeeId = seed.employee.id!!,
+                    vaccineId = seed.vaccine.id!!,
+                    performedBy = seed.user.id!!,
+                    vaccinationDate = LocalDate.of(2026, 3, 2),
+                    doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 2),
+                    notes = "updated",
+                ),
         )
         vaccinationService.delete(created.id!!, seed.user.id!!)
 
