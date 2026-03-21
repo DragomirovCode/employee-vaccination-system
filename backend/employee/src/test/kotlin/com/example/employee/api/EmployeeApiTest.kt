@@ -209,6 +209,55 @@ class EmployeeApiTest {
     }
 
     @Test
+    fun `hr sees only employees from own department tree`() {
+        val hrUser = createUserWithRole("HR")
+        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ"))
+        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ Child", parentId = rootDepartment.id))
+        val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
+
+        employeeRepository.saveAndFlush(
+            com.example.employee.person.EmployeeEntity(
+                userId = hrUser.id,
+                departmentId = rootDepartment.id,
+                firstName = "Hr",
+                lastName = "Owner",
+            ),
+        )
+        employeeRepository.saveAndFlush(
+            com.example.employee.person.EmployeeEntity(
+                departmentId = childDepartment.id,
+                firstName = "Child",
+                lastName = "Employee",
+            ),
+        )
+        val externalEmployee =
+            employeeRepository.saveAndFlush(
+                com.example.employee.person.EmployeeEntity(
+                    departmentId = externalDepartment.id,
+                    firstName = "External",
+                    lastName = "Employee",
+                ),
+            )
+
+        val response =
+            mockMvc
+                .perform(
+                    get("/employees")
+                        .header("X-Auth-Token", hrUser.id.toString()),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.length()").value(2))
+                .andReturn()
+
+        org.junit.jupiter.api.Assertions.assertFalse(response.response.contentAsString.contains(externalEmployee.id.toString()))
+
+        mockMvc
+            .perform(
+                get("/employees/${externalEmployee.id}")
+                    .header("X-Auth-Token", hrUser.id.toString()),
+            ).andExpect(status().isForbidden)
+    }
+
+    @Test
     fun `write operations create audit records for departments and employees`() {
         val hr = createUserWithRole("HR")
 

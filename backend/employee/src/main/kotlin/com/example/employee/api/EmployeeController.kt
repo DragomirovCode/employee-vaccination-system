@@ -37,13 +37,15 @@ class EmployeeController(
 ) {
     @GetMapping
     @Operation(summary = "Get employees list")
-    fun list(): List<EmployeeResponse> = employeeService.list().map(EmployeeResponse::fromEntity)
+    fun list(request: HttpServletRequest): List<EmployeeResponse> =
+        employeeService.list(requirePrincipal(request)).map(EmployeeResponse::fromEntity)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by id")
     fun get(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
-    ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id))
+    ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id, requirePrincipal(request)))
 
     @PostMapping
     @Operation(summary = "Create employee")

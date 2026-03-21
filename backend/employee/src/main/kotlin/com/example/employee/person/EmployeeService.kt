@@ -15,13 +15,24 @@ import java.util.UUID
 class EmployeeService(
     private val employeeRepository: EmployeeRepository,
     private val departmentRepository: DepartmentRepository,
+    private val employeeAccessScopeResolver: EmployeeAccessScopeResolver,
     private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
-    fun list(): List<EmployeeEntity> = employeeRepository.findAll()
+    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<EmployeeEntity> =
+        employeeAccessScopeResolver.list(principal)
 
     @Transactional(readOnly = true)
-    fun get(id: UUID): EmployeeEntity = findEmployee(id)
+    fun get(
+        id: UUID,
+        principal: com.example.auth.AuthenticatedPrincipal,
+    ): EmployeeEntity {
+        val employee = findEmployee(id)
+        if (!employeeAccessScopeResolver.canRead(principal, employee)) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Requested employee is outside access scope")
+        }
+        return employee
+    }
 
     @Transactional
     fun create(

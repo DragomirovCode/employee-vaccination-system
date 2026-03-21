@@ -162,7 +162,7 @@ Employee module API:
   - `GET /departments`, `GET /departments/{id}` - any authenticated user
   - `POST /departments`, `PUT /departments/{id}`, `DELETE /departments/{id}` - `HR`, `ADMIN`
 - employees:
-  - `GET /employees`, `GET /employees/{id}` - any authenticated user
+  - `GET /employees`, `GET /employees/{id}` - any authenticated user, but data is scope-limited by role
   - `POST /employees`, `PUT /employees/{id}` - `HR`, `ADMIN`
   - `DELETE /employees/{id}` - `ADMIN`
 
@@ -170,6 +170,8 @@ Employee module business rules:
 - Department hierarchy cycles are rejected with `400`
 - Employee `departmentId` must reference existing department (`400` on invalid reference)
 - `employees.user_id` must be unique when present (`409` on conflict)
+- `PERSON` can read only own employee profile
+- `HR` can read employees only from own department and all descendant departments
 
 Vaccine module API:
 - vaccines:
