@@ -14,7 +14,8 @@ export function VaccinesPage() {
   const [linksByVaccine, setLinksByVaccine] = useState<Record<string, number[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [linkDrafts, setLinkDrafts] = useState<Record<string, string>>({});
   const [linkBusyId, setLinkBusyId] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export function VaccinesPage() {
 
     async function load() {
       setLoading(true);
-      setError(null);
+      setLoadError(null);
 
       try {
         const [vaccinesResponse, diseasesResponse] = await Promise.all([
@@ -48,7 +49,7 @@ export function VaccinesPage() {
       } catch (e) {
         if (cancelled) return;
         const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.unexpectedApiError");
-        setError(message);
+        setLoadError(message);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -95,7 +96,7 @@ export function VaccinesPage() {
     }
 
     setDeletingId(vaccineId);
-    setError(null);
+    setActionError(null);
     try {
       await apiDelete(`/vaccines/${vaccineId}`);
       setVaccines((current) => current.filter((vaccine) => vaccine.id !== vaccineId));
@@ -106,7 +107,7 @@ export function VaccinesPage() {
       });
     } catch (e) {
       const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.deleteError");
-      setError(message);
+      setActionError(message);
     } finally {
       setDeletingId(null);
     }
@@ -115,12 +116,12 @@ export function VaccinesPage() {
   async function addDiseaseLink(vaccineId: string) {
     const selectedDiseaseId = Number.parseInt(linkDrafts[vaccineId] ?? "", 10);
     if (Number.isNaN(selectedDiseaseId)) {
-      setError(t("diseases.linkUpdateError"));
+      setActionError(t("diseases.linkUpdateError"));
       return;
     }
 
     setLinkBusyId(vaccineId);
-    setError(null);
+    setActionError(null);
     try {
       await apiPost(`/vaccines/${vaccineId}/diseases/${selectedDiseaseId}`);
       setLinksByVaccine((current) => ({
@@ -135,10 +136,10 @@ export function VaccinesPage() {
       const message =
         e instanceof ApiHttpError && e.status === 409
           ? t("diseases.linkExists")
-          : e instanceof ApiHttpError
-            ? e.payload?.message ?? e.message
-            : t("diseases.linkUpdateError");
-      setError(message);
+            : e instanceof ApiHttpError
+              ? e.payload?.message ?? e.message
+              : t("diseases.linkUpdateError");
+      setActionError(message);
     } finally {
       setLinkBusyId(null);
     }
@@ -146,7 +147,7 @@ export function VaccinesPage() {
 
   async function removeDiseaseLink(vaccineId: string, diseaseId: number) {
     setLinkBusyId(`${vaccineId}:${diseaseId}`);
-    setError(null);
+    setActionError(null);
     try {
       await apiDelete(`/vaccines/${vaccineId}/diseases/${diseaseId}`);
       setLinksByVaccine((current) => ({
@@ -154,8 +155,13 @@ export function VaccinesPage() {
         [vaccineId]: (current[vaccineId] ?? []).filter((item) => item !== diseaseId)
       }));
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.linkUpdateError");
-      setError(message);
+      const message =
+        e instanceof ApiHttpError
+          ? e.status === 409
+            ? t("diseases.linkRemoveConflict")
+            : e.payload?.message ?? e.message
+          : t("diseases.linkUpdateError");
+      setActionError(message);
     } finally {
       setLinkBusyId(null);
     }
@@ -194,16 +200,17 @@ export function VaccinesPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {error ? <p className="warn">{error}</p> : null}
+        {loadError ? <p className="warn">{loadError}</p> : null}
+        {actionError ? <p className="warn">{actionError}</p> : null}
 
-        {!loading && !error && filteredVaccines.length === 0 ? (
+        {!loading && !loadError && filteredVaccines.length === 0 ? (
           <div className="empty-state">
             <h3>{t("vaccines.emptyTitle")}</h3>
             <p>{t("vaccines.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && filteredVaccines.length > 0 ? (
+        {!loading && !loadError && filteredVaccines.length > 0 ? (
           <div className="vaccine-list">
             {filteredVaccines.map((vaccine) => {
               const diseaseIds = linksByVaccine[vaccine.id] ?? [];

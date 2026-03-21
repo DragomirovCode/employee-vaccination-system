@@ -111,7 +111,12 @@ export function VaccineEditorPage() {
       }
       navigate("/vaccines", { replace: true });
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.unexpectedApiError");
+      const message =
+        e instanceof ApiHttpError
+          ? e.status === 409 && isEditMode
+            ? t("vaccines.usedEditConflict")
+            : e.payload?.message ?? e.message
+          : t("vaccines.unexpectedApiError");
       setError(message);
     } finally {
       setSubmitting(false);

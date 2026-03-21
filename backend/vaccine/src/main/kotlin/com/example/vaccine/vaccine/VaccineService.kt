@@ -56,6 +56,12 @@ class VaccineService(
     ): VaccineEntity {
         val vaccine = findVaccine(id)
         val oldPayload = vaccine.toAuditPayload()
+        if (vaccineDiseaseRepository.existsVaccinationByVaccineId(id) && !canUpdateUsedVaccine(vaccine, command)) {
+            throw ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Used vaccine can only change active status",
+            )
+        }
         requireUniqueName(command.name, id)
         vaccine.name = command.name.trim()
         vaccine.manufacturer = command.manufacturer?.trim()
@@ -110,6 +116,16 @@ class VaccineService(
         vaccineRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Vaccine not found")
         }
+
+    private fun canUpdateUsedVaccine(
+        vaccine: VaccineEntity,
+        command: UpdateVaccineCommand,
+    ): Boolean =
+        vaccine.name == command.name.trim() &&
+            vaccine.manufacturer == command.manufacturer?.trim() &&
+            vaccine.validityDays == command.validityDays &&
+            vaccine.dosesRequired == command.dosesRequired &&
+            vaccine.daysBetween == command.daysBetween
 
     private fun VaccineEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(

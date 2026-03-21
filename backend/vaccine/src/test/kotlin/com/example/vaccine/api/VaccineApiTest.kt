@@ -10,6 +10,10 @@ import com.example.auth.role.UserRoleId
 import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
+import com.example.employee.department.DepartmentEntity
+import com.example.employee.department.DepartmentRepository
+import com.example.employee.person.EmployeeEntity
+import com.example.employee.person.EmployeeRepository
 import com.example.vaccine.VaccineTestApplication
 import com.example.vaccine.disease.DiseaseEntity
 import com.example.vaccine.disease.DiseaseRepository
@@ -18,6 +22,8 @@ import com.example.vaccine.vaccine.VaccineRepository
 import com.example.vaccine.vaccinedisease.VaccineDiseaseEntity
 import com.example.vaccine.vaccinedisease.VaccineDiseaseId
 import com.example.vaccine.vaccinedisease.VaccineDiseaseRepository
+import com.example.vaccination.vaccination.VaccinationEntity
+import com.example.vaccination.vaccination.VaccinationRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,10 +33,12 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
+import java.time.LocalDate
 import java.util.UUID
 
 @SpringBootTest(classes = [VaccineTestApplication::class])
@@ -55,6 +63,15 @@ class VaccineApiTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var departmentRepository: DepartmentRepository
+
+    @Autowired
+    private lateinit var employeeRepository: EmployeeRepository
+
+    @Autowired
+    private lateinit var vaccinationRepository: VaccinationRepository
 
     @Autowired
     private lateinit var auditLogRepository: AuditLogRepository
@@ -169,6 +186,189 @@ class VaccineApiTest {
     }
 
     @Test
+    fun `rename disease linked to used vaccine returns conflict`() {
+        val medical = createUserWithRole("MEDICAL")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Medical"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "Ivan",
+                    lastName = "Ivanov",
+                ),
+            )
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "LinkedVax", validityDays = 365, dosesRequired = 1))
+        val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "OriginalDisease"))
+        vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = employee.id,
+                vaccineId = vaccine.id,
+                performedBy = medical.id,
+                vaccinationDate = LocalDate.of(2026, 3, 1),
+                expirationDate = LocalDate.of(2027, 3, 1),
+            ),
+        )
+
+        mockMvc
+            .perform(
+                put("/diseases/${disease.id}")
+                    .header("X-Auth-Token", medical.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"RenamedDisease","description":"updated"}"""),
+            ).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("HTTP_409"))
+    }
+
+    @Test
+    fun `rename disease linked to unused vaccine is allowed`() {
+        val medical = createUserWithRole("MEDICAL")
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "UnusedVax", validityDays = 365, dosesRequired = 1))
+        val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "UnusedDisease"))
+        vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
+
+        mockMvc
+            .perform(
+                put("/diseases/${disease.id}")
+                    .header("X-Auth-Token", medical.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"RenamedUnusedDisease","description":"updated"}"""),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("RenamedUnusedDisease"))
+    }
+
+    @Test
+    fun `delete disease link from used vaccine returns conflict`() {
+        val medical = createUserWithRole("MEDICAL")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Vaccination"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "Petr",
+                    lastName = "Petrov",
+                ),
+            )
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "UsedLinkVax", validityDays = 365, dosesRequired = 1))
+        val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "UsedLinkDisease"))
+        vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = employee.id,
+                vaccineId = vaccine.id,
+                performedBy = medical.id,
+                vaccinationDate = LocalDate.of(2026, 3, 2),
+                expirationDate = LocalDate.of(2027, 3, 2),
+            ),
+        )
+
+        mockMvc
+            .perform(
+                delete("/vaccines/${vaccine.id}/diseases/${disease.id}")
+                    .header("X-Auth-Token", medical.id.toString()),
+            ).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("HTTP_409"))
+    }
+
+    @Test
+    fun `delete disease link from unused vaccine is allowed`() {
+        val medical = createUserWithRole("MEDICAL")
+        val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "UnusedLinkVax", validityDays = 365, dosesRequired = 1))
+        val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "UnusedLinkDisease"))
+        vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
+
+        mockMvc
+            .perform(
+                delete("/vaccines/${vaccine.id}/diseases/${disease.id}")
+                    .header("X-Auth-Token", medical.id.toString()),
+            ).andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `update used vaccine fields except active returns conflict`() {
+        val medical = createUserWithRole("MEDICAL")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Used Vaccine Department"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "Sergey",
+                    lastName = "Sergeev",
+                ),
+            )
+        val vaccine =
+            vaccineRepository.saveAndFlush(
+                VaccineEntity(
+                    name = "LockedVax",
+                    manufacturer = "Acme",
+                    validityDays = 365,
+                    dosesRequired = 1,
+                    isActive = true,
+                ),
+            )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = employee.id,
+                vaccineId = vaccine.id,
+                performedBy = medical.id,
+                vaccinationDate = LocalDate.of(2026, 3, 3),
+                expirationDate = LocalDate.of(2027, 3, 3),
+            ),
+        )
+
+        mockMvc
+            .perform(
+                put("/vaccines/${vaccine.id}")
+                    .header("X-Auth-Token", medical.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(vaccineBody(name = "LockedVax", manufacturer = "Other", isActive = true)),
+            ).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.code").value("HTTP_409"))
+    }
+
+    @Test
+    fun `update used vaccine active flag is allowed`() {
+        val medical = createUserWithRole("MEDICAL")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Used Vaccine Toggle"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "Alex",
+                    lastName = "Alexeev",
+                ),
+            )
+        val vaccine =
+            vaccineRepository.saveAndFlush(
+                VaccineEntity(
+                    name = "ToggleVax",
+                    manufacturer = "Acme",
+                    validityDays = 365,
+                    dosesRequired = 1,
+                    isActive = true,
+                ),
+            )
+        vaccinationRepository.saveAndFlush(
+            VaccinationEntity(
+                employeeId = employee.id,
+                vaccineId = vaccine.id,
+                performedBy = medical.id,
+                vaccinationDate = LocalDate.of(2026, 3, 4),
+                expirationDate = LocalDate.of(2027, 3, 4),
+            ),
+        )
+
+        mockMvc
+            .perform(
+                put("/vaccines/${vaccine.id}")
+                    .header("X-Auth-Token", medical.id.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(vaccineBody(name = "ToggleVax", manufacturer = "Acme", isActive = false)),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.isActive").value(false))
+    }
+
+    @Test
     fun `write operations create audit records for vaccine disease and links`() {
         val medical = createUserWithRole("MEDICAL")
 
@@ -242,7 +442,10 @@ class VaccineApiTest {
 
     private fun cleanup() {
         auditLogRepository.deleteAll()
+        vaccinationRepository.deleteAll()
         vaccineDiseaseRepository.deleteAll()
+        employeeRepository.deleteAll()
+        departmentRepository.deleteAll()
         vaccineRepository.deleteAll()
         diseaseRepository.deleteAll()
         userRoleRepository.deleteAll()
@@ -250,15 +453,19 @@ class VaccineApiTest {
         userRepository.deleteAll()
     }
 
-    private fun vaccineBody(name: String): String =
+    private fun vaccineBody(
+        name: String,
+        manufacturer: String = "Acme",
+        isActive: Boolean = true,
+    ): String =
         """
         {
           "name":"$name",
-          "manufacturer":"Acme",
+          "manufacturer":"$manufacturer",
           "validityDays":365,
           "dosesRequired":1,
           "daysBetween":null,
-          "isActive":true
+          "isActive":$isActive
         }
         """.trimIndent()
 

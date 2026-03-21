@@ -86,7 +86,12 @@ export function DiseaseEditorPage() {
       }
       navigate("/diseases", { replace: true });
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("diseases.unexpectedApiError");
+      const message =
+        e instanceof ApiHttpError
+          ? e.status === 409 && isEditMode
+            ? t("diseases.renameConflict")
+            : e.payload?.message ?? e.message
+          : t("diseases.unexpectedApiError");
       setError(message);
     } finally {
       setSubmitting(false);

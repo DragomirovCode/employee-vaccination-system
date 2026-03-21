@@ -55,6 +55,9 @@ class VaccineDiseaseService(
     ) {
         requireVaccineExists(vaccineId)
         requireDiseaseExists(diseaseId)
+        if (vaccineDiseaseRepository.existsVaccinationByVaccineId(vaccineId)) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Vaccine-disease link cannot be deleted after vaccination usage")
+        }
         val deleted = vaccineDiseaseRepository.deleteByIdVaccineIdAndIdDiseaseId(vaccineId, diseaseId)
         if (deleted == 0L) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "Vaccine-disease link not found")

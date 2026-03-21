@@ -173,18 +173,21 @@ Employee module business rules:
 Vaccine module API:
 - vaccines:
   - `GET /vaccines`, `GET /vaccines/{id}` - any authenticated user
-  - `POST /vaccines`, `PUT /vaccines/{id}`, `DELETE /vaccines/{id}` - `HR`, `ADMIN`
+  - `POST /vaccines`, `PUT /vaccines/{id}`, `DELETE /vaccines/{id}` - `MEDICAL`, `ADMIN`
 - diseases:
   - `GET /diseases`, `GET /diseases/{id}` - any authenticated user
-  - `POST /diseases`, `PUT /diseases/{id}`, `DELETE /diseases/{id}` - `HR`, `ADMIN`
+  - `POST /diseases`, `PUT /diseases/{id}`, `DELETE /diseases/{id}` - `MEDICAL`, `ADMIN`
 - vaccine-disease links:
   - `GET /vaccines/{vaccineId}/diseases` - any authenticated user
-  - `POST /vaccines/{vaccineId}/diseases/{diseaseId}`, `DELETE /vaccines/{vaccineId}/diseases/{diseaseId}` - `HR`, `ADMIN`
+  - `POST /vaccines/{vaccineId}/diseases/{diseaseId}`, `DELETE /vaccines/{vaccineId}/diseases/{diseaseId}` - `MEDICAL`, `ADMIN`
 
 Vaccine module business rules:
 - duplicate `vaccine_id + disease_id` link is rejected with `409`
 - link creation with unknown `vaccineId` or `diseaseId` is rejected with `400`
 - deleting vaccine/disease with existing links is rejected with `409`
+- disease name cannot be changed if any linked vaccine already has vaccination records (`409`)
+- vaccine-disease link cannot be deleted if the vaccine already has vaccination records (`409`)
+- for a vaccine that already has vaccination records, only `isActive` can be changed; other fields are rejected with `409`
 
 Auth admin API (`ADMIN` only):
 - users:
