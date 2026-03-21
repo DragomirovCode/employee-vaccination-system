@@ -17,8 +17,7 @@ class DepartmentService(
     private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
-    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<DepartmentEntity> =
-        departmentAccessScopeResolver.list(principal)
+    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<DepartmentEntity> = departmentAccessScopeResolver.list(principal)
 
     @Transactional(readOnly = true)
     fun get(

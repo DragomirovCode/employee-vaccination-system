@@ -19,8 +19,7 @@ class EmployeeService(
     private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
-    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<EmployeeEntity> =
-        employeeAccessScopeResolver.list(principal)
+    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<EmployeeEntity> = employeeAccessScopeResolver.list(principal)
 
     @Transactional(readOnly = true)
     fun get(

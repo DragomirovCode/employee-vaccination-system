@@ -248,7 +248,8 @@ class EmployeeApiTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andReturn()
 
-        org.junit.jupiter.api.Assertions.assertFalse(response.response.contentAsString.contains(externalEmployee.id.toString()))
+        org.junit.jupiter.api.Assertions
+            .assertFalse(response.response.contentAsString.contains(externalEmployee.id.toString()))
 
         mockMvc
             .perform(
@@ -282,7 +283,8 @@ class EmployeeApiTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andReturn()
 
-        org.junit.jupiter.api.Assertions.assertFalse(response.response.contentAsString.contains(externalDepartment.id.toString()))
+        org.junit.jupiter.api.Assertions
+            .assertFalse(response.response.contentAsString.contains(externalDepartment.id.toString()))
 
         mockMvc
             .perform(
