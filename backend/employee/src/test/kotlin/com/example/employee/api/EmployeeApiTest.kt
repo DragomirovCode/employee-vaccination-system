@@ -258,6 +258,46 @@ class EmployeeApiTest {
     }
 
     @Test
+    fun `hr sees only departments from own department tree`() {
+        val hrUser = createUserWithRole("HR")
+        val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ"))
+        val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ Child", parentId = rootDepartment.id))
+        val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
+
+        employeeRepository.saveAndFlush(
+            com.example.employee.person.EmployeeEntity(
+                userId = hrUser.id,
+                departmentId = rootDepartment.id,
+                firstName = "Hr",
+                lastName = "Owner",
+            ),
+        )
+
+        val response =
+            mockMvc
+                .perform(
+                    get("/departments")
+                        .header("X-Auth-Token", hrUser.id.toString()),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.length()").value(2))
+                .andReturn()
+
+        org.junit.jupiter.api.Assertions.assertFalse(response.response.contentAsString.contains(externalDepartment.id.toString()))
+
+        mockMvc
+            .perform(
+                get("/departments/${externalDepartment.id}")
+                    .header("X-Auth-Token", hrUser.id.toString()),
+            ).andExpect(status().isForbidden)
+
+        mockMvc
+            .perform(
+                get("/departments/${childDepartment.id}")
+                    .header("X-Auth-Token", hrUser.id.toString()),
+            ).andExpect(status().isOk)
+    }
+
+    @Test
     fun `write operations create audit records for departments and employees`() {
         val hr = createUserWithRole("HR")
 

@@ -13,13 +13,24 @@ import java.util.UUID
 class DepartmentService(
     private val departmentRepository: DepartmentRepository,
     private val employeeRepository: EmployeeRepository,
+    private val departmentAccessScopeResolver: DepartmentAccessScopeResolver,
     private val auditLogService: AuditLogService,
 ) {
     @Transactional(readOnly = true)
-    fun list(): List<DepartmentEntity> = departmentRepository.findAll()
+    fun list(principal: com.example.auth.AuthenticatedPrincipal): List<DepartmentEntity> =
+        departmentAccessScopeResolver.list(principal)
 
     @Transactional(readOnly = true)
-    fun get(id: UUID): DepartmentEntity = findDepartment(id)
+    fun get(
+        id: UUID,
+        principal: com.example.auth.AuthenticatedPrincipal,
+    ): DepartmentEntity {
+        val department = findDepartment(id)
+        if (!departmentAccessScopeResolver.canRead(principal, department)) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Requested department is outside access scope")
+        }
+        return department
+    }
 
     @Transactional
     fun create(

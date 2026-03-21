@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../features/auth/AuthContext";
 import { apiGet, apiPost, apiPut } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, EmployeeDto, EmployeeWriteRequest } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
@@ -42,7 +43,9 @@ function toFormState(employee: EmployeeDto): EmployeeFormState {
 export function EmployeeEditorPage() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
+  const { session } = useAuth();
   const { t } = useI18n();
+  const departmentsLabel = session?.roles.includes("HR") ? t("employees.availableDepartments") : t("employees.allDepartments");
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [formState, setFormState] = useState<EmployeeFormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
@@ -153,7 +156,7 @@ export function EmployeeEditorPage() {
                 value={formState.departmentId}
                 onChange={(e) => setFormState((current) => ({ ...current, departmentId: e.target.value }))}
               >
-                <option value="">{t("employees.allDepartments")}</option>
+                <option value="">{departmentsLabel}</option>
                 {departments.map((department) => (
                   <option key={department.id} value={department.id}>
                     {department.name}

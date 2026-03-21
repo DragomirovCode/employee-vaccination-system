@@ -13,6 +13,7 @@ function formatEmployeeName(employee: EmployeeDto): string {
 export function EmployeesPage() {
   const { session } = useAuth();
   const { locale, t } = useI18n();
+  const allDepartmentsLabel = session?.roles.includes("HR") ? t("employees.availableDepartments") : t("employees.allDepartments");
   const [employees, setEmployees] = useState<EmployeeDto[]>([]);
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState("");
@@ -130,7 +131,7 @@ export function EmployeesPage() {
           <label className="toolbar-field">
             <span>{t("employees.department")}</span>
             <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
-              <option value="">{t("employees.allDepartments")}</option>
+              <option value="">{allDepartmentsLabel}</option>
               {departments.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}
