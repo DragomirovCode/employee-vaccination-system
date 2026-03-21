@@ -4,6 +4,11 @@ import { apiGet, apiPost, apiPut } from "../shared/api/client";
 import { ApiHttpError, VaccineDto, VaccineWriteRequest } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 type VaccineFormState = {
   name: string;
   manufacturer: string;
@@ -39,7 +44,7 @@ export function VaccineEditorPage() {
   const { t } = useI18n();
   const [formState, setFormState] = useState<VaccineFormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UiError | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const isEditMode = Boolean(vaccineId);
 
@@ -61,8 +66,9 @@ export function VaccineEditorPage() {
         }
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.loadOneError");
-        setError(message);
+        const nextError =
+          e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "vaccines.loadOneError" };
+        setError(nextError);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -74,7 +80,7 @@ export function VaccineEditorPage() {
     return () => {
       cancelled = true;
     };
-  }, [t, vaccineId]);
+  }, [vaccineId]);
 
   async function submitForm(e: FormEvent) {
     e.preventDefault();
@@ -84,11 +90,11 @@ export function VaccineEditorPage() {
     const daysBetween = formState.daysBetween ? Number.parseInt(formState.daysBetween, 10) : null;
 
     if (!formState.name.trim() || Number.isNaN(validityDays) || Number.isNaN(dosesRequired) || validityDays <= 0 || dosesRequired <= 0) {
-      setError(t("vaccines.validation"));
+      setError({ translationKey: "vaccines.validation" });
       return;
     }
     if (daysBetween !== null && (Number.isNaN(daysBetween) || daysBetween < 0)) {
-      setError(t("vaccines.validation"));
+      setError({ translationKey: "vaccines.validation" });
       return;
     }
 
@@ -111,8 +117,13 @@ export function VaccineEditorPage() {
       }
       navigate("/vaccines", { replace: true });
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("vaccines.unexpectedApiError");
-      setError(message);
+      const nextError =
+        e instanceof ApiHttpError
+          ? e.status === 409 && isEditMode
+            ? { translationKey: "vaccines.usedEditConflict" }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "vaccines.unexpectedApiError" };
+      setError(nextError);
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +146,7 @@ export function VaccineEditorPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {error ? <p className="warn">{error}</p> : null}
+        {error ? <p className="warn">{error.translationKey ? t(error.translationKey) : error.text}</p> : null}
 
         {!loading ? (
           <form className="editor-form" onSubmit={submitForm}>

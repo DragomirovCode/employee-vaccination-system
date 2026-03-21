@@ -112,6 +112,11 @@ class VaccineDiseaseController(
                 description = "Not found",
                 content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
             ),
+            ApiResponse(
+                responseCode = "409",
+                description = "Conflict",
+                content = [Content(schema = Schema(implementation = ApiErrorResponse::class))],
+            ),
         ],
     )
     fun deleteLink(

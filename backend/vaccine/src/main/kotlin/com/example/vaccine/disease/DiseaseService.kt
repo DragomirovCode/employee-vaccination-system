@@ -52,6 +52,9 @@ class DiseaseService(
     ): DiseaseEntity {
         val disease = findDisease(id)
         val oldPayload = disease.toAuditPayload()
+        if (vaccineDiseaseRepository.existsUsedVaccineLinkByDiseaseId(id) && disease.name != command.name.trim()) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Disease name cannot be changed after vaccination usage")
+        }
         requireUniqueName(command.name, id)
         disease.name = command.name.trim()
         disease.description = command.description?.trim()
