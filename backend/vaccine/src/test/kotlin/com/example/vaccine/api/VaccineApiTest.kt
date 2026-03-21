@@ -14,6 +14,8 @@ import com.example.employee.department.DepartmentEntity
 import com.example.employee.department.DepartmentRepository
 import com.example.employee.person.EmployeeEntity
 import com.example.employee.person.EmployeeRepository
+import com.example.vaccination.vaccination.VaccinationEntity
+import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.VaccineTestApplication
 import com.example.vaccine.disease.DiseaseEntity
 import com.example.vaccine.disease.DiseaseRepository
@@ -22,8 +24,6 @@ import com.example.vaccine.vaccine.VaccineRepository
 import com.example.vaccine.vaccinedisease.VaccineDiseaseEntity
 import com.example.vaccine.vaccinedisease.VaccineDiseaseId
 import com.example.vaccine.vaccinedisease.VaccineDiseaseRepository
-import com.example.vaccination.vaccination.VaccinationEntity
-import com.example.vaccination.vaccination.VaccinationRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
