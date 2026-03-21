@@ -108,7 +108,15 @@ class EmployeeService(
         performedBy: UUID,
     ) {
         val existing = findEmployee(id)
-        employeeRepository.deleteById(id)
+        if (existing.userId != null) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Employee has linked user account")
+        }
+        try {
+            employeeRepository.deleteById(id)
+            employeeRepository.flush()
+        } catch (ex: DataIntegrityViolationException) {
+            throw toDeleteConflict(ex)
+        }
         auditLogService.logDelete(
             userId = performedBy,
             entityType = AuditEntityType.EMPLOYEE,
@@ -145,6 +153,15 @@ class EmployeeService(
     private fun toConflict(ex: DataIntegrityViolationException): ResponseStatusException {
         val message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation"
         return ResponseStatusException(HttpStatus.CONFLICT, message)
+    }
+
+    private fun toDeleteConflict(ex: DataIntegrityViolationException): ResponseStatusException {
+        val message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation"
+        return if (message.contains("fk_vaccinations_employee", ignoreCase = true)) {
+            ResponseStatusException(HttpStatus.CONFLICT, "Employee has vaccination records")
+        } else {
+            ResponseStatusException(HttpStatus.CONFLICT, message)
+        }
     }
 
     private fun EmployeeEntity.toAuditPayload(): Map<String, Any?> =

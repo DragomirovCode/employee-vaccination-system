@@ -209,6 +209,49 @@ class EmployeeApiTest {
     }
 
     @Test
+    fun `employee delete returns conflict when employee has linked user account`() {
+        val admin = createUserWithRole("ADMIN")
+        val linkedUser = createUserWithRole("PERSON")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                com.example.employee.person.EmployeeEntity(
+                    userId = linkedUser.id,
+                    departmentId = department.id,
+                    firstName = "Linked",
+                    lastName = "Employee",
+                ),
+            )
+
+        mockMvc
+            .perform(
+                delete("/employees/${employee.id}")
+                    .header("X-Auth-Token", admin.id.toString()),
+            ).andExpect(status().isConflict)
+            .andExpect(jsonPath("$.message").value("Employee has linked user account"))
+    }
+
+    @Test
+    fun `admin can delete employee without linked user account`() {
+        val admin = createUserWithRole("ADMIN")
+        val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
+        val employee =
+            employeeRepository.saveAndFlush(
+                com.example.employee.person.EmployeeEntity(
+                    departmentId = department.id,
+                    firstName = "No",
+                    lastName = "Account",
+                ),
+            )
+
+        mockMvc
+            .perform(
+                delete("/employees/${employee.id}")
+                    .header("X-Auth-Token", admin.id.toString()),
+            ).andExpect(status().isNoContent)
+    }
+
+    @Test
     fun `hr sees only employees from own department tree`() {
         val hrUser = createUserWithRole("HR")
         val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ"))

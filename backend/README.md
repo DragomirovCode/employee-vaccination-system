@@ -170,6 +170,8 @@ Employee module business rules:
 - Department hierarchy cycles are rejected with `400`
 - Employee `departmentId` must reference existing department (`400` on invalid reference)
 - `employees.user_id` must be unique when present (`409` on conflict)
+- employee cannot be deleted while a linked user account exists (`409`)
+- employee cannot be deleted while vaccination records exist (`409`)
 - `PERSON` can read only own department
 - `HR` can read departments only from own department and all descendant departments
 - `PERSON` can read only own employee profile

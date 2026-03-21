@@ -6,6 +6,11 @@ import { ApiHttpError, DepartmentDto, EmployeeDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
+type UiError = {
+  translationKey?: string;
+  text?: string;
+};
+
 function formatEmployeeName(employee: EmployeeDto): string {
   return [employee.lastName, employee.firstName, employee.middleName].filter(Boolean).join(" ");
 }
@@ -19,7 +24,8 @@ export function EmployeesPage() {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<UiError | null>(null);
+  const [actionError, setActionError] = useState<UiError | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,7 +33,7 @@ export function EmployeesPage() {
 
     async function load() {
       setLoading(true);
-      setError(null);
+      setLoadError(null);
       try {
         const [employeesResponse, departmentsResponse] = await Promise.all([
           apiGet<EmployeeDto[]>("/employees"),
@@ -39,8 +45,8 @@ export function EmployeesPage() {
         setDepartments(departmentsResponse);
       } catch (e) {
         if (cancelled) return;
-        const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("employees.unexpectedApiError");
-        setError(message);
+        const nextError = e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "employees.unexpectedApiError" };
+        setLoadError(nextError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -86,13 +92,22 @@ export function EmployeesPage() {
     }
 
     setDeletingId(employeeId);
-    setError(null);
+    setActionError(null);
     try {
       await apiDelete(`/employees/${employeeId}`);
       setEmployees((current) => current.filter((employee) => employee.id !== employeeId));
     } catch (e) {
-      const message = e instanceof ApiHttpError ? e.payload?.message ?? e.message : t("employees.deleteError");
-      setError(message);
+      const nextError =
+        e instanceof ApiHttpError
+          ? e.status === 409
+            ? e.payload?.message === "Employee has linked user account"
+              ? { translationKey: "employees.deleteLinkedAccountConflict" }
+              : e.payload?.message === "Employee has vaccination records"
+                ? { translationKey: "employees.deleteVaccinationConflict" }
+                : { text: e.payload?.message ?? e.message }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "employees.deleteError" };
+      setActionError(nextError);
     } finally {
       setDeletingId(null);
     }
@@ -142,16 +157,17 @@ export function EmployeesPage() {
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
-        {error ? <p className="warn">{error}</p> : null}
+        {loadError ? <p className="warn">{loadError.translationKey ? t(loadError.translationKey) : loadError.text}</p> : null}
+        {actionError ? <p className="warn">{actionError.translationKey ? t(actionError.translationKey) : actionError.text}</p> : null}
 
-        {!loading && !error && filteredEmployees.length === 0 ? (
+        {!loading && !loadError && filteredEmployees.length === 0 ? (
           <div className="empty-state">
             <h3>{t("employees.emptyTitle")}</h3>
             <p>{t("employees.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && filteredEmployees.length > 0 ? (
+        {!loading && !loadError && filteredEmployees.length > 0 ? (
           <div className="employee-list">
             {filteredEmployees.map((employee) => (
               <article key={employee.id} className="employee-item">
