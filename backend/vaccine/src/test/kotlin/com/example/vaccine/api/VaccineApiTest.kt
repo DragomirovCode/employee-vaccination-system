@@ -128,7 +128,7 @@ class VaccineApiTest {
 
     @Test
     fun `duplicate vaccine disease link returns conflict`() {
-        val hr = createUserWithRole("HR")
+        val medical = createUserWithRole("MEDICAL")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "DupVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "DupDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -136,26 +136,26 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
 
     @Test
     fun `unknown ids in link creation return bad request`() {
-        val hr = createUserWithRole("HR")
+        val medical = createUserWithRole("MEDICAL")
 
         mockMvc
             .perform(
                 post("/vaccines/${UUID.randomUUID()}/diseases/12345")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
     }
 
     @Test
     fun `delete vaccine with existing links returns conflict`() {
-        val hr = createUserWithRole("HR")
+        val medical = createUserWithRole("MEDICAL")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "DeleteVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "DeleteDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -163,20 +163,20 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 delete("/vaccines/${vaccine.id}")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
 
     @Test
     fun `write operations create audit records for vaccine disease and links`() {
-        val hr = createUserWithRole("HR")
+        val medical = createUserWithRole("MEDICAL")
 
         val vaccineResponse =
             mockMvc
                 .perform(
                     post("/vaccines")
-                        .header("X-Auth-Token", hr.id.toString())
+                        .header("X-Auth-Token", medical.id.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(vaccineBody("AuditVax")),
                 ).andExpect(status().isCreated)
@@ -188,7 +188,7 @@ class VaccineApiTest {
             mockMvc
                 .perform(
                     post("/diseases")
-                        .header("X-Auth-Token", hr.id.toString())
+                        .header("X-Auth-Token", medical.id.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""{"name":"AuditDisease"}"""),
                 ).andExpect(status().isCreated)
@@ -199,13 +199,13 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/$vaccineId/diseases/$diseaseId")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 delete("/vaccines/$vaccineId/diseases/$diseaseId")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isNoContent)
 
         val logs = auditLogRepository.findAll()
