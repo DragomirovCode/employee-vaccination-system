@@ -17,8 +17,9 @@ export function readSession(): AuthSession | null {
     if (!parsed.token || typeof parsed.token !== "string") return null;
     if (!parsed.userId || typeof parsed.userId !== "string") return null;
     const token = normalizeAuthToken(parsed.token);
-    if (!token) return null;
-    return { token, roles: normalizeRoles(parsed.roles), userId: parsed.userId.trim() };
+    const userId = parsed.userId.trim();
+    if (!isUuid(token) || !isUuid(userId)) return null;
+    return { token, roles: normalizeRoles(parsed.roles), userId };
   } catch {
     return null;
   }
@@ -26,11 +27,17 @@ export function readSession(): AuthSession | null {
 
 export function writeSession(session: AuthSession): void {
   const token = normalizeAuthToken(session.token);
+  const userId = session.userId.trim();
+  if (!isUuid(token) || !isUuid(userId)) {
+    localStorage.removeItem(SESSION_KEY);
+    return;
+  }
   localStorage.setItem(
     SESSION_KEY,
     JSON.stringify({
       ...session,
-      token
+      token,
+      userId
     })
   );
 }
@@ -49,4 +56,8 @@ export function normalizeAuthToken(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
   return trimmed.replace(/^Bearer\s+/i, "").trim();
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
