@@ -4,6 +4,7 @@ import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet, apiPost } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto, VaccineDiseaseLinkDto, VaccineDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { matchesSearchQuery } from "../shared/search";
 
 export function VaccinesPage() {
   const { session } = useAuth();
@@ -11,6 +12,7 @@ export function VaccinesPage() {
   const [vaccines, setVaccines] = useState<VaccineDto[]>([]);
   const [diseases, setDiseases] = useState<DiseaseDto[]>([]);
   const [linksByVaccine, setLinksByVaccine] = useState<Record<string, number[]>>({});
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -65,6 +67,26 @@ export function VaccinesPage() {
   const diseasesMap = useMemo(
     () => Object.fromEntries(diseases.map((disease) => [disease.id, disease])),
     [diseases]
+  );
+
+  const filteredVaccines = useMemo(
+    () =>
+      vaccines.filter((vaccine) => {
+        const relatedDiseaseNames = (linksByVaccine[vaccine.id] ?? [])
+          .map((diseaseId) => diseasesMap[diseaseId]?.name)
+          .join(" ");
+
+        return matchesSearchQuery(
+          searchQuery,
+          vaccine.name,
+          vaccine.manufacturer,
+          vaccine.validityDays,
+          vaccine.dosesRequired,
+          vaccine.daysBetween,
+          relatedDiseaseNames
+        );
+      }),
+    [diseasesMap, linksByVaccine, searchQuery, vaccines]
   );
 
   async function deleteVaccine(vaccineId: string) {
@@ -159,19 +181,31 @@ export function VaccinesPage() {
           </div>
         </div>
 
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && vaccines.length === 0 ? (
+        {!loading && !error && filteredVaccines.length === 0 ? (
           <div className="empty-state">
             <h3>{t("vaccines.emptyTitle")}</h3>
             <p>{t("vaccines.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && vaccines.length > 0 ? (
+        {!loading && !error && filteredVaccines.length > 0 ? (
           <div className="vaccine-list">
-            {vaccines.map((vaccine) => {
+            {filteredVaccines.map((vaccine) => {
               const diseaseIds = linksByVaccine[vaccine.id] ?? [];
               const relatedDiseases = diseaseIds
                 .map((diseaseId) => diseasesMap[diseaseId])

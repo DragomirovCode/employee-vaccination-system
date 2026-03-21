@@ -1,9 +1,10 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiGet, apiGetBlob } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, PageResponse, RevaccinationDueItem } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 const DEFAULT_DAYS = 30;
 const PAGE_SIZE = 10;
@@ -35,6 +36,7 @@ export function RevaccinationDuePage() {
   const [draftDays, setDraftDays] = useState(String(DEFAULT_DAYS));
   const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -137,6 +139,21 @@ export function RevaccinationDuePage() {
   const canGoPrevious = page > 0 && !loading;
   const canGoNext = Boolean(data && page + 1 < data.totalPages) && !loading;
   const isPersonView = Boolean(session?.roles.includes("PERSON"));
+  const filteredItems = useMemo(
+    () =>
+      (data?.content ?? []).filter((item) =>
+        matchesSearchQuery(
+          searchQuery,
+          item.fullName,
+          item.vaccineName,
+          ...getDateSearchValues(item.lastVaccinationDate, locale === "ru" ? "ru-RU" : "en-US"),
+          ...getDateSearchValues(item.revaccinationDate, locale === "ru" ? "ru-RU" : "en-US"),
+          item.daysLeft,
+          departments[item.departmentId]
+        )
+      ),
+    [data?.content, departments, locale, searchQuery]
+  );
 
   return (
     <section className="stack-lg">
@@ -182,20 +199,32 @@ export function RevaccinationDuePage() {
           </div>
         </form>
 
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && data && data.content.length === 0 ? (
+        {!loading && !error && data && filteredItems.length === 0 ? (
           <div className="empty-state">
             <h3>{t("revaccination.emptyTitle")}</h3>
             <p>{t("revaccination.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && data && data.content.length > 0 ? (
+        {!loading && !error && data && filteredItems.length > 0 ? (
           <>
             <div className="due-list">
-              {data.content.map((item) => {
+              {filteredItems.map((item) => {
                 const status = getStatus(item.daysLeft);
                 return (
                   <article key={`${item.employeeId}-${item.vaccineName}-${item.revaccinationDate}`} className={`due-item is-${status}`}>

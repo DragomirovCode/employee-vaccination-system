@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { apiGet, apiGetBlob } from "../shared/api/client";
 import {
   ApiHttpError,
@@ -7,6 +7,7 @@ import {
   VaccinationCoverageVaccineItem
 } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { matchesSearchQuery } from "../shared/search";
 
 type CoverageMode = "department" | "vaccine";
 type ExportFormat = "csv" | "xlsx" | "pdf";
@@ -42,6 +43,7 @@ export function CoverageReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<ExportFormat>("csv");
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -166,6 +168,21 @@ export function CoverageReportPage() {
     }
   }
 
+  const filteredItems = useMemo(
+    () =>
+      items.filter((item) => {
+        const name = "departmentName" in item ? item.departmentName : item.vaccineName;
+        return matchesSearchQuery(
+          searchQuery,
+          name,
+          item.employeesTotal,
+          item.employeesCovered,
+          item.coveragePercent.toFixed(1)
+        );
+      }),
+    [items, searchQuery]
+  );
+
   return (
     <section className="stack-lg">
       <article className="card">
@@ -232,17 +249,29 @@ export function CoverageReportPage() {
           </div>
         </form>
 
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && items.length === 0 ? (
+        {!loading && !error && filteredItems.length === 0 ? (
           <div className="empty-state">
             <h3>{t("coverage.emptyTitle")}</h3>
             <p>{t("coverage.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && items.length > 0 ? (
+        {!loading && !error && filteredItems.length > 0 ? (
           <div className="coverage-table">
             <div className="coverage-row coverage-row-head">
               <span>{mode === "department" ? t("coverage.department") : t("coverage.vaccine")}</span>
@@ -250,7 +279,7 @@ export function CoverageReportPage() {
               <span>{t("coverage.coveredEmployees")}</span>
               <span>{t("coverage.coveragePercent")}</span>
             </div>
-            {items.map((item) => {
+            {filteredItems.map((item) => {
               const tone = getCoverageTone(item.coveragePercent);
               const name = "departmentName" in item ? item.departmentName : item.vaccineName;
               return (

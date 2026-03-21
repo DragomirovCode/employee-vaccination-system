@@ -13,6 +13,8 @@ const STORAGE_KEY = "evs.frontend.locale";
 const messages: Record<Locale, Record<string, string>> = {
   ru: {
     "common.loading": "Загрузка...",
+    "common.search": "Поиск",
+    "common.searchPlaceholder": "Введите ключевое слово",
     "common.signOut": "Выйти",
     "common.networkCorsError": "Ошибка сети/CORS. Проверьте URL backend и CORS для заголовка X-Auth-Token.",
     "layout.title": "Система вакцинации сотрудников",
@@ -349,6 +351,8 @@ const messages: Record<Locale, Record<string, string>> = {
   },
   en: {
     "common.loading": "Loading...",
+    "common.search": "Search",
+    "common.searchPlaceholder": "Enter a keyword",
     "common.signOut": "Sign out",
     "common.networkCorsError": "Network/CORS error. Check backend URL and CORS for X-Auth-Token header.",
     "layout.title": "Employee Vaccination System",

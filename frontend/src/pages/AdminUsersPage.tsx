@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiGet, apiPatch } from "../shared/api/client";
 import { ApiHttpError, AuthUserDto, AuthUserStatusRequest } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 function formatDateTime(value: string, locale: string): string {
   return new Date(value).toLocaleString(locale === "ru" ? "ru-RU" : "en-US");
@@ -11,6 +12,7 @@ function formatDateTime(value: string, locale: string): string {
 export function AdminUsersPage() {
   const { locale, t } = useI18n();
   const [users, setUsers] = useState<AuthUserDto[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
@@ -45,8 +47,19 @@ export function AdminUsersPage() {
   }, [t]);
 
   const sortedUsers = useMemo(
-    () => [...users].sort((left, right) => left.email.localeCompare(right.email)),
-    [users]
+    () =>
+      [...users]
+        .filter((user) =>
+          matchesSearchQuery(
+            searchQuery,
+            user.email,
+            user.id,
+            ...getDateSearchValues(user.createdAt, locale === "ru" ? "ru-RU" : "en-US", { dateStyle: "short", timeStyle: "medium" }),
+            ...getDateSearchValues(user.updatedAt, locale === "ru" ? "ru-RU" : "en-US", { dateStyle: "short", timeStyle: "medium" })
+          )
+        )
+        .sort((left, right) => left.email.localeCompare(right.email)),
+    [locale, searchQuery, users]
   );
 
   async function toggleStatus(user: AuthUserDto) {
@@ -99,6 +112,18 @@ export function AdminUsersPage() {
               <button type="button" className="button-secondary">{t("adminUsers.create")}</button>
             </Link>
           </div>
+        </div>
+
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}
