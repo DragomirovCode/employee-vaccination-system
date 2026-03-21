@@ -80,7 +80,7 @@ export function App() {
           <Route
             path="departments"
             element={
-              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+              <RequireRole allowedRoles={["ADMIN"]}>
                 <DepartmentsPage />
               </RequireRole>
             }
@@ -88,7 +88,7 @@ export function App() {
           <Route
             path="departments/new"
             element={
-              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+              <RequireRole allowedRoles={["ADMIN"]}>
                 <DepartmentEditorPage />
               </RequireRole>
             }
@@ -96,7 +96,7 @@ export function App() {
           <Route
             path="departments/:departmentId/edit"
             element={
-              <RequireRole allowedRoles={["HR", "ADMIN"]}>
+              <RequireRole allowedRoles={["ADMIN"]}>
                 <DepartmentEditorPage />
               </RequireRole>
             }
