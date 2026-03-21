@@ -19,6 +19,7 @@ on:
 
 jobs:
   code-check:
+    if: github.event_name == 'pull_request' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
 
     steps:
