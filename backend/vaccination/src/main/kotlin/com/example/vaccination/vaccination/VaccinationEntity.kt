@@ -29,7 +29,7 @@ class VaccinationEntity(
     var doseNumber: Int = 1,
     @Column(name = "batch_number", length = 255)
     var batchNumber: String? = null,
-    @Column(name = "expiration_date")
+    @Column(name = "expiration_date", nullable = false)
     var expirationDate: LocalDate? = null,
     @Column(name = "next_dose_date")
     var nextDoseDate: LocalDate? = null,

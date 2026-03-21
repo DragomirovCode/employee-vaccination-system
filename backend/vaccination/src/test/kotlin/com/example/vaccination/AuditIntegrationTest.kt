@@ -64,6 +64,7 @@ class AuditIntegrationTest {
                     performedBy = seed.user.id!!,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                 ),
             )
         vaccinationService.update(
@@ -75,6 +76,7 @@ class AuditIntegrationTest {
                     performedBy = seed.user.id!!,
                     vaccinationDate = LocalDate.of(2026, 3, 2),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 2),
                     notes = "updated",
                 ),
         )
@@ -104,6 +106,7 @@ class AuditIntegrationTest {
                     performedBy = seed.user.id,
                     vaccinationDate = LocalDate.of(2026, 3, 1),
                     doseNumber = 1,
+                    expirationDate = LocalDate.of(2027, 1, 1),
                     revaccinationDate = LocalDate.of(2027, 3, 1),
                 ),
             )

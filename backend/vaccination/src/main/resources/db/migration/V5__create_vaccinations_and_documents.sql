@@ -6,7 +6,7 @@
     vaccination_date DATE NOT NULL,
     dose_number INTEGER NOT NULL,
     batch_number VARCHAR(255) NULL,
-    expiration_date DATE NULL,
+    expiration_date DATE NOT NULL,
     next_dose_date DATE NULL,
     revaccination_date DATE NULL,
     notes TEXT NULL,

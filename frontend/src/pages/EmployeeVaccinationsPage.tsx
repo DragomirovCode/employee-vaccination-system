@@ -201,7 +201,7 @@ export function EmployeeVaccinationsPage() {
     if (!employeeId) return;
 
     const doseNumber = Number.parseInt(formState.doseNumber, 10);
-    if (!formState.vaccineId || !formState.vaccinationDate || Number.isNaN(doseNumber) || doseNumber <= 0) {
+    if (!formState.vaccineId || !formState.vaccinationDate || !formState.expirationDate || Number.isNaN(doseNumber) || doseNumber <= 0) {
       setFormError(t("vaccinationEditor.validation"));
       return;
     }
@@ -212,7 +212,7 @@ export function EmployeeVaccinationsPage() {
       vaccinationDate: formState.vaccinationDate,
       doseNumber,
       batchNumber: formState.batchNumber.trim() || null,
-      expirationDate: formState.expirationDate || null,
+      expirationDate: formState.expirationDate,
       notes: formState.notes.trim() || null
     };
 
@@ -564,6 +564,7 @@ export function EmployeeVaccinationsPage() {
               <input
                 type="date"
                 value={formState.expirationDate}
+                required
                 onChange={(e) => setFormState((current) => ({ ...current, expirationDate: e.target.value }))}
               />
             </label>

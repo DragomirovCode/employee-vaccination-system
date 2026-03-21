@@ -159,6 +159,7 @@ class VaccinationCoverageServiceTest {
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 2, 10),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2027, 1, 1),
                 revaccinationDate = LocalDate.now().plusDays(30),
             ),
         )
@@ -169,6 +170,7 @@ class VaccinationCoverageServiceTest {
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 3, 10),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2027, 1, 1),
                 revaccinationDate = LocalDate.now().minusDays(1),
             ),
         )
@@ -179,6 +181,7 @@ class VaccinationCoverageServiceTest {
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2025, 12, 10),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2026, 12, 10),
                 revaccinationDate = LocalDate.now().plusDays(30),
             ),
         )
@@ -189,6 +192,7 @@ class VaccinationCoverageServiceTest {
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 4, 10),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2027, 1, 1),
                 revaccinationDate = LocalDate.now().plusDays(30),
             ),
         )
@@ -199,6 +203,7 @@ class VaccinationCoverageServiceTest {
                 performedBy = performer.id,
                 vaccinationDate = LocalDate.of(2026, 6, 10),
                 doseNumber = 1,
+                expirationDate = LocalDate.of(2027, 1, 1),
                 revaccinationDate = LocalDate.now().plusDays(30),
             ),
         )
