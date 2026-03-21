@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../features/auth/AuthContext";
 import { apiGet, apiGetBlob } from "../shared/api/client";
 import {
   ApiHttpError,
@@ -28,8 +29,10 @@ function getCoverageTone(coveragePercent: number): "low" | "medium" | "high" {
 }
 
 export function CoverageReportPage() {
+  const { session } = useAuth();
   const { locale, t } = useI18n();
   const defaults = getDefaultDateRange();
+  const allDepartmentsLabel = session?.roles.includes("HR") ? t("coverage.myDepartments") : t("coverage.allDepartments");
   const [mode, setMode] = useState<CoverageMode>("department");
   const [dateFrom, setDateFrom] = useState(defaults.dateFrom);
   const [dateTo, setDateTo] = useState(defaults.dateTo);
@@ -221,7 +224,7 @@ export function CoverageReportPage() {
           <label className="toolbar-field">
             <span>{t("coverage.department")}</span>
             <select value={draftDepartmentId} onChange={(e) => setDraftDepartmentId(e.target.value)}>
-              <option value="">{t("coverage.allDepartments")}</option>
+              <option value="">{allDepartmentsLabel}</option>
               {departments.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}

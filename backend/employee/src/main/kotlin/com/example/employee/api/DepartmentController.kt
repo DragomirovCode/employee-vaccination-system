@@ -35,13 +35,15 @@ class DepartmentController(
 ) {
     @GetMapping
     @Operation(summary = "Get departments list")
-    fun list(): List<DepartmentResponse> = departmentService.list().map(DepartmentResponse::fromEntity)
+    fun list(request: HttpServletRequest): List<DepartmentResponse> =
+        departmentService.list(requirePrincipal(request)).map(DepartmentResponse::fromEntity)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get department by id")
     fun get(
+        request: HttpServletRequest,
         @PathVariable id: UUID,
-    ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id))
+    ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id, requirePrincipal(request)))
 
     @PostMapping
     @Operation(summary = "Create department")
