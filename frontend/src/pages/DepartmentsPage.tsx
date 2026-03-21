@@ -4,11 +4,13 @@ import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { matchesSearchQuery } from "../shared/search";
 
 export function DepartmentsPage() {
   const { session } = useAuth();
   const { t } = useI18n();
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -49,8 +51,11 @@ export function DepartmentsPage() {
   );
 
   const sortedDepartments = useMemo(
-    () => [...departments].sort((left, right) => left.name.localeCompare(right.name)),
-    [departments]
+    () =>
+      [...departments]
+        .filter((department) => matchesSearchQuery(searchQuery, department.name, departmentMap[department.parentId ?? ""]))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [departmentMap, departments, searchQuery]
   );
 
   async function deleteDepartment(departmentId: string) {
@@ -89,6 +94,18 @@ export function DepartmentsPage() {
               </Link>
             ) : null}
           </div>
+        </div>
+
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}

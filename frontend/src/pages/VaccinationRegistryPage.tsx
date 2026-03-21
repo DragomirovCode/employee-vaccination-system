@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiGet } from "../shared/api/client";
 import { ApiHttpError, EmployeeDto, VaccinationPage, VaccinationReadDto, VaccineDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 const PAGE_SIZE = 20;
 
@@ -34,6 +35,7 @@ export function VaccinationRegistryPage() {
   const [draftVaccineId, setDraftVaccineId] = useState("");
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +134,17 @@ export function VaccinationRegistryPage() {
   }
 
   const items = data?.content ?? [];
+  const filteredItems = items.filter((item: VaccinationReadDto) =>
+    matchesSearchQuery(
+      searchQuery,
+      employeeMap[item.employeeId],
+      vaccineMap[item.vaccineId],
+      ...getDateSearchValues(item.vaccinationDate, locale === "ru" ? "ru-RU" : "en-US"),
+      item.doseNumber,
+      ...getDateSearchValues(item.nextDoseDate, locale === "ru" ? "ru-RU" : "en-US"),
+      ...getDateSearchValues(item.revaccinationDate, locale === "ru" ? "ru-RU" : "en-US")
+    )
+  );
   const totalPages = data?.totalPages ?? 0;
   const canGoPrevious = page > 0 && !loading;
   const canGoNext = Boolean(data && page + 1 < data.totalPages) && !loading;
@@ -191,17 +204,29 @@ export function VaccinationRegistryPage() {
           </div>
         </form>
 
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && items.length === 0 ? (
+        {!loading && !error && filteredItems.length === 0 ? (
           <div className="empty-state">
             <h3>{t("vaccinationRegistry.emptyTitle")}</h3>
             <p>{t("vaccinationRegistry.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && items.length > 0 ? (
+        {!loading && !error && filteredItems.length > 0 ? (
           <>
             <div className="registry-table">
               <div className="registry-row registry-row-head">
@@ -212,7 +237,7 @@ export function VaccinationRegistryPage() {
                 <span>{t("vaccinationRegistry.nextDoseDate")}</span>
                 <span>{t("vaccinationRegistry.revaccinationDate")}</span>
               </div>
-              {items.map((item: VaccinationReadDto) => {
+              {filteredItems.map((item: VaccinationReadDto) => {
                 const employeeName = employeeMap[item.employeeId] ?? t("vaccinationRegistry.employeeUnknown");
                 const vaccineName = vaccineMap[item.vaccineId] ?? t("vaccinationRegistry.vaccineUnknown");
                 return (

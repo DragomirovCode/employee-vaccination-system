@@ -4,6 +4,7 @@ import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DepartmentDto, EmployeeDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 function formatEmployeeName(employee: EmployeeDto): string {
   return [employee.lastName, employee.firstName, employee.middleName].filter(Boolean).join(" ");
@@ -15,6 +16,7 @@ export function EmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeDto[]>([]);
   const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -59,10 +61,19 @@ export function EmployeesPage() {
   const filteredEmployees = useMemo(
     () =>
       employees.filter((employee) => {
-        if (!departmentFilter) return true;
-        return employee.departmentId === departmentFilter;
+        if (departmentFilter && employee.departmentId !== departmentFilter) {
+          return false;
+        }
+
+        return matchesSearchQuery(
+          searchQuery,
+          formatEmployeeName(employee),
+          departmentMap[employee.departmentId],
+          employee.position,
+          ...getDateSearchValues(employee.hireDate, locale === "ru" ? "ru-RU" : "en-US")
+        );
       }),
-    [departmentFilter, employees]
+    [departmentFilter, departmentMap, employees, searchQuery]
   );
 
   const formatter = new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-US");
@@ -106,6 +117,15 @@ export function EmployeesPage() {
         </div>
 
         <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
           <label className="toolbar-field">
             <span>{t("employees.department")}</span>
             <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>

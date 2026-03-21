@@ -4,11 +4,13 @@ import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet } from "../shared/api/client";
 import { ApiHttpError, DiseaseDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { matchesSearchQuery } from "../shared/search";
 
 export function DiseasesPage() {
   const { session } = useAuth();
   const { t } = useI18n();
   const [diseases, setDiseases] = useState<DiseaseDto[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -45,8 +47,11 @@ export function DiseasesPage() {
   const canManageDiseases = Boolean(session?.roles.some((role) => role === "MEDICAL" || role === "ADMIN"));
 
   const sortedDiseases = useMemo(
-    () => [...diseases].sort((left, right) => left.name.localeCompare(right.name)),
-    [diseases]
+    () =>
+      [...diseases]
+        .filter((disease) => matchesSearchQuery(searchQuery, disease.name, disease.description))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [diseases, searchQuery]
   );
 
   async function deleteDisease(diseaseId: number) {
@@ -85,6 +90,18 @@ export function DiseasesPage() {
               </Link>
             ) : null}
           </div>
+        </div>
+
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
         </div>
 
         {loading ? <p>{t("common.loading")}</p> : null}

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet, apiGetBlob, apiPost, apiPostForm, apiPut } from "../shared/api/client";
@@ -15,6 +15,7 @@ import {
   VaccineDto
 } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 function formatEmployeeName(employee: EmployeeDto): string {
   return [employee.lastName, employee.firstName, employee.middleName].filter(Boolean).join(" ");
@@ -74,6 +75,7 @@ export function EmployeeVaccinationsPage() {
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const [formState, setFormState] = useState<VaccinationFormState>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const editorCardRef = useRef<HTMLElement | null>(null);
   const vaccineFieldRef = useRef<HTMLSelectElement | null>(null);
 
@@ -166,6 +168,23 @@ export function EmployeeVaccinationsPage() {
             (vaccineNames[item.vaccineId] ?? "") === focusedVaccineName && item.vaccinationDate === focusedVaccinationDate
         )
       : items;
+  const filteredItems = useMemo(
+    () =>
+      visibleItems.filter((item) =>
+        matchesSearchQuery(
+          searchQuery,
+          vaccineNames[item.vaccineId],
+          ...getDateSearchValues(item.vaccinationDate, locale === "ru" ? "ru-RU" : "en-US"),
+          item.doseNumber,
+          item.batchNumber,
+          ...getDateSearchValues(item.nextDoseDate, locale === "ru" ? "ru-RU" : "en-US"),
+          ...getDateSearchValues(item.revaccinationDate, locale === "ru" ? "ru-RU" : "en-US"),
+          ...getDateSearchValues(item.expirationDate, locale === "ru" ? "ru-RU" : "en-US"),
+          item.notes
+        )
+      ),
+    [locale, searchQuery, vaccineNames, visibleItems]
+  );
   const canShowFullHistory = items.length > visibleItems.length;
 
   function openFullHistory() {
@@ -381,19 +400,31 @@ export function EmployeeVaccinationsPage() {
           </div>
         ) : null}
 
+        <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+        </div>
+
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && visibleItems.length === 0 ? (
+        {!loading && !error && filteredItems.length === 0 ? (
           <div className="empty-state">
             <h3>{t("employeeVaccinations.emptyTitle")}</h3>
             <p>{t("employeeVaccinations.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && visibleItems.length > 0 ? (
+        {!loading && !error && filteredItems.length > 0 ? (
           <div className="history-list">
-            {visibleItems.map((item) => {
+            {filteredItems.map((item) => {
               const documents = documentsByVaccination[item.id] ?? [];
               return (
                 <article key={item.id} className={`history-item ${formState.id === item.id ? "is-editing" : ""}`}>

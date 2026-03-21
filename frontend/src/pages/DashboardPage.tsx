@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPatch } from "../shared/api/client";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { ApiHttpError, NotificationBulkReadResponse, NotificationPage } from "../shared/api/types";
+import { getDateSearchValues, matchesSearchQuery } from "../shared/search";
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +13,7 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
 
@@ -97,6 +99,18 @@ export function DashboardPage() {
   const canGoPrevious = page > 0 && !loading;
   const canGoNext = Boolean(data && page + 1 < data.totalPages) && !loading;
   const unreadCount = data?.content.filter((item) => !item.isRead).length ?? 0;
+  const filteredItems = useMemo(
+    () =>
+      (data?.content ?? []).filter((item) =>
+        matchesSearchQuery(
+          searchQuery,
+          item.title,
+          item.message,
+          ...getDateSearchValues(item.createdAt, locale === "ru" ? "ru-RU" : "en-US", { dateStyle: "medium", timeStyle: "short" })
+        )
+      ),
+    [data?.content, locale, searchQuery]
+  );
 
   return (
     <section className="stack-lg">
@@ -112,6 +126,15 @@ export function DashboardPage() {
         </div>
 
         <div className="toolbar">
+          <label className="toolbar-field">
+            <span>{t("common.search")}</span>
+            <input
+              type="search"
+              value={searchQuery}
+              placeholder={t("common.searchPlaceholder")}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
           <label className="checkbox-row">
             <input
               type="checkbox"
@@ -135,17 +158,17 @@ export function DashboardPage() {
         {loading ? <p>{t("common.loading")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
 
-        {!loading && !error && data && data.content.length === 0 ? (
+        {!loading && !error && data && filteredItems.length === 0 ? (
           <div className="empty-state">
             <h3>{t("notifications.emptyTitle")}</h3>
             <p>{t("notifications.emptyDescription")}</p>
           </div>
         ) : null}
 
-        {!loading && !error && data && data.content.length > 0 ? (
+        {!loading && !error && data && filteredItems.length > 0 ? (
           <>
             <div className="notification-list">
-              {data.content.map((item) => (
+              {filteredItems.map((item) => (
                 <article key={item.id} className={`notification-item ${item.isRead ? "is-read" : "is-unread"}`}>
                   <div className="notification-head">
                     <div>
