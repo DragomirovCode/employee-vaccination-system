@@ -25,9 +25,7 @@ services:
       - minio_data:/data
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -47,11 +45,7 @@ services:
       - "8080:8080"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: /api
+    image: ${FRONTEND_IMAGE}
     restart: unless-stopped
     depends_on:
       - backend
