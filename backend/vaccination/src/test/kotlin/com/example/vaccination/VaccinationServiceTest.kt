@@ -116,7 +116,7 @@ class VaccinationServiceTest {
     }
 
     @Test
-    fun `creates revaccination notifications when employee has linked user`() {
+    fun `creates vaccination notifications when employee has linked user`() {
         notificationRepository.deleteAll()
         auditLogRepository.deleteAll()
         vaccinationRepository.deleteAll()
@@ -160,7 +160,8 @@ class VaccinationServiceTest {
         val notifications = notificationRepository.findAll()
         assertEquals(1, notifications.size)
         assertEquals(employeeUser.id, notifications.first().userId)
-        assertEquals(NotificationType.REVACCINATION_DUE, notifications.first().type)
+        assertEquals(NotificationType.SYSTEM, notifications.first().type)
+        assertEquals("Vaccination recorded", notifications.first().title)
     }
 
     @Test
