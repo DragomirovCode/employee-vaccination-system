@@ -113,7 +113,11 @@ export function VaccinesPage() {
       });
     } catch (e) {
       const nextError =
-        e instanceof ApiHttpError ? { text: e.payload?.message ?? e.message } : { translationKey: "vaccines.deleteError" };
+        e instanceof ApiHttpError
+          ? e.status === 409
+            ? { translationKey: "vaccines.deleteConflict" }
+            : { text: e.payload?.message ?? e.message }
+          : { translationKey: "vaccines.deleteError" };
       setActionError(nextError);
     } finally {
       setDeletingId(null);
