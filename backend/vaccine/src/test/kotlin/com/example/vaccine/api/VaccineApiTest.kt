@@ -75,9 +75,9 @@ class VaccineApiTest {
     }
 
     @Test
-    fun `write is forbidden for person and allowed for hr`() {
+    fun `write is forbidden for person and allowed for medical`() {
         val person = createUserWithRole("PERSON")
-        val hr = createUserWithRole("HR")
+        val medical = createUserWithRole("MEDICAL")
 
         mockMvc
             .perform(
@@ -90,7 +90,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .header("X-Auth-Token", medical.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccineBody("FluShield")),
             ).andExpect(status().isCreated)
@@ -98,14 +98,14 @@ class VaccineApiTest {
     }
 
     @Test
-    fun `hr can create disease and vaccine disease link`() {
-        val hr = createUserWithRole("HR")
+    fun `medical can create disease and vaccine disease link`() {
+        val medical = createUserWithRole("MEDICAL")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "LinkVax", validityDays = 365, dosesRequired = 1))
 
         mockMvc
             .perform(
                 post("/diseases")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .header("X-Auth-Token", medical.id.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"Influenza"}"""),
             ).andExpect(status().isCreated)
@@ -115,13 +115,13 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 get("/vaccines/${vaccine.id}/diseases")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .header("X-Auth-Token", medical.id.toString()),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
     }
