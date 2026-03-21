@@ -94,6 +94,7 @@ Default credentials:
 ## Vaccination module
 - `vaccination` module is included in backend multi-module build
 - `vaccinations` table stores vaccination facts
+- `vaccinations.expiration_date` stores vial expiration date and is required for create/update
 - `vaccinations.next_dose_date` and `vaccinations.revaccination_date` are persisted fields
 - `documents` table stores file metadata for vaccination documents
 - `documents.vaccination_id` is FK to `vaccinations(id)`
@@ -210,7 +211,7 @@ Notifications API (personal):
 Notifications business rules:
 - authenticated user can read and update only own notifications
 - access to someone else's notification id returns `404`
-- vaccination create/update emits `REVACCINATION_DUE` notification when target employee has linked `user_id`
+- vaccination create/update emits notification when target employee has linked `user_id`
 
 Vaccination read API:
 - `GET /vaccinations/{id}` - vaccination card
