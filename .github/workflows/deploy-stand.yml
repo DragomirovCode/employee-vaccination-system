@@ -12,56 +12,12 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'master'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ github.token }}
-
-      - name: Prepare image names
-        id: image_names
-        run: |
-          REPOSITORY="$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
-          echo "backend=ghcr.io/${REPOSITORY}/backend:latest" >> "$GITHUB_OUTPUT"
-          echo "backend_sha=ghcr.io/${REPOSITORY}/backend:${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          echo "frontend=ghcr.io/${REPOSITORY}/frontend:latest" >> "$GITHUB_OUTPUT"
-          echo "frontend_sha=ghcr.io/${REPOSITORY}/frontend:${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: |
-            ${{ steps.image_names.outputs.backend }}
-            ${{ steps.image_names.outputs.backend_sha }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          build-args: |
-            VITE_API_BASE_URL=/api
-          push: true
-          tags: |
-            ${{ steps.image_names.outputs.frontend }}
-            ${{ steps.image_names.outputs.frontend_sha }}
 
       - name: Copy application files to stand
         uses: appleboy/scp-action@v0.1.7
@@ -70,7 +26,7 @@ jobs:
           username: ${{ secrets.STAND_USER }}
           key: ${{ secrets.STAND_SSH_KEY }}
           port: ${{ secrets.STAND_PORT || '22' }}
-          source: "scripts,docker-compose.stand.yml"
+          source: "backend,frontend,scripts,docker-compose.stand.yml"
           target: ${{ secrets.STAND_APP_DIR || '/opt/app' }}
           rm: false
           overwrite: true
@@ -80,16 +36,12 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           APP_DIR: ${{ secrets.STAND_APP_DIR || '/opt/app' }}
-          BACKEND_IMAGE: ${{ steps.image_names.outputs.backend }}
-          FRONTEND_IMAGE: ${{ steps.image_names.outputs.frontend }}
-          GHCR_USERNAME: ${{ github.repository_owner }}
-          GHCR_TOKEN: ${{ github.token }}
         with:
           host: ${{ secrets.STAND_HOST }}
           username: ${{ secrets.STAND_USER }}
           key: ${{ secrets.STAND_SSH_KEY }}
           port: ${{ secrets.STAND_PORT || '22' }}
-          envs: APP_DIR,BACKEND_IMAGE,FRONTEND_IMAGE,GHCR_USERNAME,GHCR_TOKEN
+          envs: APP_DIR
           command_timeout: 30m
           script: |
             chmod +x "$APP_DIR/scripts/deploy_stand.sh"

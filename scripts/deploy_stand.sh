@@ -3,16 +3,10 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/app}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.stand.yml}"
-GHCR_REGISTRY="${GHCR_REGISTRY:-ghcr.io}"
 
 cd "$APP_DIR"
 
-if [ -n "${GHCR_USERNAME:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
-  echo "$GHCR_TOKEN" | docker login "$GHCR_REGISTRY" -u "$GHCR_USERNAME" --password-stdin
-fi
-
-docker compose -f "$COMPOSE_FILE" pull
-docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+docker compose -f "$COMPOSE_FILE" up -d --build --remove-orphans
 docker compose -f "$COMPOSE_FILE" ps
 
 echo "Waiting for frontend..."
