@@ -19,9 +19,9 @@ function canAccessPath(pathname: string, roles: AppRole[]): boolean {
   if (pathname === "/employees/new") return roles.some((role) => role === "HR" || role === "ADMIN");
   if (/^\/employees\/[^/]+\/edit$/.test(pathname)) return roles.some((role) => role === "HR" || role === "ADMIN");
   if (/^\/employees\/[^/]+\/vaccinations$/.test(pathname)) return true;
-  if (pathname === "/departments") return roles.some((role) => role === "HR" || role === "ADMIN");
-  if (pathname === "/departments/new") return roles.some((role) => role === "HR" || role === "ADMIN");
-  if (/^\/departments\/[^/]+\/edit$/.test(pathname)) return roles.some((role) => role === "HR" || role === "ADMIN");
+  if (pathname === "/departments") return roles.some((role) => role === "ADMIN");
+  if (pathname === "/departments/new") return roles.some((role) => role === "ADMIN");
+  if (/^\/departments\/[^/]+\/edit$/.test(pathname)) return roles.some((role) => role === "ADMIN");
   if (pathname === "/vaccines" || pathname === "/diseases") {
     return roles.some((role) => role === "MEDICAL" || role === "ADMIN");
   }
