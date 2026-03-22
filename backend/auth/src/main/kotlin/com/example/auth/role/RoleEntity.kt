@@ -9,12 +9,18 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "roles")
+/**
+ * JPA-сущность роли пользователя.
+ */
 class RoleEntity(
+    /** Числовой идентификатор роли. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,
+    /** Машинный код роли. */
     @Column(nullable = false, unique = true, length = 64)
     var code: String = "",
+    /** Человекочитаемое название роли. */
     @Column(nullable = false, length = 255)
     var name: String = "",
 )

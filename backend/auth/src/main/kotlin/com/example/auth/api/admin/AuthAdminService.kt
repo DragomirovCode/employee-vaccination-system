@@ -22,12 +22,28 @@ class AuthAdminService(
     private val userRoleRepository: UserRoleRepository,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает список всех пользователей системы.
+     */
     @Transactional(readOnly = true)
     fun listUsers(): List<UserEntity> = userRepository.findAll()
 
+    /**
+     * Возвращает пользователя по идентификатору.
+     *
+     * @param id идентификатор пользователя
+     * @return найденный пользователь
+     */
     @Transactional(readOnly = true)
     fun getUser(id: UUID): UserEntity = findUser(id)
 
+    /**
+     * Создает нового пользователя и фиксирует это действие в аудите.
+     *
+     * @param command данные нового пользователя
+     * @param performedBy идентификатор пользователя, выполнившего операцию
+     * @return созданный пользователь
+     */
     @Transactional
     fun createUser(
         command: CreateUserCommand,
@@ -51,6 +67,14 @@ class AuthAdminService(
         return saved
     }
 
+    /**
+     * Обновляет данные пользователя и сохраняет изменения в журнале аудита.
+     *
+     * @param id идентификатор пользователя
+     * @param command новые данные пользователя
+     * @param performedBy идентификатор пользователя, выполнившего операцию
+     * @return обновленный пользователь
+     */
     @Transactional
     fun updateUser(
         id: UUID,
@@ -73,6 +97,14 @@ class AuthAdminService(
         return saved
     }
 
+    /**
+     * Изменяет признак активности пользователя и сохраняет изменение в аудите.
+     *
+     * @param id идентификатор пользователя
+     * @param isActive новое значение признака активности
+     * @param performedBy идентификатор пользователя, выполнившего операцию
+     * @return обновленный пользователь
+     */
     @Transactional
     fun setStatus(
         id: UUID,
@@ -93,15 +125,32 @@ class AuthAdminService(
         return saved
     }
 
+    /**
+     * Возвращает список всех ролей системы.
+     */
     @Transactional(readOnly = true)
     fun listRoles(): List<RoleEntity> = roleRepository.findAll()
 
+    /**
+     * Возвращает роли, назначенные пользователю.
+     *
+     * @param userId идентификатор пользователя
+     * @return список назначенных ролей
+     */
     @Transactional(readOnly = true)
     fun listUserRoles(userId: UUID): List<UserRoleEntity> {
         findUser(userId)
         return userRoleRepository.findAllByIdUserId(userId)
     }
 
+    /**
+     * Назначает пользователю роль и сохраняет факт назначения в аудите.
+     *
+     * @param userId идентификатор пользователя
+     * @param roleCode код роли
+     * @param assignedBy идентификатор администратора, назначившего роль
+     * @return созданная запись о назначении роли
+     */
     @Transactional
     fun assignRole(
         userId: UUID,
@@ -133,6 +182,13 @@ class AuthAdminService(
         return saved
     }
 
+    /**
+     * Снимает роль с пользователя и фиксирует удаление назначения в аудите.
+     *
+     * @param userId идентификатор пользователя
+     * @param roleCode код роли
+     * @param unassignedBy идентификатор администратора, снявшего роль
+     */
     @Transactional
     fun unassignRole(
         userId: UUID,
@@ -156,6 +212,9 @@ class AuthAdminService(
         )
     }
 
+    /**
+     * Проверяет, что email свободен или принадлежит текущему редактируемому пользователю.
+     */
     private fun requireUniqueEmail(
         email: String,
         currentUserId: UUID?,
@@ -166,15 +225,24 @@ class AuthAdminService(
         }
     }
 
+    /**
+     * Ищет пользователя по идентификатору или выбрасывает ошибку 404.
+     */
     private fun findUser(id: UUID): UserEntity =
         userRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
         }
 
+    /**
+     * Ищет роль по коду без учета регистра или выбрасывает ошибку 404.
+     */
     private fun findRoleByCode(code: String): RoleEntity =
         roleRepository.findByCode(code.trim().uppercase())
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found")
 
+    /**
+     * Преобразует пользователя в сериализуемое представление для журнала аудита.
+     */
     private fun UserEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),
@@ -184,6 +252,9 @@ class AuthAdminService(
             "updatedAt" to updatedAt?.toString(),
         )
 
+    /**
+     * Преобразует назначение роли в сериализуемое представление для журнала аудита.
+     */
     private fun UserRoleEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "userId" to id.userId?.toString(),

@@ -6,6 +6,9 @@ import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface UserRoleRepository : JpaRepository<UserRoleEntity, UserRoleId> {
+    /**
+     * Возвращает все назначения ролей для пользователя.
+     */
     fun findAllByIdUserId(userId: UUID): List<UserRoleEntity>
 
     @Query(
@@ -16,6 +19,9 @@ interface UserRoleRepository : JpaRepository<UserRoleEntity, UserRoleId> {
         where ur.id.userId = :userId
     """,
     )
+    /**
+     * Возвращает строковые коды ролей, назначенных пользователю.
+     */
     fun findRoleCodesByUserId(
         @Param("userId") userId: UUID,
     ): List<String>

@@ -15,29 +15,44 @@ import java.util.UUID
 
 @Entity
 @Table(name = "notifications")
+/**
+ * JPA-сущность пользовательского уведомления.
+ */
 class NotificationEntity(
+    /** Уникальный идентификатор уведомления. */
     @Id
     @Column(nullable = false, updatable = false)
     var id: UUID? = null,
+    /** Идентификатор пользователя, которому адресовано уведомление. */
     @Column(name = "user_id", nullable = false)
     var userId: UUID? = null,
+    /** Тип уведомления. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 64)
     var type: NotificationType = NotificationType.SYSTEM,
+    /** Короткий заголовок уведомления. */
     @Column(nullable = false, length = 255)
     var title: String = "",
+    /** Основной текст уведомления. */
     @Column(nullable = false, columnDefinition = "TEXT")
     var message: String = "",
+    /** Признак того, что уведомление уже прочитано. */
     @Column(name = "is_read", nullable = false)
     var isRead: Boolean = false,
+    /** Момент создания уведомления. */
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant? = null,
+    /** Момент, когда пользователь прочитал уведомление. */
     @Column(name = "read_at")
     var readAt: Instant? = null,
+    /** Дополнительные данные уведомления в JSON-формате. */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     var payload: String? = null,
 ) {
+    /**
+     * Заполняет системные поля перед первой вставкой уведомления в базу данных.
+     */
     @PrePersist
     fun onCreate() {
         if (id == null) {

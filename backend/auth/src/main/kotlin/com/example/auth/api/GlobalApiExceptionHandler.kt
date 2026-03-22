@@ -13,6 +13,9 @@ import java.time.Instant
 
 @RestControllerAdvice
 class GlobalApiExceptionHandler {
+    /**
+     * Преобразует `ResponseStatusException` в единый формат ошибки API.
+     */
     @ExceptionHandler(ResponseStatusException::class)
     fun handleResponseStatusException(
         ex: ResponseStatusException,
@@ -31,6 +34,9 @@ class GlobalApiExceptionHandler {
             )
     }
 
+    /**
+     * Возвращает ошибку валидации запроса с перечнем проблемных полей.
+     */
     @ExceptionHandler(MethodArgumentNotValidException::class, BindException::class)
     fun handleValidationException(
         ex: Exception,
@@ -57,6 +63,9 @@ class GlobalApiExceptionHandler {
             )
     }
 
+    /**
+     * Возвращает ошибку некорректного тела запроса.
+     */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(request: HttpServletRequest): ResponseEntity<ApiErrorResponse> =
         ResponseEntity
@@ -71,6 +80,9 @@ class GlobalApiExceptionHandler {
                 ),
             )
 
+    /**
+     * Возвращает ошибку, когда входные аргументы имеют недопустимые значения.
+     */
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(
         ex: IllegalArgumentException,
@@ -88,6 +100,9 @@ class GlobalApiExceptionHandler {
                 ),
             )
 
+    /**
+     * Возвращает стандартный ответ о внутренней ошибке сервера.
+     */
     @ExceptionHandler(Exception::class)
     fun handleException(request: HttpServletRequest): ResponseEntity<ApiErrorResponse> =
         ResponseEntity
@@ -102,6 +117,9 @@ class GlobalApiExceptionHandler {
                 ),
             )
 
+    /**
+     * Собирает объект ошибки API в едином формате.
+     */
     private fun buildError(
         status: HttpStatus,
         message: String,
@@ -119,6 +137,9 @@ class GlobalApiExceptionHandler {
             traceId = traceId,
         )
 
+    /**
+     * Возвращает внутренний код ошибки по HTTP-статусу.
+     */
     private fun codeByStatus(status: HttpStatus): String =
         when (status) {
             HttpStatus.BAD_REQUEST -> "BAD_REQUEST"
@@ -128,6 +149,9 @@ class GlobalApiExceptionHandler {
             else -> "HTTP_${status.value()}"
         }
 
+    /**
+     * Возвращает сообщение по умолчанию для HTTP-статуса.
+     */
     private fun defaultMessage(status: HttpStatus): String =
         when (status) {
             HttpStatus.BAD_REQUEST -> "Bad request"

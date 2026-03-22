@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class AuthAdminWebMvcConfiguration(
     private val authAdminSecurityInterceptor: AuthAdminSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор проверки административного доступа к auth-эндпоинтам.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry
             .addInterceptor(authAdminSecurityInterceptor)

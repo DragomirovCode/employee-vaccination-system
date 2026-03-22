@@ -11,6 +11,9 @@ import org.springframework.web.servlet.HandlerInterceptor
 class NotificationSecurityInterceptor(
     private val authService: AuthService,
 ) : HandlerInterceptor {
+    /**
+     * Проверяет аутентификацию пользователя и сохраняет principal в атрибутах запроса.
+     */
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,

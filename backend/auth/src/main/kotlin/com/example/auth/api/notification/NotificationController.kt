@@ -54,6 +54,7 @@ class NotificationController(
             ),
         ],
     )
+    /** Возвращает страницу уведомлений текущего пользователя. */
     fun list(
         request: HttpServletRequest,
         @Parameter(description = "Return unread only", example = "false")
@@ -90,6 +91,7 @@ class NotificationController(
             ),
         ],
     )
+    /** Помечает выбранное уведомление текущего пользователя как прочитанное. */
     fun markRead(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -110,12 +112,19 @@ class NotificationController(
             ),
         ],
     )
+    /** Помечает все уведомления текущего пользователя как прочитанные. */
     fun markAllRead(request: HttpServletRequest): NotificationBulkReadResponse {
         val principal = requirePrincipal(request)
         val updated = notificationService.markAllRead(principal.userId)
         return NotificationBulkReadResponse(updated = updated)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     *
+     * @param request текущий HTTP-запрос
+     * @return данные аутентифицированного пользователя
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(NotificationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -132,6 +141,7 @@ data class NotificationResponse(
     val payload: String?,
 ) {
     companion object {
+        /** Преобразует сущность уведомления в DTO для ответа API. */
         fun fromEntity(entity: NotificationEntity): NotificationResponse =
             NotificationResponse(
                 id = entity.id!!,

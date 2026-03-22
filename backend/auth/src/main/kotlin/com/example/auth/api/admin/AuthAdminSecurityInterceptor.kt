@@ -12,6 +12,10 @@ import org.springframework.web.servlet.HandlerInterceptor
 class AuthAdminSecurityInterceptor(
     private val authService: AuthService,
 ) : HandlerInterceptor {
+    /**
+     * Проверяет, что запрос выполняется аутентифицированным пользователем с ролью администратора,
+     * и сохраняет principal в атрибутах запроса.
+     */
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,

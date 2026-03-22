@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class NotificationWebMvcConfiguration(
     private val notificationSecurityInterceptor: NotificationSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор аутентификации к эндпоинтам уведомлений.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(notificationSecurityInterceptor).addPathPatterns("/notifications/**")
     }

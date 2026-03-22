@@ -18,6 +18,7 @@ class AuthSelfController(
 ) {
     @GetMapping("/me")
     @Operation(summary = "Get authenticated user info")
+    /** Возвращает идентификатор и роли текущего аутентифицированного пользователя. */
     fun me(
         @RequestHeader("X-Auth-Token", required = false) token: String?,
     ): AuthMeResponse {

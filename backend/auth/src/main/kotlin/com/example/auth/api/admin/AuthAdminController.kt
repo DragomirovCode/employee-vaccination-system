@@ -35,10 +35,12 @@ class AuthAdminController(
 ) {
     @GetMapping("/users")
     @Operation(summary = "Get users list")
+    /** Возвращает список пользователей в формате API-ответа. */
     fun listUsers(): List<AuthUserResponse> = authAdminService.listUsers().map(AuthUserResponse::fromEntity)
 
     @GetMapping("/users/{id}")
     @Operation(summary = "Get user by id")
+    /** Возвращает пользователя по идентификатору. */
     fun getUser(
         @PathVariable id: UUID,
     ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.getUser(id))
@@ -66,6 +68,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Создает пользователя от имени аутентифицированного администратора. */
     fun createUser(
         request: HttpServletRequest,
         @RequestBody body: AuthUserWriteRequest,
@@ -107,6 +110,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Обновляет email и статус активности пользователя. */
     fun updateUser(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -146,6 +150,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Меняет признак активности пользователя. */
     fun setStatus(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -154,6 +159,7 @@ class AuthAdminController(
 
     @GetMapping("/roles")
     @Operation(summary = "Get roles list")
+    /** Возвращает список ролей, доступных в системе. */
     fun listRoles(): List<AuthRoleResponse> = authAdminService.listRoles().map(AuthRoleResponse::fromEntity)
 
     @GetMapping("/users/{id}/roles")
@@ -168,6 +174,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Возвращает роли, назначенные указанному пользователю. */
     fun listUserRoles(
         @PathVariable id: UUID,
     ): List<AuthUserRoleResponse> = authAdminService.listUserRoles(id).map(AuthUserRoleResponse::fromEntity)
@@ -200,6 +207,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Назначает пользователю роль. */
     fun assignRole(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -232,6 +240,7 @@ class AuthAdminController(
             ),
         ],
     )
+    /** Снимает роль с пользователя. */
     fun unassignRole(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -240,6 +249,12 @@ class AuthAdminController(
         authAdminService.unassignRole(id, roleCode, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного администратора из атрибутов запроса.
+     *
+     * @param request текущий HTTP-запрос
+     * @return данные аутентифицированного пользователя
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(AuthAdminSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -262,6 +277,7 @@ data class AuthUserResponse(
     val updatedAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность пользователя в DTO для ответа API. */
         fun fromEntity(entity: UserEntity): AuthUserResponse =
             AuthUserResponse(
                 id = entity.id!!,
@@ -279,6 +295,7 @@ data class AuthRoleResponse(
     val name: String,
 ) {
     companion object {
+        /** Преобразует сущность роли в DTO для ответа API. */
         fun fromEntity(entity: RoleEntity): AuthRoleResponse =
             AuthRoleResponse(
                 id = entity.id!!,
@@ -295,6 +312,7 @@ data class AuthUserRoleResponse(
     val assignedBy: UUID?,
 ) {
     companion object {
+        /** Преобразует сущность назначения роли в DTO для ответа API. */
         fun fromEntity(entity: UserRoleEntity): AuthUserRoleResponse =
             AuthUserRoleResponse(
                 userId = entity.id.userId!!,
