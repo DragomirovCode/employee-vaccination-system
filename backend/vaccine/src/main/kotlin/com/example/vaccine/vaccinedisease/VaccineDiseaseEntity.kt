@@ -11,12 +11,18 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "vaccine_diseases")
+/**
+ * JPA-сущность связи вакцины с заболеванием.
+ */
 class VaccineDiseaseEntity(
+    /** Составной идентификатор связи. */
     @EmbeddedId
     var id: VaccineDiseaseId = VaccineDiseaseId(),
+    /** Связанная вакцина. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vaccine_id", insertable = false, updatable = false)
     var vaccine: VaccineEntity? = null,
+    /** Связанное заболевание. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "disease_id", insertable = false, updatable = false)
     var disease: DiseaseEntity? = null,

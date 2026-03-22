@@ -46,6 +46,7 @@ class VaccineDiseaseController(
             ),
         ],
     )
+    /** Возвращает список связей заболевания с вакциной. */
     fun listByVaccine(
         @PathVariable vaccineId: UUID,
     ): List<VaccineDiseaseLinkResponse> = vaccineDiseaseService.listByVaccine(vaccineId).map(VaccineDiseaseLinkResponse::fromEntity)
@@ -78,6 +79,7 @@ class VaccineDiseaseController(
             ),
         ],
     )
+    /** Создает связь вакцины и заболевания. */
     fun createLink(
         request: HttpServletRequest,
         @PathVariable vaccineId: UUID,
@@ -119,6 +121,7 @@ class VaccineDiseaseController(
             ),
         ],
     )
+    /** Удаляет связь вакцины и заболевания. */
     fun deleteLink(
         request: HttpServletRequest,
         @PathVariable vaccineId: UUID,
@@ -127,16 +130,25 @@ class VaccineDiseaseController(
         vaccineDiseaseService.deleteLink(vaccineId, diseaseId, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * DTO ответа со связью вакцины и заболевания.
+ */
 data class VaccineDiseaseLinkResponse(
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Идентификатор заболевания. */
     val diseaseId: Int,
 ) {
     companion object {
+        /** Преобразует сущность связи в DTO ответа API. */
         fun fromEntity(entity: VaccineDiseaseEntity): VaccineDiseaseLinkResponse =
             VaccineDiseaseLinkResponse(
                 vaccineId = entity.id.vaccineId!!,

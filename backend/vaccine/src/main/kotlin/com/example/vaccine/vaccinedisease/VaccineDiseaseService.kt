@@ -17,12 +17,18 @@ class VaccineDiseaseService(
     private val vaccineDiseaseRepository: VaccineDiseaseRepository,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает все связи заболевания с указанной вакциной.
+     */
     @Transactional(readOnly = true)
     fun listByVaccine(vaccineId: UUID): List<VaccineDiseaseEntity> {
         requireVaccineExists(vaccineId)
         return vaccineDiseaseRepository.findAllByIdVaccineId(vaccineId)
     }
 
+    /**
+     * Создает связь вакцины с заболеванием и фиксирует операцию в аудите.
+     */
     @Transactional
     fun createLink(
         vaccineId: UUID,
@@ -47,6 +53,9 @@ class VaccineDiseaseService(
         )
     }
 
+    /**
+     * Удаляет связь вакцины с заболеванием и фиксирует удаление в аудите.
+     */
     @Transactional
     fun deleteLink(
         vaccineId: UUID,
@@ -70,12 +79,18 @@ class VaccineDiseaseService(
         )
     }
 
+    /**
+     * Проверяет существование вакцины.
+     */
     private fun requireVaccineExists(vaccineId: UUID) {
         if (!vaccineRepository.existsById(vaccineId)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "vaccineId does not exist")
         }
     }
 
+    /**
+     * Проверяет существование заболевания.
+     */
     private fun requireDiseaseExists(diseaseId: Int) {
         if (!diseaseRepository.existsById(diseaseId)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "diseaseId does not exist")

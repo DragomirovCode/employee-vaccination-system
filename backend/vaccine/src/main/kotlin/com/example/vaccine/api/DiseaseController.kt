@@ -34,10 +34,12 @@ class DiseaseController(
 ) {
     @GetMapping
     @Operation(summary = "Get diseases list")
+    /** Возвращает список заболеваний. */
     fun list(): List<DiseaseResponse> = diseaseService.list().map(DiseaseResponse::fromEntity)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get disease by id")
+    /** Возвращает заболевание по идентификатору. */
     fun get(
         @PathVariable id: Int,
     ): DiseaseResponse = DiseaseResponse.fromEntity(diseaseService.get(id))
@@ -70,6 +72,7 @@ class DiseaseController(
             ),
         ],
     )
+    /** Создает заболевание. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DiseaseWriteRequest,
@@ -116,6 +119,7 @@ class DiseaseController(
             ),
         ],
     )
+    /** Обновляет заболевание. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: Int,
@@ -161,6 +165,7 @@ class DiseaseController(
             ),
         ],
     )
+    /** Удаляет заболевание. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: Int,
@@ -168,22 +173,37 @@ class DiseaseController(
         diseaseService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * Тело запроса на создание или обновление заболевания.
+ */
 data class DiseaseWriteRequest(
+    /** Наименование заболевания. */
     val name: String,
+    /** Описание заболевания. */
     val description: String? = null,
 )
 
+/**
+ * DTO ответа с данными о заболевании.
+ */
 data class DiseaseResponse(
+    /** Идентификатор заболевания. */
     val id: Int,
+    /** Наименование заболевания. */
     val name: String,
+    /** Описание заболевания. */
     val description: String?,
 ) {
     companion object {
+        /** Преобразует сущность заболевания в DTO ответа API. */
         fun fromEntity(entity: DiseaseEntity): DiseaseResponse =
             DiseaseResponse(
                 id = entity.id!!,

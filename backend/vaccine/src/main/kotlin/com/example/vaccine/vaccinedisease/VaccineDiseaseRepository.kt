@@ -6,17 +6,34 @@ import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, VaccineDiseaseId> {
+    /**
+     * Возвращает все связи для указанной вакцины.
+     */
     fun findAllByIdVaccineId(vaccineId: UUID): List<VaccineDiseaseEntity>
 
+    /**
+     * Проверяет наличие связей у вакцины.
+     */
     fun existsByIdVaccineId(vaccineId: UUID): Boolean
 
+    /**
+     * Проверяет наличие связей у заболевания.
+     */
     fun existsByIdDiseaseId(diseaseId: Int): Boolean
 
+    /**
+     * Проверяет существование конкретной связи вакцины и заболевания.
+     */
     fun existsByIdVaccineIdAndIdDiseaseId(
         vaccineId: UUID,
         diseaseId: Int,
     ): Boolean
 
+    /**
+     * Удаляет связь вакцины и заболевания.
+     *
+     * @return количество удаленных записей
+     */
     fun deleteByIdVaccineIdAndIdDiseaseId(
         vaccineId: UUID,
         diseaseId: Int,
@@ -34,6 +51,9 @@ interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, Vaccine
             """,
         nativeQuery = true,
     )
+    /**
+     * Проверяет, использовалась ли хотя бы одна вакцина, связанная с указанным заболеванием.
+     */
     fun existsUsedVaccineLinkByDiseaseId(
         @Param("diseaseId") diseaseId: Int,
     ): Boolean
@@ -49,6 +69,9 @@ interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, Vaccine
             """,
         nativeQuery = true,
     )
+    /**
+     * Проверяет, использовалась ли вакцина в записях о вакцинации.
+     */
     fun existsVaccinationByVaccineId(
         @Param("vaccineId") vaccineId: UUID,
     ): Boolean

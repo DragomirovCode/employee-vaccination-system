@@ -9,12 +9,18 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "diseases")
+/**
+ * JPA-сущность заболевания.
+ */
 class DiseaseEntity(
+    /** Числовой идентификатор заболевания. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,
+    /** Наименование заболевания. */
     @Column(nullable = false, unique = true, length = 255)
     var name: String = "",
+    /** Текстовое описание заболевания. */
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
 )
