@@ -16,9 +16,15 @@ class DepartmentService(
     private val departmentAccessScopeResolver: DepartmentAccessScopeResolver,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает список подразделений, доступных пользователю.
+     */
     @Transactional(readOnly = true)
     fun list(principal: com.example.auth.AuthenticatedPrincipal): List<DepartmentEntity> = departmentAccessScopeResolver.list(principal)
 
+    /**
+     * Возвращает подразделение по идентификатору с проверкой прав доступа.
+     */
     @Transactional(readOnly = true)
     fun get(
         id: UUID,
@@ -31,6 +37,9 @@ class DepartmentService(
         return department
     }
 
+    /**
+     * Создает подразделение и фиксирует операцию в журнале аудита.
+     */
     @Transactional
     fun create(
         command: CreateDepartmentCommand,
@@ -53,6 +62,9 @@ class DepartmentService(
         return saved
     }
 
+    /**
+     * Обновляет подразделение и сохраняет изменения в аудите.
+     */
     @Transactional
     fun update(
         id: UUID,
@@ -77,6 +89,9 @@ class DepartmentService(
         return saved
     }
 
+    /**
+     * Удаляет подразделение, если у него нет дочерних подразделений и сотрудников.
+     */
     @Transactional
     fun delete(
         id: UUID,
@@ -98,12 +113,18 @@ class DepartmentService(
         )
     }
 
+    /**
+     * Проверяет, что родительское подразделение существует.
+     */
     private fun requireParentExists(parentId: UUID?) {
         if (parentId != null && !departmentRepository.existsById(parentId)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "parentId does not exist")
         }
     }
 
+    /**
+     * Проверяет, что новое положение подразделения в иерархии не образует цикл.
+     */
     private fun requireNoCycle(
         departmentId: UUID,
         parentId: UUID?,
@@ -124,11 +145,17 @@ class DepartmentService(
         }
     }
 
+    /**
+     * Ищет подразделение по идентификатору или выбрасывает ошибку 404.
+     */
     private fun findDepartment(id: UUID): DepartmentEntity =
         departmentRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found")
         }
 
+    /**
+     * Преобразует подразделение в сериализуемое представление для аудита.
+     */
     private fun DepartmentEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),

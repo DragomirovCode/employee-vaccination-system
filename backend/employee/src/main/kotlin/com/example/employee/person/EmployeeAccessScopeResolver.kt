@@ -15,6 +15,9 @@ class EmployeeAccessScopeResolver(
     private val employeeRepository: EmployeeRepository,
     private val departmentRepository: DepartmentRepository,
 ) {
+    /**
+     * Возвращает список сотрудников, доступных пользователю в зависимости от его ролей.
+     */
     @Transactional(readOnly = true)
     fun list(principal: AuthenticatedPrincipal): List<EmployeeEntity> {
         if (principal.hasAnyRole(AppRole.ADMIN, AppRole.MEDICAL)) {
@@ -33,6 +36,9 @@ class EmployeeAccessScopeResolver(
         throw ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions")
     }
 
+    /**
+     * Проверяет, может ли пользователь читать карточку указанного сотрудника.
+     */
     @Transactional(readOnly = true)
     fun canRead(
         principal: AuthenticatedPrincipal,
@@ -54,6 +60,10 @@ class EmployeeAccessScopeResolver(
         return false
     }
 
+    /**
+     * Определяет множество подразделений, доступных HR-пользователю:
+     * его собственное подразделение и все дочерние.
+     */
     private fun resolveHrDepartmentIds(userId: UUID): Set<UUID> {
         val employee =
             employeeRepository.findByUserId(userId)
@@ -66,6 +76,9 @@ class EmployeeAccessScopeResolver(
         return collectDescendants(rootDepartmentId, departmentRepository.findAll())
     }
 
+    /**
+     * Собирает идентификаторы корневого подразделения и всех его потомков.
+     */
     private fun collectDescendants(
         rootId: UUID,
         allDepartments: List<DepartmentEntity>,
@@ -86,7 +99,9 @@ class EmployeeAccessScopeResolver(
         return result
     }
 
+    /** Проверяет наличие конкретной роли у пользователя. */
     private fun AuthenticatedPrincipal.hasRole(role: AppRole): Boolean = roles.contains(role)
 
+    /** Проверяет наличие хотя бы одной роли из переданного набора. */
     private fun AuthenticatedPrincipal.hasAnyRole(vararg allowedRoles: AppRole): Boolean = roles.any { it in allowedRoles }
 }

@@ -4,5 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 interface DepartmentRepository : JpaRepository<DepartmentEntity, UUID> {
+    /**
+     * Проверяет, есть ли у указанного подразделения дочерние подразделения.
+     */
     fun existsByParentId(parentId: UUID): Boolean
 }

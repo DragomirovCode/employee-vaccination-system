@@ -37,11 +37,13 @@ class EmployeeController(
 ) {
     @GetMapping
     @Operation(summary = "Get employees list")
+    /** Возвращает список сотрудников, доступных текущему пользователю. */
     fun list(request: HttpServletRequest): List<EmployeeResponse> =
         employeeService.list(requirePrincipal(request)).map(EmployeeResponse::fromEntity)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by id")
+    /** Возвращает сотрудника по идентификатору. */
     fun get(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -75,6 +77,7 @@ class EmployeeController(
         ],
     )
     @ResponseStatus(HttpStatus.CREATED)
+    /** Создает нового сотрудника. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: EmployeeWriteRequest,
@@ -127,6 +130,7 @@ class EmployeeController(
             ),
         ],
     )
+    /** Обновляет данные сотрудника. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -173,6 +177,7 @@ class EmployeeController(
             ),
         ],
     )
+    /** Удаляет сотрудника. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -180,6 +185,9 @@ class EmployeeController(
         employeeService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -210,6 +218,7 @@ data class EmployeeResponse(
     val updatedAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность сотрудника в DTO ответа API. */
         fun fromEntity(entity: EmployeeEntity): EmployeeResponse =
             EmployeeResponse(
                 id = entity.id!!,

@@ -35,11 +35,13 @@ class DepartmentController(
 ) {
     @GetMapping
     @Operation(summary = "Get departments list")
+    /** Возвращает список подразделений, доступных текущему пользователю. */
     fun list(request: HttpServletRequest): List<DepartmentResponse> =
         departmentService.list(requirePrincipal(request)).map(DepartmentResponse::fromEntity)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get department by id")
+    /** Возвращает подразделение по идентификатору. */
     fun get(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -68,6 +70,7 @@ class DepartmentController(
         ],
     )
     @ResponseStatus(HttpStatus.CREATED)
+    /** Создает новое подразделение. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DepartmentWriteRequest,
@@ -109,6 +112,7 @@ class DepartmentController(
             ),
         ],
     )
+    /** Обновляет подразделение. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -154,6 +158,7 @@ class DepartmentController(
             ),
         ],
     )
+    /** Удаляет подразделение. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -161,6 +166,9 @@ class DepartmentController(
         departmentService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -178,6 +186,7 @@ data class DepartmentResponse(
     val createdAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность подразделения в DTO ответа API. */
         fun fromEntity(entity: com.example.employee.department.DepartmentEntity): DepartmentResponse =
             DepartmentResponse(
                 id = entity.id!!,
