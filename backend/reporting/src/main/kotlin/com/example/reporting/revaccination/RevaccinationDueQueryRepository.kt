@@ -12,6 +12,9 @@ import java.util.UUID
 class RevaccinationDueQueryRepository(
     private val entityManager: EntityManager,
 ) {
+    /**
+     * Возвращает постраничный список записей о предстоящей ревакцинации за указанный период.
+     */
     fun findDueInPeriod(
         fromDate: LocalDate,
         toDate: LocalDate,
@@ -93,6 +96,9 @@ class RevaccinationDueQueryRepository(
         return PageImpl(content, pageable, totalCount)
     }
 
+    /**
+     * Возвращает полный список записей о предстоящей ревакцинации для экспорта.
+     */
     fun findDueInPeriodForExport(
         fromDate: LocalDate,
         toDate: LocalDate,
@@ -143,6 +149,9 @@ class RevaccinationDueQueryRepository(
         return query.resultList
     }
 
+    /**
+     * Привязывает параметры области доступа к JPA-запросу.
+     */
     private fun bindScopeParameters(
         query: jakarta.persistence.TypedQuery<*>,
         departmentIds: Set<UUID>?,

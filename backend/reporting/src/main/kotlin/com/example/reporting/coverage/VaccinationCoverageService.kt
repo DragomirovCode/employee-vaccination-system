@@ -10,6 +10,9 @@ import java.time.LocalDate
 class VaccinationCoverageService(
     private val queryRepository: VaccinationCoverageQueryRepository,
 ) {
+    /**
+     * Строит отчет по охвату вакцинацией в разрезе подразделений.
+     */
     fun getCoverageByDepartment(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -48,6 +51,9 @@ class VaccinationCoverageService(
         }
     }
 
+    /**
+     * Строит отчет по охвату вакцинацией в разрезе вакцин.
+     */
     fun getCoverageByVaccine(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -82,6 +88,9 @@ class VaccinationCoverageService(
             }
     }
 
+    /**
+     * Вычисляет процент охвата и округляет его до двух знаков после запятой.
+     */
     private fun calculateCoverage(
         covered: Long,
         total: Long,

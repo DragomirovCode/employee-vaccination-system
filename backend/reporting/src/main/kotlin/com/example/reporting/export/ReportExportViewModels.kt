@@ -5,12 +5,20 @@ import com.example.reporting.coverage.VaccinationCoverageItem
 import com.example.reporting.revaccination.RevaccinationDueItem
 import java.util.Locale
 
+/**
+ * Табличное представление отчета, готовое к экспорту.
+ */
 data class ReportTableView(
+    /** Заголовки столбцов. */
     val headers: List<String>,
+    /** Строки таблицы. */
     val rows: List<List<Any?>>,
 )
 
 object ReportExportViewModels {
+    /**
+     * Преобразует отчет по ревакцинации в табличный вид для экспорта.
+     */
     fun revaccinationDue(
         items: List<RevaccinationDueItem>,
         locale: Locale,
@@ -39,6 +47,9 @@ object ReportExportViewModels {
                 },
         )
 
+    /**
+     * Преобразует отчет по охвату вакцинацией по подразделениям в табличный вид.
+     */
     fun coverageByDepartment(
         items: List<VaccinationCoverageItem>,
         locale: Locale,
@@ -56,6 +67,9 @@ object ReportExportViewModels {
                 },
         )
 
+    /**
+     * Преобразует отчет по охвату вакцинацией по вакцинам в табличный вид.
+     */
     fun coverageByVaccine(
         items: List<VaccinationCoverageByVaccineItem>,
         locale: Locale,
@@ -73,6 +87,9 @@ object ReportExportViewModels {
                 },
         )
 
+    /**
+     * Возвращает локализованные заголовки таблицы.
+     */
     private fun localizedHeaders(
         locale: Locale,
         vararg englishHeaders: String,
@@ -83,6 +100,9 @@ object ReportExportViewModels {
             englishHeaders.toList()
         }
 
+    /**
+     * Переводит известные английские заголовки таблиц на русский язык.
+     */
     private fun toRussianHeader(header: String): String =
         when (header) {
             "Employee" -> "Сотрудник"

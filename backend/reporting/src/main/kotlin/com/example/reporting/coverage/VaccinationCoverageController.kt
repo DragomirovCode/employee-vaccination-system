@@ -69,6 +69,7 @@ class VaccinationCoverageController(
             ),
         ],
     )
+    /** Возвращает отчет по охвату вакцинацией в разрезе подразделений. */
     fun getVaccinationCoverage(
         request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
@@ -116,6 +117,7 @@ class VaccinationCoverageController(
             ),
         ],
     )
+    /** Экспортирует отчет по охвату вакцинацией в разрезе подразделений. */
     fun exportVaccinationCoverage(
         request: HttpServletRequest,
         @RequestParam dateFrom: LocalDate,
@@ -181,6 +183,7 @@ class VaccinationCoverageController(
             ),
         ],
     )
+    /** Возвращает отчет по охвату вакцинацией в разрезе вакцин. */
     fun getVaccinationCoverageByVaccine(
         request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
@@ -228,6 +231,7 @@ class VaccinationCoverageController(
             ),
         ],
     )
+    /** Экспортирует отчет по охвату вакцинацией в разрезе вакцин. */
     fun exportVaccinationCoverageByVaccine(
         request: HttpServletRequest,
         @RequestParam dateFrom: LocalDate,
@@ -259,10 +263,16 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
+    /**
+     * Извлекает ранее вычисленную область доступа к отчетам из атрибутов запроса.
+     */
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 
+    /**
+     * Определяет локаль для экспортируемого отчета по заголовку `Accept-Language`.
+     */
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
         request
             .getHeader("Accept-Language")

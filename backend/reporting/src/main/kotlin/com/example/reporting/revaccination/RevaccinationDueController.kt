@@ -70,6 +70,7 @@ class RevaccinationDueController(
             ),
         ],
     )
+    /** Возвращает постраничный отчет по сотрудникам, которым требуется ревакцинация. */
     fun getRevaccinationDue(
         request: HttpServletRequest,
         @Parameter(description = "Number of days from today to include in due window", example = "30")
@@ -120,6 +121,7 @@ class RevaccinationDueController(
             ),
         ],
     )
+    /** Экспортирует отчет по предстоящей ревакцинации. */
     fun exportRevaccinationDue(
         request: HttpServletRequest,
         @RequestParam days: Int,
@@ -150,10 +152,16 @@ class RevaccinationDueController(
             .body(reportFile.bytes)
     }
 
+    /**
+     * Извлекает ранее вычисленную область доступа к отчетам из атрибутов запроса.
+     */
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 
+    /**
+     * Определяет локаль для экспортируемого отчета по заголовку `Accept-Language`.
+     */
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
         request
             .getHeader("Accept-Language")

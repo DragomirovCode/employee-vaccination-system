@@ -15,6 +15,10 @@ class ReportingAccessScopeResolver(
     private val employeeRepository: EmployeeRepository,
     private val departmentRepository: DepartmentRepository,
 ) {
+    /**
+     * Вычисляет область доступа к отчетам с учетом ролей пользователя
+     * и необязательного фильтра по подразделению.
+     */
     @Transactional(readOnly = true)
     fun resolve(
         principal: AuthenticatedPrincipal,
@@ -35,6 +39,9 @@ class ReportingAccessScopeResolver(
         throw ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions")
     }
 
+    /**
+     * Возвращает полную область доступа для ролей с неограниченным просмотром отчетов.
+     */
     private fun resolveFullAccess(requestedDepartmentId: UUID?): ReportingAccessScope =
         if (requestedDepartmentId == null) {
             ReportingAccessScope()
@@ -42,6 +49,10 @@ class ReportingAccessScopeResolver(
             ReportingAccessScope(departmentIds = setOf(requestedDepartmentId))
         }
 
+    /**
+     * Вычисляет область доступа для HR-пользователя:
+     * его подразделение и все дочерние, либо поддерево запрошенного подразделения внутри доступного контура.
+     */
     private fun resolveHrAccess(
         userId: UUID,
         requestedDepartmentId: UUID?,
@@ -70,6 +81,9 @@ class ReportingAccessScopeResolver(
         return ReportingAccessScope(departmentIds = effectiveDepartmentIds)
     }
 
+    /**
+     * Вычисляет область доступа для обычного сотрудника, ограничивая отчеты его собственной карточкой.
+     */
     private fun resolvePersonAccess(
         userId: UUID,
         requestedDepartmentId: UUID?,
@@ -89,6 +103,9 @@ class ReportingAccessScopeResolver(
         return ReportingAccessScope(employeeId = employeeId)
     }
 
+    /**
+     * Собирает идентификаторы подразделения и всех его потомков.
+     */
     private fun collectDescendants(
         rootId: UUID,
         allDepartments: List<com.example.employee.department.DepartmentEntity>,
@@ -109,7 +126,9 @@ class ReportingAccessScopeResolver(
         return result
     }
 
+    /** Проверяет наличие конкретной роли у пользователя. */
     private fun AuthenticatedPrincipal.hasRole(role: AppRole): Boolean = roles.contains(role)
 
+    /** Проверяет наличие хотя бы одной роли из переданного набора. */
     private fun AuthenticatedPrincipal.hasAnyRole(vararg allowedRoles: AppRole): Boolean = roles.any { it in allowedRoles }
 }

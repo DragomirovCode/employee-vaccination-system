@@ -16,6 +16,10 @@ class ReportingSecurityInterceptor(
     private val authService: AuthService,
     private val scopeResolver: ReportingAccessScopeResolver,
 ) : HandlerInterceptor {
+    /**
+     * Проверяет, что пользователь имеет право на просмотр отчетов,
+     * вычисляет область доступа и сохраняет ее в атрибутах запроса.
+     */
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,

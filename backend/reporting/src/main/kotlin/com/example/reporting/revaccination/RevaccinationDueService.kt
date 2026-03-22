@@ -11,6 +11,9 @@ import java.time.temporal.ChronoUnit
 class RevaccinationDueService(
     private val queryRepository: RevaccinationDueQueryRepository,
 ) {
+    /**
+     * Возвращает постраничный список сотрудников, которым требуется ревакцинация в ближайшие N дней.
+     */
     fun getDueInDays(
         days: Int,
         scope: ReportingAccessScope,
@@ -42,6 +45,9 @@ class RevaccinationDueService(
             }
     }
 
+    /**
+     * Возвращает полный список сотрудников для экспорта отчета по ревакцинации.
+     */
     fun getDueInDaysForExport(
         days: Int,
         scope: ReportingAccessScope,
@@ -70,6 +76,9 @@ class RevaccinationDueService(
             }
     }
 
+    /**
+     * Собирает полное имя сотрудника из отдельных частей.
+     */
     private fun buildFullName(
         lastName: String,
         firstName: String,

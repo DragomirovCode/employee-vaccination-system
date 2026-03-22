@@ -6,6 +6,9 @@ import java.io.ByteArrayOutputStream
 
 @Component
 class XlsxReportExporter {
+    /**
+     * Формирует XLSX-файл отчета и возвращает его содержимое с метаданными.
+     */
     fun export(
         headers: List<String>,
         rows: List<List<Any?>>,

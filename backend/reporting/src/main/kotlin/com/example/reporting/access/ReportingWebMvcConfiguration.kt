@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class ReportingWebMvcConfiguration(
     private val reportingSecurityInterceptor: ReportingSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор безопасности ко всем reporting-эндпоинтам.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(reportingSecurityInterceptor).addPathPatterns("/reports/**")
     }
