@@ -35,6 +35,7 @@ class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
     private val reportExportService: ReportExportService,
 ) {
+    /** Возвращает отчет по охвату вакцинацией в разрезе подразделений. */
     @GetMapping("/vaccination-coverage")
     @Operation(
         summary = "Get vaccination coverage by departments",
@@ -94,6 +95,7 @@ class VaccinationCoverageController(
         )
     }
 
+    /** Экспортирует отчет по охвату вакцинацией в разрезе подразделений. */
     @GetMapping("/vaccination-coverage/export")
     @Operation(summary = "Export vaccination coverage report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -147,6 +149,7 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
+    /** Возвращает отчет по охвату вакцинацией в разрезе вакцин. */
     @GetMapping("/vaccination-coverage-by-vaccine")
     @Operation(
         summary = "Get vaccination coverage by vaccines",
@@ -206,6 +209,7 @@ class VaccinationCoverageController(
         )
     }
 
+    /** Экспортирует отчет по охвату вакцинацией в разрезе вакцин. */
     @GetMapping("/vaccination-coverage-by-vaccine/export")
     @Operation(summary = "Export vaccination coverage by vaccines report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -259,10 +263,16 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
+    /**
+     * Извлекает ранее вычисленную область доступа к отчетам из атрибутов запроса.
+     */
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 
+    /**
+     * Определяет локаль для экспортируемого отчета по заголовку `Accept-Language`.
+     */
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
         request
             .getHeader("Accept-Language")

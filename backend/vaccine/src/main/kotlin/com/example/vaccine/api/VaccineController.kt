@@ -34,16 +34,19 @@ import java.util.UUID
 class VaccineController(
     private val vaccineService: VaccineService,
 ) {
+    /** Возвращает список вакцин. */
     @GetMapping
     @Operation(summary = "Get vaccines list")
     fun list(): List<VaccineResponse> = vaccineService.list().map(VaccineResponse::fromEntity)
 
+    /** Возвращает вакцину по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get vaccine by id")
     fun get(
         @PathVariable id: UUID,
     ): VaccineResponse = VaccineResponse.fromEntity(vaccineService.get(id))
 
+    /** Создает вакцину. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create vaccine")
@@ -90,6 +93,7 @@ class VaccineController(
             ),
         )
 
+    /** Обновляет вакцину. */
     @PutMapping("/{id}")
     @Operation(summary = "Update vaccine")
     @ApiResponses(
@@ -143,6 +147,7 @@ class VaccineController(
             ),
         )
 
+    /** Удаляет вакцину. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccine")
@@ -178,31 +183,55 @@ class VaccineController(
         vaccineService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * Тело запроса на создание или обновление вакцины.
+ */
 data class VaccineWriteRequest(
+    /** Наименование вакцины. */
     val name: String,
+    /** Производитель вакцины. */
     val manufacturer: String? = null,
+    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
+    /** Требуемое количество доз. */
     val dosesRequired: Int,
+    /** Интервал между дозами в днях. */
     val daysBetween: Int? = null,
+    /** Признак активности вакцины. */
     val isActive: Boolean = true,
 )
 
+/**
+ * DTO ответа с данными о вакцине.
+ */
 data class VaccineResponse(
+    /** Идентификатор вакцины. */
     val id: UUID,
+    /** Наименование вакцины. */
     val name: String,
+    /** Производитель вакцины. */
     val manufacturer: String?,
+    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
+    /** Требуемое количество доз. */
     val dosesRequired: Int,
+    /** Интервал между дозами в днях. */
     val daysBetween: Int?,
+    /** Признак активности вакцины. */
     val isActive: Boolean,
+    /** Момент создания записи. */
     val createdAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность вакцины в DTO ответа API. */
         fun fromEntity(entity: VaccineEntity): VaccineResponse =
             VaccineResponse(
                 id = entity.id!!,

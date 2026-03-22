@@ -36,6 +36,7 @@ class RevaccinationDueController(
     private val service: RevaccinationDueService,
     private val reportExportService: ReportExportService,
 ) {
+    /** Возвращает постраничный отчет по сотрудникам, которым требуется ревакцинация. */
     @GetMapping("/revaccination-due")
     @Operation(
         summary = "Get employees due for revaccination",
@@ -98,6 +99,7 @@ class RevaccinationDueController(
         )
     }
 
+    /** Экспортирует отчет по предстоящей ревакцинации. */
     @GetMapping("/revaccination-due/export")
     @Operation(summary = "Export revaccination due report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -150,10 +152,16 @@ class RevaccinationDueController(
             .body(reportFile.bytes)
     }
 
+    /**
+     * Извлекает ранее вычисленную область доступа к отчетам из атрибутов запроса.
+     */
     private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
         request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
 
+    /**
+     * Определяет локаль для экспортируемого отчета по заголовку `Accept-Language`.
+     */
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
         request
             .getHeader("Accept-Language")

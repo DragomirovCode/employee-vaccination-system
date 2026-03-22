@@ -18,6 +18,9 @@ class PdfReportExporter {
         FontFactory.registerDirectories()
     }
 
+    /**
+     * Формирует PDF-файл отчета и возвращает его содержимое с метаданными.
+     */
     fun export(
         headers: List<String>,
         rows: List<List<Any?>>,
@@ -48,6 +51,9 @@ class PdfReportExporter {
         )
     }
 
+    /**
+     * Создает табличное представление данных для PDF-документа.
+     */
     private fun createTable(
         headers: List<String>,
         rows: List<List<Any?>>,
@@ -71,6 +77,9 @@ class PdfReportExporter {
         return table
     }
 
+    /**
+     * Подбирает шрифт, способный корректно отображать локализованный текст.
+     */
     private fun resolveFont(
         size: Float,
         style: Int,

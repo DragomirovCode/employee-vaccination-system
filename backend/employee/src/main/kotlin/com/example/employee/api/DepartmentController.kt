@@ -33,11 +33,13 @@ import java.util.UUID
 class DepartmentController(
     private val departmentService: DepartmentService,
 ) {
+    /** Возвращает список подразделений, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get departments list")
     fun list(request: HttpServletRequest): List<DepartmentResponse> =
         departmentService.list(requirePrincipal(request)).map(DepartmentResponse::fromEntity)
 
+    /** Возвращает подразделение по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get department by id")
     fun get(
@@ -45,6 +47,7 @@ class DepartmentController(
         @PathVariable id: UUID,
     ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id, requirePrincipal(request)))
 
+    /** Создает новое подразделение. */
     @PostMapping
     @Operation(summary = "Create department")
     @ApiResponses(
@@ -82,6 +85,7 @@ class DepartmentController(
             ),
         )
 
+    /** Обновляет подразделение. */
     @PutMapping("/{id}")
     @Operation(summary = "Update department")
     @ApiResponses(
@@ -126,6 +130,7 @@ class DepartmentController(
             ),
         )
 
+    /** Удаляет подразделение. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete department")
@@ -161,6 +166,9 @@ class DepartmentController(
         departmentService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -178,6 +186,7 @@ data class DepartmentResponse(
     val createdAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность подразделения в DTO ответа API. */
         fun fromEntity(entity: com.example.employee.department.DepartmentEntity): DepartmentResponse =
             DepartmentResponse(
                 id = entity.id!!,

@@ -8,6 +8,9 @@ class ReportExportService(
     private val xlsxReportExporter: XlsxReportExporter,
     private val pdfReportExporter: PdfReportExporter,
 ) {
+    /**
+     * Делегирует формирование файла соответствующему экспортеру в зависимости от формата.
+     */
     fun export(
         format: ReportFormat,
         fileNameBase: String,

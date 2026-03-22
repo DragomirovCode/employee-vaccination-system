@@ -24,6 +24,9 @@ class VaccinationService(
     private val documentRepository: DocumentRepository,
     private val documentContentStorage: DocumentContentStorage,
 ) {
+    /**
+     * Создает запись о вакцинации, сохраняет ее в аудите и при необходимости создает уведомление сотруднику.
+     */
     @Transactional
     fun create(command: CreateVaccinationCommand): VaccinationEntity {
         val computedDates =
@@ -65,6 +68,9 @@ class VaccinationService(
         return saved
     }
 
+    /**
+     * Обновляет запись о вакцинации, пересчитывает производные даты и фиксирует изменение в аудите.
+     */
     @Transactional
     fun update(
         id: UUID,
@@ -112,6 +118,9 @@ class VaccinationService(
         return saved
     }
 
+    /**
+     * Удаляет запись о вакцинации вместе с привязанными документами и их содержимым.
+     */
     @Transactional
     fun delete(
         id: UUID,
@@ -137,6 +146,9 @@ class VaccinationService(
         )
     }
 
+    /**
+     * Вычисляет дату следующей дозы и дату ревакцинации по параметрам вакцины.
+     */
     private fun computeDates(
         vaccineId: UUID,
         vaccinationDate: LocalDate,
@@ -158,6 +170,9 @@ class VaccinationService(
         return VaccinationDates(nextDoseDate = nextDoseDate, revaccinationDate = revaccinationDate)
     }
 
+    /**
+     * Преобразует запись вакцинации в сериализуемое представление для аудита.
+     */
     private fun VaccinationEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),
@@ -173,6 +188,9 @@ class VaccinationService(
             "notes" to notes,
         )
 
+    /**
+     * Создает персональное уведомление о зафиксированной вакцинации, если у сотрудника есть связанный пользователь.
+     */
     private fun maybeCreateVaccinationNotification(
         employeeId: UUID,
         vaccinationId: UUID,
@@ -199,29 +217,56 @@ class VaccinationService(
     }
 }
 
+/**
+ * Набор производных дат, вычисляемых для записи вакцинации.
+ */
 private data class VaccinationDates(
+    /** Дата следующей дозы, если она требуется. */
     val nextDoseDate: LocalDate?,
+    /** Дата ревакцинации. */
     val revaccinationDate: LocalDate?,
 )
 
+/**
+ * Команда создания записи о вакцинации.
+ */
 data class CreateVaccinationCommand(
+    /** Идентификатор сотрудника. */
     val employeeId: UUID,
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Идентификатор пользователя, выполняющего операцию. */
     val performedBy: UUID,
+    /** Дата вакцинации. */
     val vaccinationDate: LocalDate,
+    /** Номер дозы. */
     val doseNumber: Int,
+    /** Номер партии препарата. */
     val batchNumber: String? = null,
+    /** Срок годности использованной дозы. */
     val expirationDate: LocalDate,
+    /** Дополнительные заметки. */
     val notes: String? = null,
 )
 
+/**
+ * Команда обновления записи о вакцинации.
+ */
 data class UpdateVaccinationCommand(
+    /** Идентификатор сотрудника. */
     val employeeId: UUID,
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Идентификатор пользователя, выполняющего операцию. */
     val performedBy: UUID,
+    /** Дата вакцинации. */
     val vaccinationDate: LocalDate,
+    /** Номер дозы. */
     val doseNumber: Int,
+    /** Номер партии препарата. */
     val batchNumber: String? = null,
+    /** Срок годности использованной дозы. */
     val expirationDate: LocalDate,
+    /** Дополнительные заметки. */
     val notes: String? = null,
 )

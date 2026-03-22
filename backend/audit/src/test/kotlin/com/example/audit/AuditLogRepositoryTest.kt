@@ -16,6 +16,9 @@ class AuditLogRepositoryTest {
     @Autowired
     private lateinit var auditLogRepository: AuditLogRepository
 
+    /**
+     * Проверяет, что запись аудита сохраняется в базе и затем находится по типу и идентификатору сущности.
+     */
     @Test
     fun `save and query audit log`() {
         auditLogRepository.deleteAll()

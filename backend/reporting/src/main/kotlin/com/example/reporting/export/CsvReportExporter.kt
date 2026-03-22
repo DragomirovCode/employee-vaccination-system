@@ -5,6 +5,9 @@ import java.io.ByteArrayOutputStream
 
 @Component
 class CsvReportExporter {
+    /**
+     * Формирует CSV-файл отчета и возвращает его содержимое с метаданными.
+     */
     fun export(
         headers: List<String>,
         rows: List<List<Any?>>,
@@ -30,6 +33,9 @@ class CsvReportExporter {
         )
     }
 
+    /**
+     * Экранирует значение ячейки по правилам CSV.
+     */
     private fun escape(value: String): String {
         val mustQuote = value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")
         if (!mustQuote) {

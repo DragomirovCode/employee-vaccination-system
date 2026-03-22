@@ -13,6 +13,12 @@ import java.util.UUID
 class NotificationService(
     private val notificationRepository: NotificationRepository,
 ) {
+    /**
+     * Создает и сохраняет новое уведомление.
+     *
+     * @param command данные для создания уведомления
+     * @return сохраненное уведомление
+     */
     @Transactional
     fun create(command: CreateNotificationCommand): NotificationEntity =
         notificationRepository.saveAndFlush(
@@ -25,6 +31,14 @@ class NotificationService(
             ),
         )
 
+    /**
+     * Возвращает страницу уведомлений пользователя.
+     *
+     * @param userId идентификатор пользователя
+     * @param onlyUnread если `true`, возвращаются только непрочитанные уведомления
+     * @param pageable параметры пагинации
+     * @return страница уведомлений
+     */
     @Transactional(readOnly = true)
     fun listForUser(
         userId: UUID,
@@ -37,6 +51,13 @@ class NotificationService(
             notificationRepository.findByUserId(userId, pageable)
         }
 
+    /**
+     * Помечает уведомление как прочитанное, если оно принадлежит указанному пользователю.
+     *
+     * @param userId идентификатор пользователя
+     * @param notificationId идентификатор уведомления
+     * @return обновленное уведомление
+     */
     @Transactional
     fun markRead(
         userId: UUID,
@@ -55,6 +76,12 @@ class NotificationService(
         return notification
     }
 
+    /**
+     * Помечает все непрочитанные уведомления пользователя как прочитанные.
+     *
+     * @param userId идентификатор пользователя
+     * @return количество обновленных уведомлений
+     */
     @Transactional
     fun markAllRead(userId: UUID): Int = notificationRepository.markAllAsRead(userId, Instant.now())
 }

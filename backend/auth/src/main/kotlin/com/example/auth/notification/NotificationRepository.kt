@@ -10,21 +10,33 @@ import java.time.Instant
 import java.util.UUID
 
 interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
+    /**
+     * Возвращает страницу всех уведомлений пользователя.
+     */
     fun findByUserId(
         userId: UUID,
         pageable: Pageable,
     ): Page<NotificationEntity>
 
+    /**
+     * Возвращает страницу только непрочитанных уведомлений пользователя.
+     */
     fun findByUserIdAndIsReadFalse(
         userId: UUID,
         pageable: Pageable,
     ): Page<NotificationEntity>
 
+    /**
+     * Ищет уведомление по идентификатору с проверкой владельца.
+     */
     fun findByIdAndUserId(
         id: UUID,
         userId: UUID,
     ): NotificationEntity?
 
+    /**
+     * Помечает все непрочитанные уведомления пользователя как прочитанные.
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
         """

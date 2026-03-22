@@ -16,12 +16,21 @@ class DiseaseService(
     private val vaccineDiseaseRepository: VaccineDiseaseRepository,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает список всех заболеваний.
+     */
     @Transactional(readOnly = true)
     fun list(): List<DiseaseEntity> = diseaseRepository.findAll()
 
+    /**
+     * Возвращает заболевание по идентификатору.
+     */
     @Transactional(readOnly = true)
     fun get(id: Int): DiseaseEntity = findDisease(id)
 
+    /**
+     * Создает заболевание и фиксирует операцию в журнале аудита.
+     */
     @Transactional
     fun create(
         command: CreateDiseaseCommand,
@@ -44,6 +53,9 @@ class DiseaseService(
         return saved
     }
 
+    /**
+     * Обновляет заболевание и сохраняет изменение в аудите.
+     */
     @Transactional
     fun update(
         id: Int,
@@ -69,6 +81,9 @@ class DiseaseService(
         return saved
     }
 
+    /**
+     * Удаляет заболевание, если оно не связано с вакцинами и зависимыми данными.
+     */
     @Transactional
     fun delete(
         id: Int,
@@ -91,6 +106,9 @@ class DiseaseService(
         }
     }
 
+    /**
+     * Проверяет уникальность имени заболевания.
+     */
     private fun requireUniqueName(
         name: String,
         currentId: Int?,
@@ -101,11 +119,17 @@ class DiseaseService(
         }
     }
 
+    /**
+     * Ищет заболевание по идентификатору или выбрасывает ошибку 404.
+     */
     private fun findDisease(id: Int): DiseaseEntity =
         diseaseRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Disease not found")
         }
 
+    /**
+     * Преобразует заболевание в сериализуемое представление для аудита.
+     */
     private fun DiseaseEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id,
@@ -114,12 +138,22 @@ class DiseaseService(
         )
 }
 
+/**
+ * Команда создания заболевания.
+ */
 data class CreateDiseaseCommand(
+    /** Наименование заболевания. */
     val name: String,
+    /** Описание заболевания. */
     val description: String?,
 )
 
+/**
+ * Команда обновления заболевания.
+ */
 data class UpdateDiseaseCommand(
+    /** Наименование заболевания. */
     val name: String,
+    /** Описание заболевания. */
     val description: String?,
 )

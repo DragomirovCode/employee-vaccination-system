@@ -9,6 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
 class InMemoryDocumentContentStorage : DocumentContentStorage {
     private val storage = ConcurrentHashMap<String, StoredDocumentContent>()
 
+    /**
+     * Сохраняет документ в памяти процесса.
+     */
     override fun put(
         objectKey: String,
         contentType: String?,
@@ -17,7 +20,13 @@ class InMemoryDocumentContentStorage : DocumentContentStorage {
         storage[objectKey] = StoredDocumentContent(bytes = bytes, contentType = contentType)
     }
 
+    /**
+     * Возвращает документ из памяти по ключу.
+     */
     override fun get(objectKey: String): StoredDocumentContent? = storage[objectKey]
 
+    /**
+     * Удаляет документ из памяти по ключу.
+     */
     override fun delete(objectKey: String): Boolean = storage.remove(objectKey) != null
 }

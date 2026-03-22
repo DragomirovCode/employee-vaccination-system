@@ -8,7 +8,13 @@ import java.util.UUID
 interface VaccinationRepository :
     JpaRepository<VaccinationEntity, UUID>,
     JpaSpecificationExecutor<VaccinationEntity> {
+    /**
+     * Возвращает все записи вакцинации сотрудника.
+     */
     fun findAllByEmployeeId(employeeId: UUID): List<VaccinationEntity>
 
+    /**
+     * Возвращает вакцинации, дата ревакцинации по которым наступает не позднее указанной даты.
+     */
     fun findAllByRevaccinationDateLessThanEqual(revaccinationDate: LocalDate): List<VaccinationEntity>
 }

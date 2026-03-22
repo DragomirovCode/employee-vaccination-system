@@ -12,6 +12,12 @@ import org.springframework.web.servlet.HandlerInterceptor
 class EmployeeSecurityInterceptor(
     private val authService: AuthService,
 ) : HandlerInterceptor {
+    /**
+     * Проверяет токен и определяет требуемый уровень доступа в зависимости от HTTP-метода.
+     *
+     * Для операций удаления требуется роль администратора, для создания и обновления
+     * достаточно ролей HR или ADMIN, для чтения достаточно аутентификации.
+     */
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,

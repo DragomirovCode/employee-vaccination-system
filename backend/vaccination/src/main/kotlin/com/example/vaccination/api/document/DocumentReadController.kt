@@ -25,6 +25,7 @@ import java.util.UUID
 class DocumentReadController(
     private val readService: VaccinationReadService,
 ) {
+    /** Возвращает список документов для записи вакцинации. */
     @GetMapping("/vaccinations/{vaccinationId}/documents")
     @Operation(summary = "Get documents by vaccination id")
     @ApiResponses(
@@ -57,6 +58,7 @@ class DocumentReadController(
                 vaccinationId = vaccinationId,
             ).map(DocumentReadResponse::fromEntity)
 
+    /** Возвращает метаданные документа по идентификатору. */
     @GetMapping("/documents/{id}")
     @Operation(summary = "Get document by id")
     @ApiResponses(
@@ -90,22 +92,37 @@ class DocumentReadController(
             ),
         )
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * DTO ответа с метаданными документа.
+ */
 data class DocumentReadResponse(
+    /** Идентификатор документа. */
     val id: UUID,
+    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
+    /** Имя файла. */
     val fileName: String,
+    /** Путь или ключ объекта в хранилище. */
     val filePath: String,
+    /** Размер файла в байтах. */
     val fileSize: Long,
+    /** MIME-тип файла. */
     val mimeType: String,
+    /** Идентификатор пользователя, загрузившего документ. */
     val uploadedBy: UUID,
+    /** Момент загрузки документа. */
     val uploadedAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность документа в DTO ответа API. */
         fun fromEntity(entity: DocumentEntity): DocumentReadResponse =
             DocumentReadResponse(
                 id = entity.id!!,

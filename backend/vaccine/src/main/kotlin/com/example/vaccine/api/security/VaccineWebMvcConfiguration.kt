@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class VaccineWebMvcConfiguration(
     private val vaccineSecurityInterceptor: VaccineSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор безопасности к эндпоинтам справочников вакцин и заболеваний.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(vaccineSecurityInterceptor).addPathPatterns("/vaccines/**", "/diseases/**")
     }

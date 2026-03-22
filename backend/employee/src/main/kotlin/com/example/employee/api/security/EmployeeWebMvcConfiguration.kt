@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class EmployeeWebMvcConfiguration(
     private val employeeSecurityInterceptor: EmployeeSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор безопасности к эндпоинтам подразделений и сотрудников.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(employeeSecurityInterceptor).addPathPatterns("/departments/**", "/employees/**")
     }

@@ -9,6 +9,9 @@ import java.util.UUID
 class VaccinationCoverageQueryRepository(
     private val entityManager: EntityManager,
 ) {
+    /**
+     * Подсчитывает количество сотрудников в доступной области отчета.
+     */
     fun countEmployeesInScope(
         departmentIds: Set<UUID>?,
         employeeId: UUID?,
@@ -45,6 +48,9 @@ class VaccinationCoverageQueryRepository(
         return query.singleResult.toLong()
     }
 
+    /**
+     * Возвращает общее количество сотрудников по подразделениям в пределах доступной области.
+     */
     fun findDepartmentTotals(
         departmentIds: Set<UUID>?,
         employeeId: UUID?,
@@ -87,6 +93,9 @@ class VaccinationCoverageQueryRepository(
         return query.resultList
     }
 
+    /**
+     * Возвращает количество охваченных сотрудников по каждой вакцине за период.
+     */
     fun findVaccineCovered(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -135,6 +144,9 @@ class VaccinationCoverageQueryRepository(
         return query.resultList
     }
 
+    /**
+     * Возвращает количество охваченных сотрудников по подразделениям за период.
+     */
     fun findDepartmentCovered(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -181,6 +193,9 @@ class VaccinationCoverageQueryRepository(
         return query.resultList
     }
 
+    /**
+     * Привязывает параметры области доступа к JPA-запросу.
+     */
     private fun bindScopeParameters(
         query: jakarta.persistence.TypedQuery<*>,
         departmentIds: Set<UUID>?,

@@ -9,6 +9,9 @@ import java.sql.SQLException
 import java.util.UUID
 
 class MigrationTest {
+    /**
+     * Проверяет, что миграция V6 создает таблицу аудита и включает внешний ключ на таблицу пользователей.
+     */
     @Test
     fun `flyway applies V6 and enforces audit user foreign key`() {
         val url = "jdbc:h2:mem:flyway-audit;DB_CLOSE_DELAY=-1;MODE=PostgreSQL"

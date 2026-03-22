@@ -38,6 +38,7 @@ class DocumentContentController(
     private val readService: VaccinationReadService,
     private val writeScopeService: VaccinationWriteScopeService,
 ) {
+    /** Загружает бинарное содержимое документа. */
     @PostMapping("/{id}/content")
     @Operation(summary = "Upload document content")
     @ApiResponses(
@@ -82,6 +83,7 @@ class DocumentContentController(
         return DocumentReadResponse.fromEntity(updated)
     }
 
+    /** Скачивает бинарное содержимое документа. */
     @GetMapping("/{id}/content")
     @Operation(summary = "Download document content")
     @ApiResponses(
@@ -120,6 +122,7 @@ class DocumentContentController(
             .body(ByteArrayResource(content.bytes))
     }
 
+    /** Удаляет бинарное содержимое документа из хранилища. */
     @DeleteMapping("/{id}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document content from storage")
@@ -152,6 +155,9 @@ class DocumentContentController(
         documentContentService.deleteContent(id)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")

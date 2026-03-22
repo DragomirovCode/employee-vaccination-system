@@ -33,6 +33,7 @@ class DocumentWriteController(
     private val documentService: DocumentService,
     private val scopeService: VaccinationWriteScopeService,
 ) {
+    /** Создает метаданные документа вакцинации. */
     @PostMapping
     @Operation(summary = "Create document metadata")
     @ApiResponses(
@@ -76,6 +77,7 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = created.id!!)
     }
 
+    /** Обновляет метаданные документа вакцинации. */
     @PutMapping("/{id}")
     @Operation(summary = "Update document metadata")
     @ApiResponses(
@@ -122,6 +124,7 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = updated.id!!)
     }
 
+    /** Удаляет метаданные документа вакцинации. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document metadata")
@@ -149,19 +152,34 @@ class DocumentWriteController(
         documentService.delete(id = id, deletedBy = principal.userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * Тело запроса на создание или обновление метаданных документа.
+ */
 data class DocumentWriteRequest(
+    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
+    /** Имя файла. */
     val fileName: String,
+    /** Путь или ключ объекта в хранилище. */
     val filePath: String,
+    /** Размер файла в байтах. */
     val fileSize: Long,
+    /** MIME-тип файла. */
     val mimeType: String,
 )
 
+/**
+ * Ответ на успешную операцию с метаданными документа.
+ */
 data class DocumentWriteResponse(
+    /** Идентификатор документа. */
     val id: UUID,
 )

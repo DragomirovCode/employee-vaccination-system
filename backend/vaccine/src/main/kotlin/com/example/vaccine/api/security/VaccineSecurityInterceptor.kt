@@ -12,6 +12,9 @@ import org.springframework.web.servlet.HandlerInterceptor
 class VaccineSecurityInterceptor(
     private val authService: AuthService,
 ) : HandlerInterceptor {
+    /**
+     * Проверяет токен и определяет требуемые роли в зависимости от HTTP-метода.
+     */
     override fun preHandle(
         request: HttpServletRequest,
         response: HttpServletResponse,

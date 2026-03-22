@@ -33,6 +33,7 @@ import java.util.UUID
 class NotificationController(
     private val notificationService: NotificationService,
 ) {
+    /** Возвращает страницу уведомлений текущего пользователя. */
     @GetMapping
     @Operation(summary = "Get current user's notifications")
     @ApiResponses(
@@ -73,6 +74,7 @@ class NotificationController(
             ).map(NotificationResponse::fromEntity)
     }
 
+    /** Помечает выбранное уведомление текущего пользователя как прочитанное. */
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark notification as read")
     @ApiResponses(
@@ -98,6 +100,7 @@ class NotificationController(
         return NotificationResponse.fromEntity(notificationService.markRead(principal.userId, id))
     }
 
+    /** Помечает все уведомления текущего пользователя как прочитанные. */
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all current user's notifications as read")
     @ApiResponses(
@@ -116,6 +119,12 @@ class NotificationController(
         return NotificationBulkReadResponse(updated = updated)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     *
+     * @param request текущий HTTP-запрос
+     * @return данные аутентифицированного пользователя
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(NotificationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -132,6 +141,7 @@ data class NotificationResponse(
     val payload: String?,
 ) {
     companion object {
+        /** Преобразует сущность уведомления в DTO для ответа API. */
         fun fromEntity(entity: NotificationEntity): NotificationResponse =
             NotificationResponse(
                 id = entity.id!!,

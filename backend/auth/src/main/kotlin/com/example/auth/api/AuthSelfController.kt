@@ -16,6 +16,7 @@ import java.util.UUID
 class AuthSelfController(
     private val authService: AuthService,
 ) {
+    /** Возвращает идентификатор и роли текущего аутентифицированного пользователя. */
     @GetMapping("/me")
     @Operation(summary = "Get authenticated user info")
     fun me(

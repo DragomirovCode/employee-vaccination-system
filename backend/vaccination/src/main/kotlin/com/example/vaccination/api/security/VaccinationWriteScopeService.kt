@@ -19,6 +19,9 @@ class VaccinationWriteScopeService(
     private val vaccinationRepository: VaccinationRepository,
     private val documentRepository: DocumentRepository,
 ) {
+    /**
+     * Проверяет право на создание записи вакцинации для указанного сотрудника.
+     */
     fun assertVaccinationCreateAllowed(
         principal: AuthenticatedPrincipal,
         employeeId: UUID,
@@ -30,6 +33,9 @@ class VaccinationWriteScopeService(
         assertEmployeeInScope(employeeId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на обновление записи вакцинации.
+     */
     fun assertVaccinationUpdateAllowed(
         principal: AuthenticatedPrincipal,
         vaccinationId: UUID,
@@ -43,6 +49,9 @@ class VaccinationWriteScopeService(
         assertEmployeeInScope(requestedEmployeeId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на удаление записи вакцинации.
+     */
     fun assertVaccinationDeleteAllowed(
         principal: AuthenticatedPrincipal,
         vaccinationId: UUID,
@@ -54,6 +63,9 @@ class VaccinationWriteScopeService(
         assertExistingVaccinationInScope(vaccinationId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на создание документа для указанной вакцинации.
+     */
     fun assertDocumentCreateAllowed(
         principal: AuthenticatedPrincipal,
         vaccinationId: UUID,
@@ -65,6 +77,9 @@ class VaccinationWriteScopeService(
         assertVaccinationIdInScope(vaccinationId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на обновление документа и его привязки к вакцинации.
+     */
     fun assertDocumentUpdateAllowed(
         principal: AuthenticatedPrincipal,
         documentId: UUID,
@@ -78,6 +93,9 @@ class VaccinationWriteScopeService(
         assertVaccinationIdInScope(requestedVaccinationId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на удаление документа.
+     */
     fun assertDocumentDeleteAllowed(
         principal: AuthenticatedPrincipal,
         documentId: UUID,
@@ -89,11 +107,17 @@ class VaccinationWriteScopeService(
         assertExistingDocumentInScope(documentId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет право на изменение бинарного содержимого документа.
+     */
     fun assertDocumentContentWriteAllowed(
         principal: AuthenticatedPrincipal,
         documentId: UUID,
     ) = assertDocumentDeleteAllowed(principal, documentId)
 
+    /**
+     * Возвращает набор подразделений, доступных пользователю с ролью MEDICAL.
+     */
     private fun medicalAllowedDepartments(principal: AuthenticatedPrincipal): Set<UUID> {
         if (!principal.roles.contains(AppRole.MEDICAL)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Write access is outside role scope")
@@ -110,6 +134,9 @@ class VaccinationWriteScopeService(
         return collectDescendants(rootDepartmentId, departmentRepository.findAll())
     }
 
+    /**
+     * Проверяет, что существующая запись вакцинации находится в пределах доступной области.
+     */
     private fun assertExistingVaccinationInScope(
         vaccinationId: UUID,
         allowedDepartmentIds: Set<UUID>,
@@ -119,6 +146,9 @@ class VaccinationWriteScopeService(
         assertEmployeeInScope(employeeId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет, что существующий документ относится к доступной пользователю вакцинации.
+     */
     private fun assertExistingDocumentInScope(
         documentId: UUID,
         allowedDepartmentIds: Set<UUID>,
@@ -128,6 +158,9 @@ class VaccinationWriteScopeService(
         assertVaccinationIdInScope(vaccinationId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет, что вакцинация находится в пределах доступной пользователю области.
+     */
     private fun assertVaccinationIdInScope(
         vaccinationId: UUID,
         allowedDepartmentIds: Set<UUID>,
@@ -137,6 +170,9 @@ class VaccinationWriteScopeService(
         assertEmployeeInScope(employeeId, allowedDepartmentIds)
     }
 
+    /**
+     * Проверяет, что сотрудник относится к одному из разрешенных подразделений.
+     */
     private fun assertEmployeeInScope(
         employeeId: UUID,
         allowedDepartmentIds: Set<UUID>,
@@ -148,6 +184,9 @@ class VaccinationWriteScopeService(
         }
     }
 
+    /**
+     * Собирает идентификаторы подразделения и всех его потомков.
+     */
     private fun collectDescendants(
         rootId: UUID,
         allDepartments: List<DepartmentEntity>,
@@ -168,8 +207,10 @@ class VaccinationWriteScopeService(
         return result
     }
 
+    /** Проверяет, является ли пользователь администратором. */
     private fun isAdmin(principal: AuthenticatedPrincipal): Boolean = principal.roles.contains(AppRole.ADMIN)
 
+    /** Проверяет, есть ли у пользователя полный доступ на запись. */
     private fun hasFullWriteAccess(principal: AuthenticatedPrincipal): Boolean =
         principal.roles.contains(AppRole.ADMIN) || principal.roles.contains(AppRole.MEDICAL)
 }

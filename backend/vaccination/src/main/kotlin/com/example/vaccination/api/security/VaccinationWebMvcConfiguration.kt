@@ -8,6 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class VaccinationWebMvcConfiguration(
     private val vaccinationWriteSecurityInterceptor: VaccinationWriteSecurityInterceptor,
 ) : WebMvcConfigurer {
+    /**
+     * Подключает интерсептор безопасности к эндпоинтам вакцинаций и документов.
+     */
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry
             .addInterceptor(vaccinationWriteSecurityInterceptor)

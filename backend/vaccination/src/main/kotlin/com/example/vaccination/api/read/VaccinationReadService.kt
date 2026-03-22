@@ -27,6 +27,9 @@ class VaccinationReadService(
     private val employeeRepository: EmployeeRepository,
     private val readScopeResolver: VaccinationReadScopeResolver,
 ) {
+    /**
+     * Возвращает запись вакцинации по идентификатору с проверкой области доступа.
+     */
     @Transactional(readOnly = true)
     fun getVaccination(
         principal: AuthenticatedPrincipal,
@@ -41,6 +44,9 @@ class VaccinationReadService(
         return vaccination
     }
 
+    /**
+     * Возвращает страницу записей вакцинации с учетом фильтров и области доступа пользователя.
+     */
     @Transactional(readOnly = true)
     fun listVaccinations(
         principal: AuthenticatedPrincipal,
@@ -75,6 +81,9 @@ class VaccinationReadService(
         return vaccinationRepository.findAll(specification, pageable)
     }
 
+    /**
+     * Возвращает историю вакцинации конкретного сотрудника.
+     */
     @Transactional(readOnly = true)
     fun listEmployeeVaccinations(
         principal: AuthenticatedPrincipal,
@@ -85,6 +94,9 @@ class VaccinationReadService(
         return vaccinationRepository.findAllByEmployeeId(employeeId).sortedByDescending { it.vaccinationDate }
     }
 
+    /**
+     * Возвращает документы, прикрепленные к записи вакцинации.
+     */
     @Transactional(readOnly = true)
     fun listVaccinationDocuments(
         principal: AuthenticatedPrincipal,
@@ -95,6 +107,9 @@ class VaccinationReadService(
         return documentRepository.findAllByVaccinationIdOrderByUploadedAtDesc(id)
     }
 
+    /**
+     * Возвращает метаданные документа после проверки доступа к связанной вакцинации.
+     */
     @Transactional(readOnly = true)
     fun getDocument(
         principal: AuthenticatedPrincipal,
@@ -111,6 +126,9 @@ class VaccinationReadService(
         return document
     }
 
+    /**
+     * Преобразует область доступа к вакцинациям в набор идентификаторов сотрудников.
+     */
     private fun resolveScopedEmployeeIds(scope: VaccinationReadScope): Set<UUID>? {
         scope.employeeId?.let { return setOf(it) }
         scope.departmentIds?.let { departmentIds ->
@@ -119,6 +137,9 @@ class VaccinationReadService(
         return null
     }
 
+    /**
+     * Проверяет, что сотрудник находится в пределах доступной пользователю области.
+     */
     private fun assertEmployeeAccessible(
         scope: VaccinationReadScope,
         employeeId: UUID?,
@@ -144,6 +165,9 @@ class VaccinationReadService(
         }
     }
 
+    /**
+     * Проверяет корректность диапазона дат фильтрации.
+     */
     private fun validateDates(
         dateFrom: LocalDate?,
         dateTo: LocalDate?,
@@ -154,9 +178,16 @@ class VaccinationReadService(
     }
 }
 
+/**
+ * Фильтр для поиска записей вакцинации.
+ */
 data class VaccinationReadFilter(
+    /** Фильтр по сотруднику. */
     val employeeId: UUID? = null,
+    /** Фильтр по вакцине. */
     val vaccineId: UUID? = null,
+    /** Нижняя граница даты вакцинации. */
     val dateFrom: LocalDate? = null,
+    /** Верхняя граница даты вакцинации. */
     val dateTo: LocalDate? = null,
 )

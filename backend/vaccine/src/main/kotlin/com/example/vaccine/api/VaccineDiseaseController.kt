@@ -29,6 +29,7 @@ import java.util.UUID
 class VaccineDiseaseController(
     private val vaccineDiseaseService: VaccineDiseaseService,
 ) {
+    /** Возвращает список связей заболевания с вакциной. */
     @GetMapping
     @Operation(summary = "Get disease links for vaccine")
     @ApiResponses(
@@ -50,6 +51,7 @@ class VaccineDiseaseController(
         @PathVariable vaccineId: UUID,
     ): List<VaccineDiseaseLinkResponse> = vaccineDiseaseService.listByVaccine(vaccineId).map(VaccineDiseaseLinkResponse::fromEntity)
 
+    /** Создает связь вакцины и заболевания. */
     @PostMapping("/{diseaseId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create vaccine-disease link")
@@ -86,6 +88,7 @@ class VaccineDiseaseController(
         vaccineDiseaseService.createLink(vaccineId, diseaseId, requirePrincipal(request).userId)
     }
 
+    /** Удаляет связь вакцины и заболевания. */
     @DeleteMapping("/{diseaseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccine-disease link")
@@ -127,16 +130,25 @@ class VaccineDiseaseController(
         vaccineDiseaseService.deleteLink(vaccineId, diseaseId, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * DTO ответа со связью вакцины и заболевания.
+ */
 data class VaccineDiseaseLinkResponse(
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Идентификатор заболевания. */
     val diseaseId: Int,
 ) {
     companion object {
+        /** Преобразует сущность связи в DTO ответа API. */
         fun fromEntity(entity: VaccineDiseaseEntity): VaccineDiseaseLinkResponse =
             VaccineDiseaseLinkResponse(
                 vaccineId = entity.id.vaccineId!!,

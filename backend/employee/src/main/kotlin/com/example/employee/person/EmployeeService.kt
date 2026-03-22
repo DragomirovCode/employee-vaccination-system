@@ -18,9 +18,15 @@ class EmployeeService(
     private val employeeAccessScopeResolver: EmployeeAccessScopeResolver,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает список сотрудников, доступных пользователю.
+     */
     @Transactional(readOnly = true)
     fun list(principal: com.example.auth.AuthenticatedPrincipal): List<EmployeeEntity> = employeeAccessScopeResolver.list(principal)
 
+    /**
+     * Возвращает сотрудника по идентификатору с проверкой прав доступа.
+     */
     @Transactional(readOnly = true)
     fun get(
         id: UUID,
@@ -33,6 +39,9 @@ class EmployeeService(
         return employee
     }
 
+    /**
+     * Создает сотрудника и фиксирует операцию в журнале аудита.
+     */
     @Transactional
     fun create(
         command: CreateEmployeeCommand,
@@ -67,6 +76,9 @@ class EmployeeService(
         }
     }
 
+    /**
+     * Обновляет данные сотрудника и сохраняет изменения в аудите.
+     */
     @Transactional
     fun update(
         id: UUID,
@@ -102,6 +114,10 @@ class EmployeeService(
         }
     }
 
+    /**
+     * Удаляет сотрудника, если он не связан с учетной записью пользователя
+     * и на него не ссылаются зависимые записи.
+     */
     @Transactional
     fun delete(
         id: UUID,
@@ -125,12 +141,18 @@ class EmployeeService(
         )
     }
 
+    /**
+     * Проверяет существование подразделения, к которому привязывается сотрудник.
+     */
     private fun validateDepartment(departmentId: UUID) {
         if (!departmentRepository.existsById(departmentId)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "departmentId does not exist")
         }
     }
 
+    /**
+     * Проверяет, что пользовательская учетная запись не привязана к другому сотруднику.
+     */
     private fun validateUserUniqueness(
         userId: UUID?,
         currentEmployeeId: UUID?,
@@ -145,16 +167,25 @@ class EmployeeService(
         }
     }
 
+    /**
+     * Ищет сотрудника по идентификатору или выбрасывает ошибку 404.
+     */
     private fun findEmployee(id: UUID): EmployeeEntity =
         employeeRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found")
         }
 
+    /**
+     * Преобразует ошибку нарушения целостности данных в HTTP-конфликт.
+     */
     private fun toConflict(ex: DataIntegrityViolationException): ResponseStatusException {
         val message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation"
         return ResponseStatusException(HttpStatus.CONFLICT, message)
     }
 
+    /**
+     * Преобразует ошибку удаления в пользовательский конфликт с более понятным сообщением.
+     */
     private fun toDeleteConflict(ex: DataIntegrityViolationException): ResponseStatusException {
         val message = ex.rootCause?.message ?: ex.message ?: "Data integrity violation"
         return if (message.contains("fk_vaccinations_employee", ignoreCase = true)) {
@@ -164,6 +195,9 @@ class EmployeeService(
         }
     }
 
+    /**
+     * Преобразует сотрудника в сериализуемое представление для аудита.
+     */
     private fun EmployeeEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),

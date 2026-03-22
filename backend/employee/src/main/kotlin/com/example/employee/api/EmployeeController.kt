@@ -35,11 +35,13 @@ import java.util.UUID
 class EmployeeController(
     private val employeeService: EmployeeService,
 ) {
+    /** Возвращает список сотрудников, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get employees list")
     fun list(request: HttpServletRequest): List<EmployeeResponse> =
         employeeService.list(requirePrincipal(request)).map(EmployeeResponse::fromEntity)
 
+    /** Возвращает сотрудника по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by id")
     fun get(
@@ -47,6 +49,7 @@ class EmployeeController(
         @PathVariable id: UUID,
     ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id, requirePrincipal(request)))
 
+    /** Создает нового сотрудника. */
     @PostMapping
     @Operation(summary = "Create employee")
     @ApiResponses(
@@ -95,6 +98,7 @@ class EmployeeController(
             ),
         )
 
+    /** Обновляет данные сотрудника. */
     @PutMapping("/{id}")
     @Operation(summary = "Update employee")
     @ApiResponses(
@@ -150,6 +154,7 @@ class EmployeeController(
             ),
         )
 
+    /** Удаляет сотрудника. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete employee")
@@ -180,6 +185,9 @@ class EmployeeController(
         employeeService.delete(id, requirePrincipal(request).userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
@@ -210,6 +218,7 @@ data class EmployeeResponse(
     val updatedAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность сотрудника в DTO ответа API. */
         fun fromEntity(entity: EmployeeEntity): EmployeeResponse =
             EmployeeResponse(
                 id = entity.id!!,

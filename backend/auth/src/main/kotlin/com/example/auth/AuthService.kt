@@ -13,9 +13,22 @@ class AuthService(
     private val userRepository: UserRepository,
     private val userRoleRepository: UserRoleRepository,
 ) {
+    /**
+     * Проверяет токен и возвращает данные аутентифицированного пользователя.
+     *
+     * @param token токен из заголовка запроса
+     * @return данные аутентифицированного пользователя
+     */
     @Transactional(readOnly = true)
     fun requireAuthenticated(token: String?): AuthenticatedPrincipal = authenticate(token)
 
+    /**
+     * Проверяет токен и убеждается, что у пользователя есть хотя бы одна из разрешенных ролей.
+     *
+     * @param token токен из заголовка запроса
+     * @param allowedRoles набор ролей, достаточных для доступа
+     * @return данные аутентифицированного пользователя
+     */
     @Transactional(readOnly = true)
     fun requireAnyRole(
         token: String?,
@@ -28,6 +41,9 @@ class AuthService(
         return principal
     }
 
+    /**
+     * Выполняет полную аутентификацию пользователя по токену.
+     */
     private fun authenticate(token: String?): AuthenticatedPrincipal {
         val userId =
             parseUserId(token)
@@ -54,6 +70,12 @@ class AuthService(
         )
     }
 
+    /**
+     * Извлекает UUID пользователя из токена вида `Bearer <uuid>` или просто `<uuid>`.
+     *
+     * @param token токен из заголовка запроса
+     * @return UUID пользователя или `null`, если токен пустой либо имеет неверный формат
+     */
     private fun parseUserId(token: String?): UUID? {
         val rawToken = token?.trim().takeUnless { it.isNullOrEmpty() } ?: return null
         val normalized = rawToken.removePrefix("Bearer ").trim()
@@ -74,6 +96,12 @@ enum class AppRole {
     ;
 
     companion object {
+        /**
+         * Ищет роль приложения по строковому коду из базы данных.
+         *
+         * @param code код роли
+         * @return найденная роль или `null`, если код не поддерживается
+         */
         fun fromCode(code: String): AppRole? = entries.firstOrNull { it.name == code }
     }
 }

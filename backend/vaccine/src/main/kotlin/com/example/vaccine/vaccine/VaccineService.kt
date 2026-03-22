@@ -16,12 +16,21 @@ class VaccineService(
     private val vaccineDiseaseRepository: VaccineDiseaseRepository,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Возвращает список всех вакцин.
+     */
     @Transactional(readOnly = true)
     fun list(): List<VaccineEntity> = vaccineRepository.findAll()
 
+    /**
+     * Возвращает вакцину по идентификатору.
+     */
     @Transactional(readOnly = true)
     fun get(id: UUID): VaccineEntity = findVaccine(id)
 
+    /**
+     * Создает вакцину и фиксирует операцию в журнале аудита.
+     */
     @Transactional
     fun create(
         command: CreateVaccineCommand,
@@ -48,6 +57,9 @@ class VaccineService(
         return saved
     }
 
+    /**
+     * Обновляет вакцину и сохраняет изменения в аудите.
+     */
     @Transactional
     fun update(
         id: UUID,
@@ -80,6 +92,9 @@ class VaccineService(
         return saved
     }
 
+    /**
+     * Удаляет вакцину, если у нее нет связей с заболеваниями и зависимых записей.
+     */
     @Transactional
     fun delete(
         id: UUID,
@@ -102,6 +117,9 @@ class VaccineService(
         }
     }
 
+    /**
+     * Проверяет уникальность имени вакцины.
+     */
     private fun requireUniqueName(
         name: String,
         currentId: UUID?,
@@ -112,11 +130,17 @@ class VaccineService(
         }
     }
 
+    /**
+     * Ищет вакцину по идентификатору или выбрасывает ошибку 404.
+     */
     private fun findVaccine(id: UUID): VaccineEntity =
         vaccineRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Vaccine not found")
         }
 
+    /**
+     * Проверяет, допустимо ли обновление уже использованной вакцины.
+     */
     private fun canUpdateUsedVaccine(
         vaccine: VaccineEntity,
         command: UpdateVaccineCommand,
@@ -127,6 +151,9 @@ class VaccineService(
             vaccine.dosesRequired == command.dosesRequired &&
             vaccine.daysBetween == command.daysBetween
 
+    /**
+     * Преобразует вакцину в сериализуемое представление для аудита.
+     */
     private fun VaccineEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),
@@ -140,20 +167,38 @@ class VaccineService(
         )
 }
 
+/**
+ * Команда создания вакцины.
+ */
 data class CreateVaccineCommand(
+    /** Наименование вакцины. */
     val name: String,
+    /** Производитель вакцины. */
     val manufacturer: String?,
+    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
+    /** Требуемое количество доз. */
     val dosesRequired: Int,
+    /** Интервал между дозами в днях. */
     val daysBetween: Int?,
+    /** Признак активности вакцины. */
     val isActive: Boolean,
 )
 
+/**
+ * Команда обновления вакцины.
+ */
 data class UpdateVaccineCommand(
+    /** Наименование вакцины. */
     val name: String,
+    /** Производитель вакцины. */
     val manufacturer: String?,
+    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
+    /** Требуемое количество доз. */
     val dosesRequired: Int,
+    /** Интервал между дозами в днях. */
     val daysBetween: Int?,
+    /** Признак активности вакцины. */
     val isActive: Boolean,
 )

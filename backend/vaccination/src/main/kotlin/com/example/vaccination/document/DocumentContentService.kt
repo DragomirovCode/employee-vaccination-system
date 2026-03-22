@@ -12,6 +12,9 @@ class DocumentContentService(
     private val documentRepository: DocumentRepository,
     private val contentStorage: DocumentContentStorage,
 ) {
+    /**
+     * Загружает бинарное содержимое документа в хранилище и обновляет его метаданные.
+     */
     @Transactional
     fun uploadContent(
         documentId: UUID,
@@ -41,6 +44,9 @@ class DocumentContentService(
         return documentRepository.saveAndFlush(document)
     }
 
+    /**
+     * Загружает содержимое документа из хранилища вместе с его метаданными.
+     */
     @Transactional(readOnly = true)
     fun downloadContent(documentId: UUID): DownloadedDocumentContent {
         val document =
@@ -59,6 +65,9 @@ class DocumentContentService(
         )
     }
 
+    /**
+     * Удаляет бинарное содержимое документа из хранилища.
+     */
     @Transactional
     fun deleteContent(documentId: UUID) {
         val document =
@@ -71,11 +80,20 @@ class DocumentContentService(
         }
     }
 
+    /**
+     * Заменяет недопустимые символы в имени файла на безопасные.
+     */
     private fun sanitizeFileName(name: String): String = name.replace("[^A-Za-z0-9._-]".toRegex(), "_")
 }
 
+/**
+ * Данные, необходимые для скачивания содержимого документа.
+ */
 data class DownloadedDocumentContent(
+    /** Имя файла. */
     val fileName: String,
+    /** MIME-тип содержимого. */
     val contentType: String,
+    /** Бинарное содержимое файла. */
     val bytes: ByteArray,
 )
