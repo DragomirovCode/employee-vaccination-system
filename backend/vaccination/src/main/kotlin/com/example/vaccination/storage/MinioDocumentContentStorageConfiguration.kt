@@ -16,6 +16,9 @@ import java.io.ByteArrayInputStream
 @ConditionalOnProperty(name = ["storage.provider"], havingValue = "minio")
 @EnableConfigurationProperties(MinioStorageProperties::class)
 class MinioDocumentContentStorageConfiguration {
+    /**
+     * Создает клиент MinIO на основе конфигурационных свойств.
+     */
     @Bean
     fun minioClient(properties: MinioStorageProperties): MinioClient =
         MinioClient
@@ -24,6 +27,9 @@ class MinioDocumentContentStorageConfiguration {
             .credentials(properties.accessKey, properties.secretKey)
             .build()
 
+    /**
+     * Создает реализацию файлового хранилища документов поверх MinIO.
+     */
     @Bean
     fun minioDocumentContentStorage(
         minioClient: MinioClient,
@@ -35,6 +41,9 @@ private class MinioDocumentContentStorage(
     private val minioClient: MinioClient,
     private val properties: MinioStorageProperties,
 ) : DocumentContentStorage {
+    /**
+     * Загружает объект в MinIO.
+     */
     override fun put(
         objectKey: String,
         contentType: String?,
@@ -53,6 +62,9 @@ private class MinioDocumentContentStorage(
         )
     }
 
+    /**
+     * Скачивает объект из MinIO.
+     */
     override fun get(objectKey: String): StoredDocumentContent? =
         runCatching {
             minioClient
@@ -70,6 +82,9 @@ private class MinioDocumentContentStorage(
                 }
         }.getOrNull()
 
+    /**
+     * Удаляет объект из MinIO.
+     */
     override fun delete(objectKey: String): Boolean =
         runCatching {
             minioClient.removeObject(
@@ -82,6 +97,9 @@ private class MinioDocumentContentStorage(
             true
         }.getOrDefault(false)
 
+    /**
+     * Гарантирует существование bucket перед загрузкой объекта.
+     */
     private fun ensureBucket() {
         val exists =
             minioClient.bucketExists(

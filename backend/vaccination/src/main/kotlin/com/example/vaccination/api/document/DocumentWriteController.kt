@@ -55,6 +55,7 @@ class DocumentWriteController(
             ),
         ],
     )
+    /** Создает метаданные документа вакцинации. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DocumentWriteRequest,
@@ -98,6 +99,7 @@ class DocumentWriteController(
             ),
         ],
     )
+    /** Обновляет метаданные документа вакцинации. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -140,6 +142,7 @@ class DocumentWriteController(
             ),
         ],
     )
+    /** Удаляет метаданные документа вакцинации. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -149,19 +152,34 @@ class DocumentWriteController(
         documentService.delete(id = id, deletedBy = principal.userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * Тело запроса на создание или обновление метаданных документа.
+ */
 data class DocumentWriteRequest(
+    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
+    /** Имя файла. */
     val fileName: String,
+    /** Путь или ключ объекта в хранилище. */
     val filePath: String,
+    /** Размер файла в байтах. */
     val fileSize: Long,
+    /** MIME-тип файла. */
     val mimeType: String,
 )
 
+/**
+ * Ответ на успешную операцию с метаданными документа.
+ */
 data class DocumentWriteResponse(
+    /** Идентификатор документа. */
     val id: UUID,
 )

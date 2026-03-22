@@ -56,6 +56,7 @@ class VaccinationWriteController(
             ),
         ],
     )
+    /** Создает запись о вакцинации. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: VaccinationWriteRequest,
@@ -101,6 +102,7 @@ class VaccinationWriteController(
             ),
         ],
     )
+    /** Обновляет запись о вакцинации. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -145,6 +147,7 @@ class VaccinationWriteController(
             ),
         ],
     )
+    /** Удаляет запись о вакцинации. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -154,21 +157,38 @@ class VaccinationWriteController(
         vaccinationService.delete(id = id, deletedBy = principal.userId)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * Тело запроса на создание или обновление записи о вакцинации.
+ */
 data class VaccinationWriteRequest(
+    /** Идентификатор сотрудника. */
     val employeeId: UUID,
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Дата вакцинации. */
     val vaccinationDate: LocalDate,
+    /** Номер дозы. */
     val doseNumber: Int,
+    /** Номер партии препарата. */
     val batchNumber: String? = null,
+    /** Срок годности использованной дозы. */
     val expirationDate: LocalDate,
+    /** Дополнительные заметки. */
     val notes: String? = null,
 )
 
+/**
+ * Ответ на успешную операцию записи вакцинации.
+ */
 data class VaccinationWriteResponse(
+    /** Идентификатор созданной или обновленной записи. */
     val id: UUID,
 )

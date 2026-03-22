@@ -65,6 +65,7 @@ class DocumentContentController(
             ),
         ],
     )
+    /** Загружает бинарное содержимое документа. */
     fun upload(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -104,6 +105,7 @@ class DocumentContentController(
             ),
         ],
     )
+    /** Скачивает бинарное содержимое документа. */
     fun download(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -143,6 +145,7 @@ class DocumentContentController(
             ),
         ],
     )
+    /** Удаляет бинарное содержимое документа из хранилища. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -152,6 +155,9 @@ class DocumentContentController(
         documentContentService.deleteContent(id)
     }
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")

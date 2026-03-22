@@ -15,6 +15,9 @@ class VaccinationReadScopeResolver(
     private val employeeRepository: EmployeeRepository,
     private val departmentRepository: DepartmentRepository,
 ) {
+    /**
+     * Вычисляет область чтения записей вакцинации на основе ролей пользователя.
+     */
     @Transactional(readOnly = true)
     fun resolve(principal: AuthenticatedPrincipal): VaccinationReadScope {
         if (principal.roles.contains(AppRole.ADMIN) || principal.roles.contains(AppRole.MEDICAL)) {
@@ -49,6 +52,9 @@ class VaccinationReadScopeResolver(
         throw ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions")
     }
 
+    /**
+     * Собирает идентификаторы подразделения и всех его потомков.
+     */
     private fun collectDescendants(rootId: UUID): Set<UUID> {
         val allDepartments = departmentRepository.findAll()
         val childrenByParent = allDepartments.filter { it.id != null }.groupBy({ it.parentId }, { it.id!! })

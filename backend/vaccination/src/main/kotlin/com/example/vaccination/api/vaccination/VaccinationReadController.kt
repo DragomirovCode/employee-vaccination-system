@@ -53,6 +53,7 @@ class VaccinationReadController(
             ),
         ],
     )
+    /** Возвращает запись о вакцинации по идентификатору. */
     fun getById(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -80,6 +81,7 @@ class VaccinationReadController(
             ),
         ],
     )
+    /** Возвращает страницу записей вакцинации с фильтрами. */
     fun list(
         request: HttpServletRequest,
         @Parameter(description = "Optional employee filter")
@@ -129,6 +131,7 @@ class VaccinationReadController(
             ),
         ],
     )
+    /** Возвращает историю вакцинации сотрудника. */
     fun listByEmployee(
         request: HttpServletRequest,
         @PathVariable employeeId: UUID,
@@ -139,27 +142,47 @@ class VaccinationReadController(
                 employeeId = employeeId,
             ).map(VaccinationReadResponse::fromEntity)
 
+    /**
+     * Извлекает аутентифицированного пользователя из атрибутов запроса.
+     */
     private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
         request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
+/**
+ * DTO ответа с данными о записи вакцинации.
+ */
 data class VaccinationReadResponse(
+    /** Идентификатор записи. */
     val id: UUID,
+    /** Идентификатор сотрудника. */
     val employeeId: UUID,
+    /** Идентификатор вакцины. */
     val vaccineId: UUID,
+    /** Идентификатор пользователя, зафиксировавшего вакцинацию. */
     val performedBy: UUID,
+    /** Дата вакцинации. */
     val vaccinationDate: LocalDate,
+    /** Номер дозы. */
     val doseNumber: Int,
+    /** Номер партии препарата. */
     val batchNumber: String?,
+    /** Срок годности использованной дозы. */
     val expirationDate: LocalDate?,
+    /** Дата следующей дозы. */
     val nextDoseDate: LocalDate?,
+    /** Дата ревакцинации. */
     val revaccinationDate: LocalDate?,
+    /** Дополнительные заметки. */
     val notes: String?,
+    /** Момент создания записи. */
     val createdAt: Instant,
+    /** Момент последнего обновления записи. */
     val updatedAt: Instant,
 ) {
     companion object {
+        /** Преобразует сущность вакцинации в DTO ответа API. */
         fun fromEntity(entity: VaccinationEntity): VaccinationReadResponse =
             VaccinationReadResponse(
                 id = entity.id!!,

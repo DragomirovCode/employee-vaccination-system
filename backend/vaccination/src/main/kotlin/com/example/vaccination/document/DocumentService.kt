@@ -11,6 +11,9 @@ class DocumentService(
     private val documentRepository: DocumentRepository,
     private val auditLogService: AuditLogService,
 ) {
+    /**
+     * Создает запись о документе и фиксирует операцию в журнале аудита.
+     */
     @Transactional
     fun create(command: CreateDocumentCommand): DocumentEntity {
         val saved =
@@ -35,6 +38,9 @@ class DocumentService(
         return saved
     }
 
+    /**
+     * Обновляет метаданные документа и сохраняет изменения в аудите.
+     */
     @Transactional
     fun update(
         id: UUID,
@@ -64,6 +70,9 @@ class DocumentService(
         return saved
     }
 
+    /**
+     * Удаляет запись о документе и сохраняет удаление в журнале аудита.
+     */
     @Transactional
     fun delete(
         id: UUID,
@@ -84,6 +93,9 @@ class DocumentService(
         )
     }
 
+    /**
+     * Преобразует документ в сериализуемое представление для аудита.
+     */
     private fun DocumentEntity.toAuditPayload(): Map<String, Any?> =
         mapOf(
             "id" to id?.toString(),
@@ -97,20 +109,38 @@ class DocumentService(
         )
 }
 
+/**
+ * Команда создания метаданных документа.
+ */
 data class CreateDocumentCommand(
+    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
+    /** Имя файла. */
     val fileName: String,
+    /** Путь или ключ файла в хранилище. */
     val filePath: String,
+    /** Размер файла в байтах. */
     val fileSize: Long,
+    /** MIME-тип файла. */
     val mimeType: String,
+    /** Идентификатор пользователя, загружающего документ. */
     val uploadedBy: UUID,
 )
 
+/**
+ * Команда обновления метаданных документа.
+ */
 data class UpdateDocumentCommand(
+    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
+    /** Имя файла. */
     val fileName: String,
+    /** Путь или ключ файла в хранилище. */
     val filePath: String,
+    /** Размер файла в байтах. */
     val fileSize: Long,
+    /** MIME-тип файла. */
     val mimeType: String,
+    /** Идентификатор пользователя, выполняющего изменение. */
     val modifiedBy: UUID,
 )
