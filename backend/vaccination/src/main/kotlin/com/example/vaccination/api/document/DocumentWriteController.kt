@@ -33,6 +33,7 @@ class DocumentWriteController(
     private val documentService: DocumentService,
     private val scopeService: VaccinationWriteScopeService,
 ) {
+    /** Создает метаданные документа вакцинации. */
     @PostMapping
     @Operation(summary = "Create document metadata")
     @ApiResponses(
@@ -55,7 +56,6 @@ class DocumentWriteController(
             ),
         ],
     )
-    /** Создает метаданные документа вакцинации. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DocumentWriteRequest,
@@ -77,6 +77,7 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = created.id!!)
     }
 
+    /** Обновляет метаданные документа вакцинации. */
     @PutMapping("/{id}")
     @Operation(summary = "Update document metadata")
     @ApiResponses(
@@ -99,7 +100,6 @@ class DocumentWriteController(
             ),
         ],
     )
-    /** Обновляет метаданные документа вакцинации. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -124,6 +124,7 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = updated.id!!)
     }
 
+    /** Удаляет метаданные документа вакцинации. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document metadata")
@@ -142,7 +143,6 @@ class DocumentWriteController(
             ),
         ],
     )
-    /** Удаляет метаданные документа вакцинации. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

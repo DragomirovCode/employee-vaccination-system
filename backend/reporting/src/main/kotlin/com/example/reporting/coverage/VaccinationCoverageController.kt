@@ -35,6 +35,7 @@ class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
     private val reportExportService: ReportExportService,
 ) {
+    /** Возвращает отчет по охвату вакцинацией в разрезе подразделений. */
     @GetMapping("/vaccination-coverage")
     @Operation(
         summary = "Get vaccination coverage by departments",
@@ -69,7 +70,6 @@ class VaccinationCoverageController(
             ),
         ],
     )
-    /** Возвращает отчет по охвату вакцинацией в разрезе подразделений. */
     fun getVaccinationCoverage(
         request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
@@ -95,6 +95,7 @@ class VaccinationCoverageController(
         )
     }
 
+    /** Экспортирует отчет по охвату вакцинацией в разрезе подразделений. */
     @GetMapping("/vaccination-coverage/export")
     @Operation(summary = "Export vaccination coverage report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -117,7 +118,6 @@ class VaccinationCoverageController(
             ),
         ],
     )
-    /** Экспортирует отчет по охвату вакцинацией в разрезе подразделений. */
     fun exportVaccinationCoverage(
         request: HttpServletRequest,
         @RequestParam dateFrom: LocalDate,
@@ -149,6 +149,7 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
+    /** Возвращает отчет по охвату вакцинацией в разрезе вакцин. */
     @GetMapping("/vaccination-coverage-by-vaccine")
     @Operation(
         summary = "Get vaccination coverage by vaccines",
@@ -183,7 +184,6 @@ class VaccinationCoverageController(
             ),
         ],
     )
-    /** Возвращает отчет по охвату вакцинацией в разрезе вакцин. */
     fun getVaccinationCoverageByVaccine(
         request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
@@ -209,6 +209,7 @@ class VaccinationCoverageController(
         )
     }
 
+    /** Экспортирует отчет по охвату вакцинацией в разрезе вакцин. */
     @GetMapping("/vaccination-coverage-by-vaccine/export")
     @Operation(summary = "Export vaccination coverage by vaccines report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -231,7 +232,6 @@ class VaccinationCoverageController(
             ),
         ],
     )
-    /** Экспортирует отчет по охвату вакцинацией в разрезе вакцин. */
     fun exportVaccinationCoverageByVaccine(
         request: HttpServletRequest,
         @RequestParam dateFrom: LocalDate,

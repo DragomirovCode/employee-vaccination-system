@@ -38,6 +38,7 @@ class DocumentContentController(
     private val readService: VaccinationReadService,
     private val writeScopeService: VaccinationWriteScopeService,
 ) {
+    /** Загружает бинарное содержимое документа. */
     @PostMapping("/{id}/content")
     @Operation(summary = "Upload document content")
     @ApiResponses(
@@ -65,7 +66,6 @@ class DocumentContentController(
             ),
         ],
     )
-    /** Загружает бинарное содержимое документа. */
     fun upload(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -83,6 +83,7 @@ class DocumentContentController(
         return DocumentReadResponse.fromEntity(updated)
     }
 
+    /** Скачивает бинарное содержимое документа. */
     @GetMapping("/{id}/content")
     @Operation(summary = "Download document content")
     @ApiResponses(
@@ -105,7 +106,6 @@ class DocumentContentController(
             ),
         ],
     )
-    /** Скачивает бинарное содержимое документа. */
     fun download(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -122,6 +122,7 @@ class DocumentContentController(
             .body(ByteArrayResource(content.bytes))
     }
 
+    /** Удаляет бинарное содержимое документа из хранилища. */
     @DeleteMapping("/{id}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document content from storage")
@@ -145,7 +146,6 @@ class DocumentContentController(
             ),
         ],
     )
-    /** Удаляет бинарное содержимое документа из хранилища. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

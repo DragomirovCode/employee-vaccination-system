@@ -9,11 +9,11 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
-@Entity
-@Table(name = "vaccine_diseases")
 /**
  * JPA-сущность связи вакцины с заболеванием.
  */
+@Entity
+@Table(name = "vaccine_diseases")
 class VaccineDiseaseEntity(
     /** Составной идентификатор связи. */
     @EmbeddedId

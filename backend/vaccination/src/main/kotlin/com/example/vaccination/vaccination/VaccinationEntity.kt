@@ -11,11 +11,11 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-@Entity
-@Table(name = "vaccinations")
 /**
  * JPA-сущность записи о вакцинации сотрудника.
  */
+@Entity
+@Table(name = "vaccinations")
 class VaccinationEntity(
     /** Уникальный идентификатор записи вакцинации. */
     @Id

@@ -11,6 +11,9 @@ interface UserRoleRepository : JpaRepository<UserRoleEntity, UserRoleId> {
      */
     fun findAllByIdUserId(userId: UUID): List<UserRoleEntity>
 
+    /**
+     * Возвращает строковые коды ролей, назначенных пользователю.
+     */
     @Query(
         """
         select r.code
@@ -19,9 +22,6 @@ interface UserRoleRepository : JpaRepository<UserRoleEntity, UserRoleId> {
         where ur.id.userId = :userId
     """,
     )
-    /**
-     * Возвращает строковые коды ролей, назначенных пользователю.
-     */
     fun findRoleCodesByUserId(
         @Param("userId") userId: UUID,
     ): List<String>

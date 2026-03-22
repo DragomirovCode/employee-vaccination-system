@@ -34,6 +34,9 @@ interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
         userId: UUID,
     ): NotificationEntity?
 
+    /**
+     * Помечает все непрочитанные уведомления пользователя как прочитанные.
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
         """
@@ -42,9 +45,6 @@ interface NotificationRepository : JpaRepository<NotificationEntity, UUID> {
         WHERE n.userId = :userId AND n.isRead = false
         """,
     )
-    /**
-     * Помечает все непрочитанные уведомления пользователя как прочитанные.
-     */
     fun markAllAsRead(
         @Param("userId") userId: UUID,
         @Param("readAt") readAt: Instant,

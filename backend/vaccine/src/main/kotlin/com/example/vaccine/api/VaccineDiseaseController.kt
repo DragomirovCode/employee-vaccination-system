@@ -29,6 +29,7 @@ import java.util.UUID
 class VaccineDiseaseController(
     private val vaccineDiseaseService: VaccineDiseaseService,
 ) {
+    /** Возвращает список связей заболевания с вакциной. */
     @GetMapping
     @Operation(summary = "Get disease links for vaccine")
     @ApiResponses(
@@ -46,11 +47,11 @@ class VaccineDiseaseController(
             ),
         ],
     )
-    /** Возвращает список связей заболевания с вакциной. */
     fun listByVaccine(
         @PathVariable vaccineId: UUID,
     ): List<VaccineDiseaseLinkResponse> = vaccineDiseaseService.listByVaccine(vaccineId).map(VaccineDiseaseLinkResponse::fromEntity)
 
+    /** Создает связь вакцины и заболевания. */
     @PostMapping("/{diseaseId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create vaccine-disease link")
@@ -79,7 +80,6 @@ class VaccineDiseaseController(
             ),
         ],
     )
-    /** Создает связь вакцины и заболевания. */
     fun createLink(
         request: HttpServletRequest,
         @PathVariable vaccineId: UUID,
@@ -88,6 +88,7 @@ class VaccineDiseaseController(
         vaccineDiseaseService.createLink(vaccineId, diseaseId, requirePrincipal(request).userId)
     }
 
+    /** Удаляет связь вакцины и заболевания. */
     @DeleteMapping("/{diseaseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccine-disease link")
@@ -121,7 +122,6 @@ class VaccineDiseaseController(
             ),
         ],
     )
-    /** Удаляет связь вакцины и заболевания. */
     fun deleteLink(
         request: HttpServletRequest,
         @PathVariable vaccineId: UUID,

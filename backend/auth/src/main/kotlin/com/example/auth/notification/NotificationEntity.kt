@@ -13,11 +13,11 @@ import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "notifications")
 /**
  * JPA-сущность пользовательского уведомления.
  */
+@Entity
+@Table(name = "notifications")
 class NotificationEntity(
     /** Уникальный идентификатор уведомления. */
     @Id

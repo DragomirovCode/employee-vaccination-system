@@ -25,6 +25,7 @@ import java.util.UUID
 class DocumentReadController(
     private val readService: VaccinationReadService,
 ) {
+    /** Возвращает список документов для записи вакцинации. */
     @GetMapping("/vaccinations/{vaccinationId}/documents")
     @Operation(summary = "Get documents by vaccination id")
     @ApiResponses(
@@ -47,7 +48,6 @@ class DocumentReadController(
             ),
         ],
     )
-    /** Возвращает список документов для записи вакцинации. */
     fun listByVaccination(
         request: HttpServletRequest,
         @PathVariable vaccinationId: UUID,
@@ -58,6 +58,7 @@ class DocumentReadController(
                 vaccinationId = vaccinationId,
             ).map(DocumentReadResponse::fromEntity)
 
+    /** Возвращает метаданные документа по идентификатору. */
     @GetMapping("/documents/{id}")
     @Operation(summary = "Get document by id")
     @ApiResponses(
@@ -80,7 +81,6 @@ class DocumentReadController(
             ),
         ],
     )
-    /** Возвращает метаданные документа по идентификатору. */
     fun getById(
         request: HttpServletRequest,
         @PathVariable id: UUID,

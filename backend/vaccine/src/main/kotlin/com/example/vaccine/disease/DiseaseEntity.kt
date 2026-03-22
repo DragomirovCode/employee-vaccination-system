@@ -7,11 +7,11 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
-@Entity
-@Table(name = "diseases")
 /**
  * JPA-сущность заболевания.
  */
+@Entity
+@Table(name = "diseases")
 class DiseaseEntity(
     /** Числовой идентификатор заболевания. */
     @Id

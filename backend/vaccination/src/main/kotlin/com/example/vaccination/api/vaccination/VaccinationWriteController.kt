@@ -34,6 +34,7 @@ class VaccinationWriteController(
     private val vaccinationService: VaccinationService,
     private val scopeService: VaccinationWriteScopeService,
 ) {
+    /** Создает запись о вакцинации. */
     @PostMapping
     @Operation(summary = "Create vaccination")
     @ApiResponses(
@@ -56,7 +57,6 @@ class VaccinationWriteController(
             ),
         ],
     )
-    /** Создает запись о вакцинации. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: VaccinationWriteRequest,
@@ -80,6 +80,7 @@ class VaccinationWriteController(
         return VaccinationWriteResponse(id = created.id!!)
     }
 
+    /** Обновляет запись о вакцинации. */
     @PutMapping("/{id}")
     @Operation(summary = "Update vaccination")
     @ApiResponses(
@@ -102,7 +103,6 @@ class VaccinationWriteController(
             ),
         ],
     )
-    /** Обновляет запись о вакцинации. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -129,6 +129,7 @@ class VaccinationWriteController(
         return VaccinationWriteResponse(id = updated.id!!)
     }
 
+    /** Удаляет запись о вакцинации. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccination")
@@ -147,7 +148,6 @@ class VaccinationWriteController(
             ),
         ],
     )
-    /** Удаляет запись о вакцинации. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

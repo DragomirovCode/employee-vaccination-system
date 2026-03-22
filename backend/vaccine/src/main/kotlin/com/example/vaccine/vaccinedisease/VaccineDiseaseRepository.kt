@@ -39,6 +39,9 @@ interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, Vaccine
         diseaseId: Int,
     ): Long
 
+    /**
+     * Проверяет, использовалась ли хотя бы одна вакцина, связанная с указанным заболеванием.
+     */
     @Query(
         value =
             """
@@ -51,13 +54,13 @@ interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, Vaccine
             """,
         nativeQuery = true,
     )
-    /**
-     * Проверяет, использовалась ли хотя бы одна вакцина, связанная с указанным заболеванием.
-     */
     fun existsUsedVaccineLinkByDiseaseId(
         @Param("diseaseId") diseaseId: Int,
     ): Boolean
 
+    /**
+     * Проверяет, использовалась ли вакцина в записях о вакцинации.
+     */
     @Query(
         value =
             """
@@ -69,9 +72,6 @@ interface VaccineDiseaseRepository : JpaRepository<VaccineDiseaseEntity, Vaccine
             """,
         nativeQuery = true,
     )
-    /**
-     * Проверяет, использовалась ли вакцина в записях о вакцинации.
-     */
     fun existsVaccinationByVaccineId(
         @Param("vaccineId") vaccineId: UUID,
     ): Boolean

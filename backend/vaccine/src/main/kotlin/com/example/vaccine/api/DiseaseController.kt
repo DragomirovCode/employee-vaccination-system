@@ -32,18 +32,19 @@ import org.springframework.web.server.ResponseStatusException
 class DiseaseController(
     private val diseaseService: DiseaseService,
 ) {
+    /** Возвращает список заболеваний. */
     @GetMapping
     @Operation(summary = "Get diseases list")
-    /** Возвращает список заболеваний. */
     fun list(): List<DiseaseResponse> = diseaseService.list().map(DiseaseResponse::fromEntity)
 
+    /** Возвращает заболевание по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get disease by id")
-    /** Возвращает заболевание по идентификатору. */
     fun get(
         @PathVariable id: Int,
     ): DiseaseResponse = DiseaseResponse.fromEntity(diseaseService.get(id))
 
+    /** Создает заболевание. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create disease")
@@ -72,7 +73,6 @@ class DiseaseController(
             ),
         ],
     )
-    /** Создает заболевание. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DiseaseWriteRequest,
@@ -87,6 +87,7 @@ class DiseaseController(
             ),
         )
 
+    /** Обновляет заболевание. */
     @PutMapping("/{id}")
     @Operation(summary = "Update disease")
     @ApiResponses(
@@ -119,7 +120,6 @@ class DiseaseController(
             ),
         ],
     )
-    /** Обновляет заболевание. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: Int,
@@ -137,6 +137,7 @@ class DiseaseController(
             ),
         )
 
+    /** Удаляет заболевание. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete disease")
@@ -165,7 +166,6 @@ class DiseaseController(
             ),
         ],
     )
-    /** Удаляет заболевание. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: Int,

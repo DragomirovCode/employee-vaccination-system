@@ -33,18 +33,19 @@ import java.util.UUID
 class AuthAdminController(
     private val authAdminService: AuthAdminService,
 ) {
+    /** Возвращает список пользователей в формате API-ответа. */
     @GetMapping("/users")
     @Operation(summary = "Get users list")
-    /** Возвращает список пользователей в формате API-ответа. */
     fun listUsers(): List<AuthUserResponse> = authAdminService.listUsers().map(AuthUserResponse::fromEntity)
 
+    /** Возвращает пользователя по идентификатору. */
     @GetMapping("/users/{id}")
     @Operation(summary = "Get user by id")
-    /** Возвращает пользователя по идентификатору. */
     fun getUser(
         @PathVariable id: UUID,
     ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.getUser(id))
 
+    /** Создает пользователя от имени аутентифицированного администратора. */
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create user")
@@ -68,7 +69,6 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Создает пользователя от имени аутентифицированного администратора. */
     fun createUser(
         request: HttpServletRequest,
         @RequestBody body: AuthUserWriteRequest,
@@ -83,6 +83,7 @@ class AuthAdminController(
             ),
         )
 
+    /** Обновляет email и статус активности пользователя. */
     @PutMapping("/users/{id}")
     @Operation(summary = "Update user")
     @ApiResponses(
@@ -110,7 +111,6 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Обновляет email и статус активности пользователя. */
     fun updateUser(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -128,6 +128,7 @@ class AuthAdminController(
             ),
         )
 
+    /** Меняет признак активности пользователя. */
     @PatchMapping("/users/{id}/status")
     @Operation(summary = "Set user active status")
     @ApiResponses(
@@ -150,18 +151,18 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Меняет признак активности пользователя. */
     fun setStatus(
         request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: AuthUserStatusRequest,
     ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.setStatus(id, body.active, requirePrincipal(request).userId))
 
+    /** Возвращает список ролей, доступных в системе. */
     @GetMapping("/roles")
     @Operation(summary = "Get roles list")
-    /** Возвращает список ролей, доступных в системе. */
     fun listRoles(): List<AuthRoleResponse> = authAdminService.listRoles().map(AuthRoleResponse::fromEntity)
 
+    /** Возвращает роли, назначенные указанному пользователю. */
     @GetMapping("/users/{id}/roles")
     @Operation(summary = "Get roles assigned to user")
     @ApiResponses(
@@ -174,11 +175,11 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Возвращает роли, назначенные указанному пользователю. */
     fun listUserRoles(
         @PathVariable id: UUID,
     ): List<AuthUserRoleResponse> = authAdminService.listUserRoles(id).map(AuthUserRoleResponse::fromEntity)
 
+    /** Назначает пользователю роль. */
     @PostMapping("/users/{id}/roles/{roleCode}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Assign role to user")
@@ -207,7 +208,6 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Назначает пользователю роль. */
     fun assignRole(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -217,6 +217,7 @@ class AuthAdminController(
         return AuthUserRoleResponse.fromEntity(authAdminService.assignRole(id, roleCode, principal.userId))
     }
 
+    /** Снимает роль с пользователя. */
     @DeleteMapping("/users/{id}/roles/{roleCode}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remove role from user")
@@ -240,7 +241,6 @@ class AuthAdminController(
             ),
         ],
     )
-    /** Снимает роль с пользователя. */
     fun unassignRole(
         request: HttpServletRequest,
         @PathVariable id: UUID,

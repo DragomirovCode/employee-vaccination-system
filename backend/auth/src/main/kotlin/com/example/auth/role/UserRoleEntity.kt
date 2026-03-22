@@ -12,11 +12,11 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "user_roles")
 /**
  * JPA-сущность назначения роли пользователю.
  */
+@Entity
+@Table(name = "user_roles")
 class UserRoleEntity(
     /** Составной идентификатор назначения роли. */
     @EmbeddedId

@@ -31,6 +31,7 @@ import java.util.UUID
 class VaccinationReadController(
     private val readService: VaccinationReadService,
 ) {
+    /** Возвращает запись о вакцинации по идентификатору. */
     @GetMapping("/vaccinations/{id}")
     @Operation(summary = "Get vaccination by id")
     @ApiResponses(
@@ -53,12 +54,12 @@ class VaccinationReadController(
             ),
         ],
     )
-    /** Возвращает запись о вакцинации по идентификатору. */
     fun getById(
         request: HttpServletRequest,
         @PathVariable id: UUID,
     ): VaccinationReadResponse = VaccinationReadResponse.fromEntity(readService.getVaccination(requirePrincipal(request), id))
 
+    /** Возвращает страницу записей вакцинации с фильтрами. */
     @GetMapping("/vaccinations")
     @Operation(summary = "Get vaccinations list with filters and pagination")
     @ApiResponses(
@@ -81,7 +82,6 @@ class VaccinationReadController(
             ),
         ],
     )
-    /** Возвращает страницу записей вакцинации с фильтрами. */
     fun list(
         request: HttpServletRequest,
         @Parameter(description = "Optional employee filter")
@@ -114,6 +114,7 @@ class VaccinationReadController(
                 pageable = PageRequest.of(page, size),
             ).map(VaccinationReadResponse::fromEntity)
 
+    /** Возвращает историю вакцинации сотрудника. */
     @GetMapping("/employees/{employeeId}/vaccinations")
     @Operation(summary = "Get vaccination history by employee")
     @ApiResponses(
@@ -131,7 +132,6 @@ class VaccinationReadController(
             ),
         ],
     )
-    /** Возвращает историю вакцинации сотрудника. */
     fun listByEmployee(
         request: HttpServletRequest,
         @PathVariable employeeId: UUID,

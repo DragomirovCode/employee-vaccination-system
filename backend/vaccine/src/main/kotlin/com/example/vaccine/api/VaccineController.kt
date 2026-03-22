@@ -34,18 +34,19 @@ import java.util.UUID
 class VaccineController(
     private val vaccineService: VaccineService,
 ) {
+    /** Возвращает список вакцин. */
     @GetMapping
     @Operation(summary = "Get vaccines list")
-    /** Возвращает список вакцин. */
     fun list(): List<VaccineResponse> = vaccineService.list().map(VaccineResponse::fromEntity)
 
+    /** Возвращает вакцину по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get vaccine by id")
-    /** Возвращает вакцину по идентификатору. */
     fun get(
         @PathVariable id: UUID,
     ): VaccineResponse = VaccineResponse.fromEntity(vaccineService.get(id))
 
+    /** Создает вакцину. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create vaccine")
@@ -74,7 +75,6 @@ class VaccineController(
             ),
         ],
     )
-    /** Создает вакцину. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: VaccineWriteRequest,
@@ -93,6 +93,7 @@ class VaccineController(
             ),
         )
 
+    /** Обновляет вакцину. */
     @PutMapping("/{id}")
     @Operation(summary = "Update vaccine")
     @ApiResponses(
@@ -125,7 +126,6 @@ class VaccineController(
             ),
         ],
     )
-    /** Обновляет вакцину. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -147,6 +147,7 @@ class VaccineController(
             ),
         )
 
+    /** Удаляет вакцину. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccine")
@@ -175,7 +176,6 @@ class VaccineController(
             ),
         ],
     )
-    /** Удаляет вакцину. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

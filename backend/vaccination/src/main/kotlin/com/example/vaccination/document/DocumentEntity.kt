@@ -9,11 +9,11 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "documents")
 /**
  * JPA-сущность документа, прикрепленного к записи о вакцинации.
  */
+@Entity
+@Table(name = "documents")
 class DocumentEntity(
     /** Уникальный идентификатор документа. */
     @Id

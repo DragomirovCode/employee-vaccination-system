@@ -13,14 +13,14 @@ import org.hibernate.type.SqlTypes
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "audit_log")
 /**
  * JPA-сущность записи журнала аудита.
  *
  * Хранит сведения о том, кто, какое действие и над какой бизнес-сущностью выполнил,
  * а также снимки состояния данных до и после изменения.
  */
+@Entity
+@Table(name = "audit_log")
 class AuditLogEntity(
     /** Уникальный идентификатор записи аудита. */
     @Id

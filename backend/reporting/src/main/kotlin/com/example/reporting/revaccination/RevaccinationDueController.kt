@@ -36,6 +36,7 @@ class RevaccinationDueController(
     private val service: RevaccinationDueService,
     private val reportExportService: ReportExportService,
 ) {
+    /** Возвращает постраничный отчет по сотрудникам, которым требуется ревакцинация. */
     @GetMapping("/revaccination-due")
     @Operation(
         summary = "Get employees due for revaccination",
@@ -70,7 +71,6 @@ class RevaccinationDueController(
             ),
         ],
     )
-    /** Возвращает постраничный отчет по сотрудникам, которым требуется ревакцинация. */
     fun getRevaccinationDue(
         request: HttpServletRequest,
         @Parameter(description = "Number of days from today to include in due window", example = "30")
@@ -99,6 +99,7 @@ class RevaccinationDueController(
         )
     }
 
+    /** Экспортирует отчет по предстоящей ревакцинации. */
     @GetMapping("/revaccination-due/export")
     @Operation(summary = "Export revaccination due report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -121,7 +122,6 @@ class RevaccinationDueController(
             ),
         ],
     )
-    /** Экспортирует отчет по предстоящей ревакцинации. */
     fun exportRevaccinationDue(
         request: HttpServletRequest,
         @RequestParam days: Int,

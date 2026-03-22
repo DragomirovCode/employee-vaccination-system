@@ -33,6 +33,7 @@ import java.util.UUID
 class NotificationController(
     private val notificationService: NotificationService,
 ) {
+    /** Возвращает страницу уведомлений текущего пользователя. */
     @GetMapping
     @Operation(summary = "Get current user's notifications")
     @ApiResponses(
@@ -54,7 +55,6 @@ class NotificationController(
             ),
         ],
     )
-    /** Возвращает страницу уведомлений текущего пользователя. */
     fun list(
         request: HttpServletRequest,
         @Parameter(description = "Return unread only", example = "false")
@@ -74,6 +74,7 @@ class NotificationController(
             ).map(NotificationResponse::fromEntity)
     }
 
+    /** Помечает выбранное уведомление текущего пользователя как прочитанное. */
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark notification as read")
     @ApiResponses(
@@ -91,7 +92,6 @@ class NotificationController(
             ),
         ],
     )
-    /** Помечает выбранное уведомление текущего пользователя как прочитанное. */
     fun markRead(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -100,6 +100,7 @@ class NotificationController(
         return NotificationResponse.fromEntity(notificationService.markRead(principal.userId, id))
     }
 
+    /** Помечает все уведомления текущего пользователя как прочитанные. */
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all current user's notifications as read")
     @ApiResponses(
@@ -112,7 +113,6 @@ class NotificationController(
             ),
         ],
     )
-    /** Помечает все уведомления текущего пользователя как прочитанные. */
     fun markAllRead(request: HttpServletRequest): NotificationBulkReadResponse {
         val principal = requirePrincipal(request)
         val updated = notificationService.markAllRead(principal.userId)

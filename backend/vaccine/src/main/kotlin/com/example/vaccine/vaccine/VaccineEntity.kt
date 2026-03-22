@@ -9,11 +9,11 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "vaccines")
 /**
  * JPA-сущность вакцины.
  */
+@Entity
+@Table(name = "vaccines")
 class VaccineEntity(
     /** Уникальный идентификатор вакцины. */
     @Id

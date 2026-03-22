@@ -9,11 +9,11 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "departments")
 /**
  * JPA-сущность подразделения организации.
  */
+@Entity
+@Table(name = "departments")
 class DepartmentEntity(
     /** Уникальный идентификатор подразделения. */
     @Id

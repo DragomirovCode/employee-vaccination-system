@@ -5,10 +5,10 @@ import jakarta.persistence.Embeddable
 import java.io.Serializable
 import java.util.UUID
 
-@Embeddable
 /**
  * Составной идентификатор назначения роли пользователю.
  */
+@Embeddable
 data class UserRoleId(
     /** Идентификатор пользователя. */
     @Column(name = "user_id", nullable = false)

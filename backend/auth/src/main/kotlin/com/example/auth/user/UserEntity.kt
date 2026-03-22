@@ -9,11 +9,11 @@ import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
-@Entity
-@Table(name = "users")
 /**
  * JPA-сущность учетной записи пользователя.
  */
+@Entity
+@Table(name = "users")
 class UserEntity(
     /** Уникальный идентификатор пользователя. */
     @Id

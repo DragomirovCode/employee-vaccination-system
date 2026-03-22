@@ -35,20 +35,21 @@ import java.util.UUID
 class EmployeeController(
     private val employeeService: EmployeeService,
 ) {
+    /** Возвращает список сотрудников, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get employees list")
-    /** Возвращает список сотрудников, доступных текущему пользователю. */
     fun list(request: HttpServletRequest): List<EmployeeResponse> =
         employeeService.list(requirePrincipal(request)).map(EmployeeResponse::fromEntity)
 
+    /** Возвращает сотрудника по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by id")
-    /** Возвращает сотрудника по идентификатору. */
     fun get(
         request: HttpServletRequest,
         @PathVariable id: UUID,
     ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id, requirePrincipal(request)))
 
+    /** Создает нового сотрудника. */
     @PostMapping
     @Operation(summary = "Create employee")
     @ApiResponses(
@@ -77,7 +78,6 @@ class EmployeeController(
         ],
     )
     @ResponseStatus(HttpStatus.CREATED)
-    /** Создает нового сотрудника. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: EmployeeWriteRequest,
@@ -98,6 +98,7 @@ class EmployeeController(
             ),
         )
 
+    /** Обновляет данные сотрудника. */
     @PutMapping("/{id}")
     @Operation(summary = "Update employee")
     @ApiResponses(
@@ -130,7 +131,6 @@ class EmployeeController(
             ),
         ],
     )
-    /** Обновляет данные сотрудника. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -154,6 +154,7 @@ class EmployeeController(
             ),
         )
 
+    /** Удаляет сотрудника. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete employee")
@@ -177,7 +178,6 @@ class EmployeeController(
             ),
         ],
     )
-    /** Удаляет сотрудника. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

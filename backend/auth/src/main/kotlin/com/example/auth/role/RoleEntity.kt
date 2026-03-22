@@ -7,11 +7,11 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
-@Entity
-@Table(name = "roles")
 /**
  * JPA-сущность роли пользователя.
  */
+@Entity
+@Table(name = "roles")
 class RoleEntity(
     /** Числовой идентификатор роли. */
     @Id

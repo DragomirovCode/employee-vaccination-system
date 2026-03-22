@@ -33,20 +33,21 @@ import java.util.UUID
 class DepartmentController(
     private val departmentService: DepartmentService,
 ) {
+    /** Возвращает список подразделений, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get departments list")
-    /** Возвращает список подразделений, доступных текущему пользователю. */
     fun list(request: HttpServletRequest): List<DepartmentResponse> =
         departmentService.list(requirePrincipal(request)).map(DepartmentResponse::fromEntity)
 
+    /** Возвращает подразделение по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get department by id")
-    /** Возвращает подразделение по идентификатору. */
     fun get(
         request: HttpServletRequest,
         @PathVariable id: UUID,
     ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id, requirePrincipal(request)))
 
+    /** Создает новое подразделение. */
     @PostMapping
     @Operation(summary = "Create department")
     @ApiResponses(
@@ -70,7 +71,6 @@ class DepartmentController(
         ],
     )
     @ResponseStatus(HttpStatus.CREATED)
-    /** Создает новое подразделение. */
     fun create(
         request: HttpServletRequest,
         @RequestBody body: DepartmentWriteRequest,
@@ -85,6 +85,7 @@ class DepartmentController(
             ),
         )
 
+    /** Обновляет подразделение. */
     @PutMapping("/{id}")
     @Operation(summary = "Update department")
     @ApiResponses(
@@ -112,7 +113,6 @@ class DepartmentController(
             ),
         ],
     )
-    /** Обновляет подразделение. */
     fun update(
         request: HttpServletRequest,
         @PathVariable id: UUID,
@@ -130,6 +130,7 @@ class DepartmentController(
             ),
         )
 
+    /** Удаляет подразделение. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete department")
@@ -158,7 +159,6 @@ class DepartmentController(
             ),
         ],
     )
-    /** Удаляет подразделение. */
     fun delete(
         request: HttpServletRequest,
         @PathVariable id: UUID,

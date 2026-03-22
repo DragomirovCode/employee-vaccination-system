@@ -15,11 +15,11 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-@Entity
-@Table(name = "employees")
 /**
  * JPA-сущность сотрудника организации.
  */
+@Entity
+@Table(name = "employees")
 class EmployeeEntity(
     /** Уникальный идентификатор сотрудника. */
     @Id
