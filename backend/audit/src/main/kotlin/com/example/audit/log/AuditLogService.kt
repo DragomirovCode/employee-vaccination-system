@@ -12,6 +12,14 @@ class AuditLogService(
 ) {
     private val objectMapper = ObjectMapper().findAndRegisterModules()
 
+    /**
+     * Сохраняет запись аудита о создании сущности с UUID-идентификатором.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип измененной сущности
+     * @param entityId идентификатор созданной сущности
+     * @param newValue состояние сущности после создания
+     */
     @Transactional
     fun logCreate(
         userId: UUID,
@@ -29,6 +37,15 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сохраняет запись аудита о создании сущности, если у нее нет собственного UUID
+     * и для аудита используется синтетический идентификатор на основе ключа.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип измененной сущности
+     * @param entityKey строковый ключ сущности, из которого формируется синтетический UUID
+     * @param newValue состояние сущности после создания
+     */
     @Transactional
     fun logCreate(
         userId: UUID,
@@ -44,6 +61,15 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сохраняет запись аудита об обновлении сущности с UUID-идентификатором.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип измененной сущности
+     * @param entityId идентификатор измененной сущности
+     * @param oldValue состояние сущности до изменения
+     * @param newValue состояние сущности после изменения
+     */
     @Transactional
     fun logUpdate(
         userId: UUID,
@@ -62,6 +88,16 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сохраняет запись аудита об обновлении сущности, если в журнале изменений
+     * она должна определяться по строковому ключу.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип измененной сущности
+     * @param entityKey строковый ключ сущности, из которого формируется синтетический UUID
+     * @param oldValue состояние сущности до изменения
+     * @param newValue состояние сущности после изменения
+     */
     @Transactional
     fun logUpdate(
         userId: UUID,
@@ -79,6 +115,14 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сохраняет запись аудита об удалении сущности с UUID-идентификатором.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип удаленной сущности
+     * @param entityId идентификатор удаленной сущности
+     * @param oldValue состояние сущности перед удалением
+     */
     @Transactional
     fun logDelete(
         userId: UUID,
@@ -96,6 +140,15 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сохраняет запись аудита об удалении сущности, если для ее идентификации
+     * используется строковый ключ вместо собственного UUID.
+     *
+     * @param userId идентификатор пользователя, выполнившего операцию
+     * @param entityType тип удаленной сущности
+     * @param entityKey строковый ключ сущности, из которого формируется синтетический UUID
+     * @param oldValue состояние сущности перед удалением
+     */
     @Transactional
     fun logDelete(
         userId: UUID,
@@ -111,6 +164,9 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Создает и немедленно сохраняет запись аудита в базе данных.
+     */
     private fun save(
         userId: UUID,
         action: AuditAction,
@@ -131,11 +187,24 @@ class AuditLogService(
         )
     }
 
+    /**
+     * Сериализует произвольный объект в JSON для хранения в журнале аудита.
+     *
+     * @param value значение для сериализации
+     * @return JSON-представление значения или `null`, если значение отсутствует
+     */
     private fun toJson(value: Any?): String? =
         value?.let {
             objectMapper.writeValueAsString(it)
         }
 
+    /**
+     * Строит детерминированный UUID для сущностей, которые идентифицируются строковым ключом.
+     *
+     * @param entityType тип сущности
+     * @param entityKey строковый ключ сущности
+     * @return синтетический UUID, одинаковый для одной и той же пары типа и ключа
+     */
     private fun syntheticEntityId(
         entityType: AuditEntityType,
         entityKey: String,
