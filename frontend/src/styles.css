@@ -240,9 +240,15 @@ button:hover {
   min-width: 180px;
 }
 
+.toolbar-field-compact {
+  min-width: 130px;
+  margin-bottom: 0;
+}
+
 .toolbar-actions {
   display: flex;
   gap: 0.6rem;
+  align-items: end;
 }
 
 .segmented-control {
@@ -687,6 +693,14 @@ select {
   gap: 0.65rem;
 }
 
+.coverage-detail-head {
+  margin-bottom: 0.75rem;
+}
+
+.coverage-drilldown-bar {
+  margin: -0.15rem 0 0.75rem;
+}
+
 .registry-table {
   display: grid;
   gap: 0.65rem;
@@ -726,8 +740,27 @@ select {
   background: #f2f8f3;
 }
 
+.coverage-employee-row {
+  grid-template-columns: minmax(220px, 1.5fr) minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(180px, 1.1fr);
+}
+
 .coverage-name {
   font-weight: 600;
+}
+
+.inline-link-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0b5b3a;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inline-link-button:hover {
+  background: transparent;
+  text-decoration: underline;
 }
 
 .coverage-pill {
@@ -782,6 +815,10 @@ select {
   }
 
   .coverage-row {
+    grid-template-columns: 1fr;
+  }
+
+  .coverage-employee-row {
     grid-template-columns: 1fr;
   }
 

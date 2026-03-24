@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { apiDelete, apiGet, apiGetBlob, apiPost, apiPostForm, apiPut } from "../shared/api/client";
 import {
@@ -60,6 +60,8 @@ function toFormState(item: VaccinationReadDto): VaccinationFormState {
 export function EmployeeVaccinationsPage() {
   const { session } = useAuth();
   const { employeeId = "" } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { locale, t } = useI18n();
   const [employee, setEmployee] = useState<EmployeeDto | null>(null);
@@ -186,6 +188,23 @@ export function EmployeeVaccinationsPage() {
     [locale, searchQuery, vaccineNames, visibleItems]
   );
   const canShowFullHistory = items.length > visibleItems.length;
+  const source = (location.state as { source?: string } | null)?.source;
+  const backLabel =
+    source === "coverage"
+      ? t("employeeVaccinations.backToCoverage")
+      : source === "vaccinationRegistry"
+        ? t("employeeVaccinations.backToRegistry")
+        : source === "employees"
+          ? t("employeeVaccinations.backToEmployees")
+          : t("employeeVaccinations.back");
+
+  function goBack() {
+    if (source) {
+      navigate(-1);
+      return;
+    }
+    navigate("/");
+  }
 
   function openFullHistory() {
     setSearchParams({});
@@ -377,9 +396,9 @@ export function EmployeeVaccinationsPage() {
   return (
     <section className="stack-lg">
       <div className="page-actions">
-        <Link to="/" className="inline-link">
-          {t("employeeVaccinations.back")}
-        </Link>
+        <button type="button" className="inline-link-button" onClick={goBack}>
+          {backLabel}
+        </button>
       </div>
 
       <article className="card">

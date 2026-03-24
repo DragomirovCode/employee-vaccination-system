@@ -1,4 +1,4 @@
-﻿package com.example.reporting.coverage
+package com.example.reporting.coverage
 
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
@@ -79,6 +79,40 @@ class VaccinationCoverageControllerTest {
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].employeesTotal").value(1))
             .andExpect(jsonPath("$[0].employeesCovered").value(1))
+    }
+
+    @Test
+    fun `department employee coverage returns detailed rows`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-employee")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.rootDepartmentId.toString()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].fullName").exists())
+            .andExpect(jsonPath("$[0].isCovered").value(true))
+            .andExpect(jsonPath("$[1].isCovered").value(true))
+    }
+
+    @Test
+    fun `department employee coverage supports revaccination date filter`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-employee")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.rootDepartmentId.toString())
+                    .param("revaccinationDateFrom", LocalDate.now().plusDays(45).toString()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(1))
     }
 
     @Test
@@ -193,6 +227,25 @@ class VaccinationCoverageControllerTest {
                     "Expected PDF signature (%PDF)",
                 )
             }
+    }
+
+    @Test
+    fun `exports employee coverage as csv`() {
+        val seed = seedData("HR")
+
+        mockMvc
+            .perform(
+                get("/reports/vaccination-coverage-by-employee/export")
+                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .param("dateFrom", "2026-01-01")
+                    .param("dateTo", "2026-12-31")
+                    .param("departmentId", seed.rootDepartmentId.toString())
+                    .param("status", "DUE_SOON"),
+            ).andExpect(status().isOk)
+            .andExpect(header().string("Content-Disposition", "attachment; filename=\"vaccination-coverage-by-employee.csv\""))
+            .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/csv")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Employee,Department,Revaccination date,Status")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Coverage Child,Child")))
     }
 
     @Test
@@ -468,6 +521,7 @@ class VaccinationCoverageControllerTest {
 
         return SeededData(
             authUserId = authUser.id!!,
+            rootDepartmentId = rootDepartment.id!!,
             externalDepartmentId = externalDepartment.id!!,
         )
     }
@@ -479,5 +533,6 @@ class VaccinationCoverageControllerTest {
 
 private data class SeededData(
     val authUserId: UUID,
+    val rootDepartmentId: UUID,
     val externalDepartmentId: UUID,
 )

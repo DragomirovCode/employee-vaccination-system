@@ -1,69 +1,93 @@
 package com.example.reporting.coverage
 
+import java.time.LocalDate
 import java.util.UUID
 
 /**
- * Элемент отчета по охвату вакцинацией в разрезе подразделений.
+ * Строка агрегированного отчета по охвату вакцинацией в разрезе подразделения.
  */
 data class VaccinationCoverageItem(
-    /** Идентификатор подразделения. */
     val departmentId: UUID,
-    /** Название подразделения. */
     val departmentName: String,
-    /** Общее количество сотрудников подразделения. */
     val employeesTotal: Long,
-    /** Количество сотрудников с актуальной вакцинацией за период. */
     val employeesCovered: Long,
-    /** Процент охвата вакцинацией. */
     val coveragePercent: Double,
 )
 
 /**
- * Внутренняя строка с общим количеством сотрудников подразделения.
+ * Внутренняя проекция с общей численностью сотрудников подразделения.
  */
 data class DepartmentEmployeesTotalRow(
-    /** Идентификатор подразделения. */
     val departmentId: UUID,
-    /** Название подразделения. */
     val departmentName: String,
-    /** Общее количество сотрудников подразделения. */
     val employeesTotal: Long,
 )
 
 /**
- * Внутренняя строка с количеством охваченных сотрудников подразделения.
+ * Внутренняя проекция с количеством охваченных сотрудников по подразделению.
  */
 data class DepartmentEmployeesCoveredRow(
-    /** Идентификатор подразделения. */
     val departmentId: UUID,
-    /** Количество сотрудников с актуальной вакцинацией. */
     val employeesCovered: Long,
 )
 
 /**
- * Элемент отчета по охвату вакцинацией в разрезе вакцин.
+ * Строка отчета по охвату вакцинацией в разрезе сотрудника.
+ * Используется для drill-down экрана и экспорта.
+ */
+data class VaccinationCoverageByEmployeeItem(
+    val employeeId: UUID,
+    val fullName: String,
+    val departmentId: UUID,
+    val departmentName: String,
+    val isCovered: Boolean,
+    val status: EmployeeVaccinationCoverageStatus,
+    val revaccinationDate: LocalDate?,
+)
+
+/**
+ * Внутренняя проекция сотрудника для drill-down отчета по охвату.
+ */
+data class EmployeeCoverageRow(
+    val employeeId: UUID,
+    val fullName: String,
+    val departmentId: UUID,
+    val departmentName: String,
+)
+
+/**
+ * Внутренняя проекция сотрудника с актуальной вакцинацией.
+ */
+data class CoveredEmployeeRow(
+    val employeeId: UUID,
+    val revaccinationDate: LocalDate,
+)
+
+/**
+ * Статус охвата вакцинацией на уровне сотрудника.
+ */
+enum class EmployeeVaccinationCoverageStatus {
+    CURRENT,
+    DUE_SOON,
+    MISSING,
+}
+
+/**
+ * Строка агрегированного отчета по охвату вакцинацией в разрезе вакцины.
  */
 data class VaccinationCoverageByVaccineItem(
-    /** Идентификатор вакцины. */
     val vaccineId: UUID,
-    /** Название вакцины. */
     val vaccineName: String,
-    /** Общее количество сотрудников в доступной области отчета. */
     val employeesTotal: Long,
-    /** Количество сотрудников, охваченных данной вакциной. */
     val employeesCovered: Long,
-    /** Процент охвата по вакцине. */
     val coveragePercent: Double,
 )
 
 /**
- * Внутренняя строка с количеством охваченных сотрудников по вакцине.
+ * Внутренняя проекция с количеством охваченных сотрудников по вакцине.
  */
 data class VaccineEmployeesCoveredRow(
-    /** Идентификатор вакцины. */
     val vaccineId: UUID,
-    /** Название вакцины. */
     val vaccineName: String,
-    /** Количество сотрудников, охваченных данной вакциной. */
     val employeesCovered: Long,
 )
