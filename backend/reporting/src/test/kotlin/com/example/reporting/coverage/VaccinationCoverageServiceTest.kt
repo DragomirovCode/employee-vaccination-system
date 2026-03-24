@@ -1,4 +1,4 @@
-﻿package com.example.reporting.coverage
+package com.example.reporting.coverage
 
 import com.example.auth.role.RoleRepository
 import com.example.auth.role.UserRoleRepository
@@ -15,6 +15,7 @@ import com.example.vaccination.vaccination.VaccinationRepository
 import com.example.vaccine.vaccine.VaccineEntity
 import com.example.vaccine.vaccine.VaccineRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -79,6 +80,36 @@ class VaccinationCoverageServiceTest {
             )
         assertEquals(1, filtered.size)
         assertEquals(seed.departmentAId, filtered.first().departmentId)
+    }
+
+    @Test
+    fun `returns employee coverage details for selected scope`() {
+        val seed = seedData()
+
+        val result =
+            service.getCoverageByEmployee(
+                dateFrom = LocalDate.of(2026, 1, 1),
+                dateTo = LocalDate.of(2026, 12, 31),
+                scope = ReportingAccessScope(departmentIds = setOf(seed.departmentAId)),
+            )
+
+        assertEquals(3, result.size)
+
+        val covered = result.first { it.employeeId == seed.employeeA1Id }
+        assertEquals("User A1", covered.fullName)
+        assertEquals(seed.departmentAId, covered.departmentId)
+        assertTrue(covered.isCovered)
+        assertEquals(EmployeeVaccinationCoverageStatus.DUE_SOON, covered.status)
+        assertEquals(LocalDate.now().plusDays(30), covered.revaccinationDate)
+
+        val expired = result.first { it.employeeId == seed.employeeA2Id }
+        assertFalse(expired.isCovered)
+        assertEquals(EmployeeVaccinationCoverageStatus.MISSING, expired.status)
+        assertEquals(null, expired.revaccinationDate)
+
+        val outOfPeriod = result.first { it.employeeId == seed.employeeA3Id }
+        assertFalse(outOfPeriod.isCovered)
+        assertEquals(EmployeeVaccinationCoverageStatus.MISSING, outOfPeriod.status)
     }
 
     @Test
@@ -214,6 +245,8 @@ class VaccinationCoverageServiceTest {
             vaccineAId = vaccineA.id!!,
             vaccineBId = vaccineB.id!!,
             employeeA1Id = a1.id!!,
+            employeeA2Id = a2.id!!,
+            employeeA3Id = a3.id!!,
         )
     }
 }
@@ -224,4 +257,6 @@ private data class SeedResult(
     val vaccineAId: UUID,
     val vaccineBId: UUID,
     val employeeA1Id: UUID,
+    val employeeA2Id: UUID,
+    val employeeA3Id: UUID,
 )

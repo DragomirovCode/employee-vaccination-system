@@ -6,13 +6,17 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 
+/**
+ * Строит отчеты по охвату вакцинацией для подразделений, сотрудников и вакцин.
+ */
 @Service
 class VaccinationCoverageService(
     private val queryRepository: VaccinationCoverageQueryRepository,
 ) {
-    /**
-     * Строит отчет по охвату вакцинацией в разрезе подразделений.
-     */
+    private companion object {
+        const val DUE_SOON_DAYS = 30L
+    }
+
     fun getCoverageByDepartment(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -51,9 +55,55 @@ class VaccinationCoverageService(
         }
     }
 
-    /**
-     * Строит отчет по охвату вакцинацией в разрезе вакцин.
-     */
+    fun getCoverageByEmployee(
+        dateFrom: LocalDate,
+        dateTo: LocalDate,
+        scope: ReportingAccessScope,
+    ): List<VaccinationCoverageByEmployeeItem> {
+        require(!dateFrom.isAfter(dateTo)) { "dateFrom must be <= dateTo" }
+
+        val employees =
+            queryRepository.findEmployeesInScope(
+                departmentIds = scope.departmentIds,
+                employeeId = scope.employeeId,
+            )
+        if (employees.isEmpty()) {
+            return emptyList()
+        }
+
+        val coveredEmployeeIds =
+            queryRepository
+                .findCoveredEmployeeIds(
+                    dateFrom = dateFrom,
+                    dateTo = dateTo,
+                    departmentIds = scope.departmentIds,
+                    employeeId = scope.employeeId,
+                    today = LocalDate.now(),
+                ).associateBy({ it.employeeId }, { it.revaccinationDate })
+
+        val dueSoonDate = LocalDate.now().plusDays(DUE_SOON_DAYS)
+
+        return employees.map { employee ->
+            val revaccinationDate = coveredEmployeeIds[employee.employeeId]
+            val status =
+                when {
+                    revaccinationDate == null -> EmployeeVaccinationCoverageStatus.MISSING
+                    !revaccinationDate.isAfter(dueSoonDate) -> EmployeeVaccinationCoverageStatus.DUE_SOON
+                    else -> EmployeeVaccinationCoverageStatus.CURRENT
+                }
+
+            VaccinationCoverageByEmployeeItem(
+                employeeId = employee.employeeId,
+                fullName = employee.fullName,
+                departmentId = employee.departmentId,
+                departmentName = employee.departmentName,
+                isCovered = revaccinationDate != null,
+                status = status,
+                revaccinationDate = revaccinationDate,
+            )
+        }
+    }
+
     fun getCoverageByVaccine(
         dateFrom: LocalDate,
         dateTo: LocalDate,
@@ -88,9 +138,6 @@ class VaccinationCoverageService(
             }
     }
 
-    /**
-     * Вычисляет процент охвата и округляет его до двух знаков после запятой.
-     */
     private fun calculateCoverage(
         covered: Long,
         total: Long,

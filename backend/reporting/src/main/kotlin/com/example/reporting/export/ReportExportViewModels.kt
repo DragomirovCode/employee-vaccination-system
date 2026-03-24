@@ -1,24 +1,18 @@
 package com.example.reporting.export
 
+import com.example.reporting.coverage.EmployeeVaccinationCoverageStatus
+import com.example.reporting.coverage.VaccinationCoverageByEmployeeItem
 import com.example.reporting.coverage.VaccinationCoverageByVaccineItem
 import com.example.reporting.coverage.VaccinationCoverageItem
 import com.example.reporting.revaccination.RevaccinationDueItem
 import java.util.Locale
 
-/**
- * Табличное представление отчета, готовое к экспорту.
- */
 data class ReportTableView(
-    /** Заголовки столбцов. */
     val headers: List<String>,
-    /** Строки таблицы. */
     val rows: List<List<Any?>>,
 )
 
 object ReportExportViewModels {
-    /**
-     * Преобразует отчет по ревакцинации в табличный вид для экспорта.
-     */
     fun revaccinationDue(
         items: List<RevaccinationDueItem>,
         locale: Locale,
@@ -47,9 +41,6 @@ object ReportExportViewModels {
                 },
         )
 
-    /**
-     * Преобразует отчет по охвату вакцинацией по подразделениям в табличный вид.
-     */
     fun coverageByDepartment(
         items: List<VaccinationCoverageItem>,
         locale: Locale,
@@ -67,9 +58,23 @@ object ReportExportViewModels {
                 },
         )
 
-    /**
-     * Преобразует отчет по охвату вакцинацией по вакцинам в табличный вид.
-     */
+    fun coverageByEmployee(
+        items: List<VaccinationCoverageByEmployeeItem>,
+        locale: Locale,
+    ): ReportTableView =
+        ReportTableView(
+            headers = localizedHeaders(locale, "Employee", "Department", "Revaccination date", "Status"),
+            rows =
+                items.map {
+                    listOf(
+                        it.fullName,
+                        it.departmentName,
+                        it.revaccinationDate ?: if (locale.language.lowercase() == "ru") "Не указано" else "Not specified",
+                        employeeStatusLabel(it.status, locale),
+                    )
+                },
+        )
+
     fun coverageByVaccine(
         items: List<VaccinationCoverageByVaccineItem>,
         locale: Locale,
@@ -87,9 +92,6 @@ object ReportExportViewModels {
                 },
         )
 
-    /**
-     * Возвращает локализованные заголовки таблицы.
-     */
     private fun localizedHeaders(
         locale: Locale,
         vararg englishHeaders: String,
@@ -100,9 +102,6 @@ object ReportExportViewModels {
             englishHeaders.toList()
         }
 
-    /**
-     * Переводит известные английские заголовки таблиц на русский язык.
-     */
     private fun toRussianHeader(header: String): String =
         when (header) {
             "Employee" -> "Сотрудник"
@@ -110,10 +109,29 @@ object ReportExportViewModels {
             "Vaccine" -> "Вакцина"
             "Last vaccination date" -> "Дата последней вакцинации"
             "Revaccination date" -> "Дата ревакцинации"
+            "Status" -> "Статус"
             "Days left" -> "Осталось дней"
             "Employees total" -> "Всего сотрудников"
             "Employees covered" -> "Привито сотрудников"
             "Coverage percent" -> "Процент охвата"
             else -> header
+        }
+
+    private fun employeeStatusLabel(
+        status: EmployeeVaccinationCoverageStatus,
+        locale: Locale,
+    ): String =
+        when (status) {
+            EmployeeVaccinationCoverageStatus.CURRENT -> {
+                if (locale.language.lowercase() == "ru") "Актуальна" else "Current"
+            }
+
+            EmployeeVaccinationCoverageStatus.DUE_SOON -> {
+                if (locale.language.lowercase() == "ru") "Скоро ревакцинация" else "Due soon"
+            }
+
+            EmployeeVaccinationCoverageStatus.MISSING -> {
+                if (locale.language.lowercase() == "ru") "Нет актуальной вакцинации" else "No current vaccination"
+            }
         }
 }

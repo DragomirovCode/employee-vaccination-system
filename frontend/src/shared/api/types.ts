@@ -184,6 +184,16 @@ export type VaccinationCoverageDepartmentItem = {
   coveragePercent: number;
 };
 
+export type VaccinationCoverageEmployeeItem = {
+  employeeId: string;
+  fullName: string;
+  departmentId: string;
+  departmentName: string;
+  isCovered: boolean;
+  status: "CURRENT" | "DUE_SOON" | "MISSING";
+  revaccinationDate: string | null;
+};
+
 export type VaccinationCoverageVaccineItem = {
   vaccineId: string;
   vaccineName: string;
