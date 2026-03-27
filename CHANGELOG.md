@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.5 - 2026-03-27
+- 2026-03-22 | backend | generic | feature | #177 - [FEATURE] добавить javadoc во все модули ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/177))
+- 2026-03-25 | backend | reporting | feature | #180 - [FEATURE] Расширить Охват. Добавить доп. таблицу ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/180))
+- 2026-03-28 | backend | generic | refactor | #182 - [REFACTOR] обновить моки, перевод на ru ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/182))
+- 2026-03-28 | backend | generic | feature | #184 - [FEATURE] добавить доп. моки ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/184))
+
+
 ## v0.9.4 - 2026-03-21
 - 2026-03-21 | ci | generic | feature | #159 - [FEATURE] - Доработать CHANGELOG ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/159))
 - 2026-03-22 | backend | generic | feature | #161 - [FEATURE] Добавить человека читаемое сообщение при ошибке 409 для заболевания ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/161))
