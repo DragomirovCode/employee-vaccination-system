@@ -62,6 +62,8 @@ Default credentials:
 
 ## Starter seed data
 - On application startup, Flyway migration `V8__seed_initial_data.sql` fills all main tables with demo data.
+- Flyway migration `V9__localize_seed_data_to_ru.sql` localizes seeded departments, employee names, positions, and vaccine names to Russian.
+- Flyway migration `V10__add_demo_filter_scenarios.sql` adds extra demo employees and vaccinations for report and registry filter scenarios.
 - Seeded users for quick API checks (`X-Auth-Token` accepts the UUID directly):
   - `admin@evs.local` - `ADMIN` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10`
   - `hr@evs.local` - `HR` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11`
@@ -69,8 +71,9 @@ Default credentials:
   - `petr.orlov@evs.local` - `PERSON` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13`
   - `polina.smirnova@evs.local` - `PERSON` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14`
 - Seed also includes:
-  - department hierarchy
+  - department hierarchy with Russian names
   - employees linked to seeded users
+  - extra employees and vaccinations for demo filter scenarios
   - diseases, vaccines, vaccine-disease links
   - vaccination records, document metadata, notifications, and audit log entries
 

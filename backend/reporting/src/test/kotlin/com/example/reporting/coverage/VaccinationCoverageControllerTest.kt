@@ -110,7 +110,7 @@ class VaccinationCoverageControllerTest {
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.rootDepartmentId.toString())
-                    .param("revaccinationDateFrom", LocalDate.now().plusDays(45).toString()),
+                    .param("revaccinationDateFrom", LocalDate.now().plusDays(8).toString()),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
     }
@@ -493,7 +493,7 @@ class VaccinationCoverageControllerTest {
                 vaccinationDate = LocalDate.of(2026, 4, 1),
                 doseNumber = 1,
                 expirationDate = LocalDate.of(2027, 1, 1),
-                revaccinationDate = LocalDate.now().plusDays(30),
+                revaccinationDate = LocalDate.now().plusDays(7),
             ),
         )
         vaccinationRepository.saveAndFlush(
@@ -504,7 +504,7 @@ class VaccinationCoverageControllerTest {
                 vaccinationDate = LocalDate.of(2026, 6, 1),
                 doseNumber = 1,
                 expirationDate = LocalDate.of(2027, 1, 1),
-                revaccinationDate = LocalDate.now().plusDays(30),
+                revaccinationDate = LocalDate.now().plusDays(7),
             ),
         )
         vaccinationRepository.saveAndFlush(
