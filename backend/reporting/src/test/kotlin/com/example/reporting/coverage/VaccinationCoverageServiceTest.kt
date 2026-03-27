@@ -100,7 +100,7 @@ class VaccinationCoverageServiceTest {
         assertEquals(seed.departmentAId, covered.departmentId)
         assertTrue(covered.isCovered)
         assertEquals(EmployeeVaccinationCoverageStatus.DUE_SOON, covered.status)
-        assertEquals(LocalDate.now().plusDays(30), covered.revaccinationDate)
+        assertEquals(LocalDate.now().plusDays(7), covered.revaccinationDate)
 
         val expired = result.first { it.employeeId == seed.employeeA2Id }
         assertFalse(expired.isCovered)
@@ -191,7 +191,7 @@ class VaccinationCoverageServiceTest {
                 vaccinationDate = LocalDate.of(2026, 2, 10),
                 doseNumber = 1,
                 expirationDate = LocalDate.of(2027, 1, 1),
-                revaccinationDate = LocalDate.now().plusDays(30),
+                revaccinationDate = LocalDate.now().plusDays(7),
             ),
         )
         vaccinationRepository.saveAndFlush(
@@ -213,7 +213,7 @@ class VaccinationCoverageServiceTest {
                 vaccinationDate = LocalDate.of(2025, 12, 10),
                 doseNumber = 1,
                 expirationDate = LocalDate.of(2026, 12, 10),
-                revaccinationDate = LocalDate.now().plusDays(30),
+                revaccinationDate = LocalDate.now().plusDays(7),
             ),
         )
         vaccinationRepository.saveAndFlush(
@@ -224,7 +224,7 @@ class VaccinationCoverageServiceTest {
                 vaccinationDate = LocalDate.of(2026, 4, 10),
                 doseNumber = 1,
                 expirationDate = LocalDate.of(2027, 1, 1),
-                revaccinationDate = LocalDate.now().plusDays(30),
+                revaccinationDate = LocalDate.now().plusDays(7),
             ),
         )
         vaccinationRepository.saveAndFlush(

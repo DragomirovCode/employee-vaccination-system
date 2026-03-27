@@ -14,7 +14,7 @@ class VaccinationCoverageService(
     private val queryRepository: VaccinationCoverageQueryRepository,
 ) {
     private companion object {
-        const val DUE_SOON_DAYS = 30L
+        const val DUE_SOON_DAYS = 7L
     }
 
     fun getCoverageByDepartment(
