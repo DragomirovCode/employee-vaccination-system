@@ -1,4 +1,4 @@
-﻿package com.example.auth
+package com.example.auth
 
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.RoleRepository
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.server.ResponseStatusException
 
 @SpringBootTest(classes = [AuthTestApplication::class])
@@ -30,12 +31,12 @@ class AuthServiceTest {
     private lateinit var userRoleRepository: UserRoleRepository
 
     @Test
-    fun `authenticates user by UUID token and resolves roles`() {
+    fun `authenticates user by email and password and resolves roles`() {
         userRoleRepository.deleteAll()
         roleRepository.deleteAll()
         userRepository.deleteAll()
 
-        val user = userRepository.saveAndFlush(UserEntity(email = "auth-ok@example.com", passwordHash = "hash"))
+        val user = userRepository.saveAndFlush(UserEntity(email = "auth-ok@example.com", passwordHash = "secret"))
         val role = roleRepository.saveAndFlush(RoleEntity(code = "HR", name = "HR"))
         userRoleRepository.saveAndFlush(
             UserRoleEntity(
@@ -43,17 +44,23 @@ class AuthServiceTest {
             ),
         )
 
-        val principal = authService.requireAnyRole(user.id.toString(), setOf(AppRole.HR, AppRole.ADMIN))
+        val authentication = authService.authenticate("auth-ok@example.com", "secret")
+        SecurityContextHolder.getContext().authentication = authentication
+
+        val principal = authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
 
         assertEquals(user.id, principal.userId)
         assertEquals(setOf(AppRole.HR), principal.roles)
     }
 
     @Test
-    fun `rejects invalid token`() {
+    fun `rejects invalid credentials`() {
+        userRepository.deleteAll()
+        userRepository.saveAndFlush(UserEntity(email = "auth-bad@example.com", passwordHash = "secret"))
+
         val ex =
             assertThrows(ResponseStatusException::class.java) {
-                authService.requireAuthenticated("dev-token")
+                authService.authenticate("auth-bad@example.com", "wrong-password")
             }
 
         assertEquals(HttpStatus.UNAUTHORIZED, ex.statusCode)
@@ -65,7 +72,7 @@ class AuthServiceTest {
         roleRepository.deleteAll()
         userRepository.deleteAll()
 
-        val user = userRepository.saveAndFlush(UserEntity(email = "auth-person@example.com", passwordHash = "hash"))
+        val user = userRepository.saveAndFlush(UserEntity(email = "auth-person@example.com", passwordHash = "secret"))
         val role = roleRepository.saveAndFlush(RoleEntity(code = "PERSON", name = "PERSON"))
         userRoleRepository.saveAndFlush(
             UserRoleEntity(
@@ -73,9 +80,12 @@ class AuthServiceTest {
             ),
         )
 
+        val authentication = authService.authenticate("auth-person@example.com", "secret")
+        SecurityContextHolder.getContext().authentication = authentication
+
         val ex =
             assertThrows(ResponseStatusException::class.java) {
-                authService.requireAnyRole(user.id.toString(), setOf(AppRole.HR, AppRole.ADMIN))
+                authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
             }
 
         assertEquals(HttpStatus.FORBIDDEN, ex.statusCode)

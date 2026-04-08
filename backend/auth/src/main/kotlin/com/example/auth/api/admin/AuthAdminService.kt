@@ -10,6 +10,7 @@ import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import org.springframework.http.HttpStatus
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
@@ -21,6 +22,7 @@ class AuthAdminService(
     private val roleRepository: RoleRepository,
     private val userRoleRepository: UserRoleRepository,
     private val auditLogService: AuditLogService,
+    private val passwordEncoder: PasswordEncoder,
 ) {
     /**
      * Возвращает список всех пользователей системы.
@@ -54,7 +56,7 @@ class AuthAdminService(
             userRepository.saveAndFlush(
                 UserEntity(
                     email = command.email.trim(),
-                    passwordHash = "",
+                    passwordHash = resolvePasswordHash(command.password),
                     isActive = command.isActive,
                 ),
             )
@@ -86,6 +88,7 @@ class AuthAdminService(
         requireUniqueEmail(command.email, id)
         user.email = command.email.trim()
         user.isActive = command.isActive
+        command.password?.takeIf { it.isNotBlank() }?.let { user.passwordHash = encodePassword(it) }
         val saved = userRepository.saveAndFlush(user)
         auditLogService.logUpdate(
             userId = performedBy,
@@ -240,6 +243,15 @@ class AuthAdminService(
         roleRepository.findByCode(code.trim().uppercase())
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found")
 
+    private fun resolvePasswordHash(password: String?): String {
+        val rawPassword = password?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
+        return encodePassword(rawPassword)
+    }
+
+    private fun encodePassword(rawPassword: String): String =
+        passwordEncoder.encode(rawPassword)
+            ?: throw IllegalStateException("Password encoder returned null hash")
+
     /**
      * Преобразует пользователя в сериализуемое представление для журнала аудита.
      */
@@ -267,9 +279,11 @@ class AuthAdminService(
 data class CreateUserCommand(
     val email: String,
     val isActive: Boolean,
+    val password: String? = null,
 )
 
 data class UpdateUserCommand(
     val email: String,
     val isActive: Boolean,
+    val password: String? = null,
 )

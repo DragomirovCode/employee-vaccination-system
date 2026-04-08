@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.spring.context)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.security)
     implementation(libs.flyway.core)
     implementation(libs.kotlin.reflect)
     implementation("tools.jackson.module:jackson-module-kotlin")

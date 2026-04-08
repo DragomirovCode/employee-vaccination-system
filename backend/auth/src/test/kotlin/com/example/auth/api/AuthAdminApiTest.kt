@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
@@ -63,11 +64,12 @@ class AuthAdminApiTest {
     @Test
     fun `non admin cannot create user`() {
         val hrUser = createUserWithRole("HR")
+        val session = login(hrUser.email, "hash")
 
         mockMvc
             .perform(
                 post("/auth/users")
-                    .header("X-Auth-Token", hrUser.id.toString())
+                    .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"email":"new@example.com","isActive":true}"""),
             ).andExpect(status().isForbidden)
@@ -76,12 +78,13 @@ class AuthAdminApiTest {
     @Test
     fun `admin can create and update user`() {
         val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
 
         val createdResponse =
             mockMvc
                 .perform(
                     post("/auth/users")
-                        .header("X-Auth-Token", adminUser.id.toString())
+                        .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""{"email":"new-admin@example.com","isActive":true}"""),
                 ).andExpect(status().isCreated)
@@ -93,7 +96,7 @@ class AuthAdminApiTest {
         mockMvc
             .perform(
                 put("/auth/users/$createdId")
-                    .header("X-Auth-Token", adminUser.id.toString())
+                    .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"email":"updated-admin@example.com","isActive":false}"""),
             ).andExpect(status().isOk)
@@ -104,12 +107,13 @@ class AuthAdminApiTest {
     @Test
     fun `duplicate email returns conflict`() {
         val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
         userRepository.saveAndFlush(UserEntity(email = "dup@example.com", passwordHash = "hash"))
 
         mockMvc
             .perform(
                 post("/auth/users")
-                    .header("X-Auth-Token", adminUser.id.toString())
+                    .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"email":"dup@example.com","isActive":true}"""),
             ).andExpect(status().isConflict)
@@ -119,6 +123,7 @@ class AuthAdminApiTest {
     @Test
     fun `assign role duplicate returns conflict`() {
         val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
         val targetUser = userRepository.saveAndFlush(UserEntity(email = "target@example.com", passwordHash = "hash"))
         val personRole = ensureRole("PERSON")
         userRoleRepository.saveAndFlush(
@@ -128,7 +133,7 @@ class AuthAdminApiTest {
         mockMvc
             .perform(
                 post("/auth/users/${targetUser.id}/roles/PERSON")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -136,39 +141,41 @@ class AuthAdminApiTest {
     @Test
     fun `assign and unassign role by admin`() {
         val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
         val targetUser = userRepository.saveAndFlush(UserEntity(email = "target2@example.com", passwordHash = "hash"))
         ensureRole("HR")
 
         mockMvc
             .perform(
                 post("/auth/users/${targetUser.id}/roles/HR")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 get("/auth/users/${targetUser.id}/roles")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
 
         mockMvc
             .perform(
                 delete("/auth/users/${targetUser.id}/roles/HR")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isNoContent)
     }
 
     @Test
     fun `auth admin write operations create audit records`() {
         val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
         ensureRole("PERSON")
 
         val createResponse =
             mockMvc
                 .perform(
                     post("/auth/users")
-                        .header("X-Auth-Token", adminUser.id.toString())
+                        .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""{"email":"audit-auth@example.com","isActive":true}"""),
                 ).andExpect(status().isCreated)
@@ -179,7 +186,7 @@ class AuthAdminApiTest {
         mockMvc
             .perform(
                 patch("/auth/users/$createdId/status")
-                    .header("X-Auth-Token", adminUser.id.toString())
+                    .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"active":false}"""),
             ).andExpect(status().isOk)
@@ -187,13 +194,13 @@ class AuthAdminApiTest {
         mockMvc
             .perform(
                 post("/auth/users/$createdId/roles/PERSON")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 delete("/auth/users/$createdId/roles/PERSON")
-                    .header("X-Auth-Token", adminUser.id.toString()),
+                    .session(session),
             ).andExpect(status().isNoContent)
 
         val userLogs = auditLogRepository.findAllByEntityTypeAndEntityId(AuditEntityType.USER, createdId)
@@ -233,6 +240,20 @@ class AuthAdminApiTest {
         roleRepository.deleteAll()
         userRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 
     private fun extractJsonField(
         json: String,

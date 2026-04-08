@@ -32,7 +32,7 @@ class ReportingSecurityInterceptor(
             return true
         }
 
-        val principal = authService.requireAnyRole(request.getHeader("X-Auth-Token"), REPORTING_ROLES)
+        val principal = authService.requireAnyRole(REPORTING_ROLES)
         val requestedDepartmentId =
             request.getParameter("departmentId")?.let {
                 runCatching { UUID.fromString(it) }.getOrElse {

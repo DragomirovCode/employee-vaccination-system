@@ -30,9 +30,9 @@ class VaccineSecurityInterceptor(
         val method = request.method.uppercase()
         val principal =
             if (method in WRITE_METHODS) {
-                authService.requireAnyRole(request.getHeader("X-Auth-Token"), WRITE_ROLES)
+                authService.requireAnyRole(WRITE_ROLES)
             } else {
-                authService.requireAuthenticated(request.getHeader("X-Auth-Token"))
+                authService.requireAuthenticated()
             }
         request.setAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
         return true
