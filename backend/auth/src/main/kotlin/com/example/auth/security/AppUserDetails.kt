@@ -20,8 +20,7 @@ class AppUserDetails(
             roles = roles,
         )
 
-    override fun getAuthorities(): Collection<GrantedAuthority> =
-        roles.map { SimpleGrantedAuthority("ROLE_${it.name}") }
+    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority("ROLE_${it.name}") }
 
     override fun getPassword(): String = passwordHash
 

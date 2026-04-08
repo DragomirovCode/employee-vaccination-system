@@ -35,7 +35,11 @@ class ApiAuthenticationEntryPoint : AuthenticationEntryPoint {
         path: String,
         traceId: String?,
     ): String =
-        """{"code":"$code","message":"$message","path":"$path","timestamp":"${Instant.now()}","traceId":${traceId?.let { "\"${escape(it)}\"" } ?: "null"}}"""
+        """{"code":"$code","message":"$message","path":"$path","timestamp":"${Instant.now()}","traceId":${traceId?.let {
+            "\"${escape(
+                it,
+            )}\""
+        } ?: "null"}}"""
 
     private fun escape(value: String): String = value.replace("\\", "\\\\").replace("\"", "\\\"")
 }
