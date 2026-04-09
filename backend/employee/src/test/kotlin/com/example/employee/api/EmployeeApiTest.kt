@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -57,7 +59,9 @@ class EmployeeApiTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
         cleanup()
     }
 
@@ -65,11 +69,13 @@ class EmployeeApiTest {
     fun `write is forbidden for person and allowed for hr`() {
         val person = createUserWithRole("PERSON")
         val hr = createUserWithRole("HR")
+        val personSession = login(person.email, "hash")
+        val hrSession = login(hr.email, "hash")
 
         mockMvc
             .perform(
                 post("/departments")
-                    .header("X-Auth-Token", person.id.toString())
+                    .session(personSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"HR Ops"}"""),
             ).andExpect(status().isForbidden)
@@ -77,7 +83,7 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 post("/departments")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"HR Ops"}"""),
             ).andExpect(status().isCreated)
@@ -94,13 +100,14 @@ class EmployeeApiTest {
     @Test
     fun `department cycle is rejected`() {
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
         val root = departmentRepository.saveAndFlush(DepartmentEntity(name = "Root"))
         val child = departmentRepository.saveAndFlush(DepartmentEntity(name = "Child", parentId = root.id))
 
         mockMvc
             .perform(
                 put("/departments/${root.id}")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"Root","parentId":"${child.id}"}"""),
             ).andExpect(status().isBadRequest)
@@ -110,12 +117,13 @@ class EmployeeApiTest {
     @Test
     fun `employee create with unknown department returns bad request`() {
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
         val unknownDepartment = UUID.randomUUID()
 
         mockMvc
             .perform(
                 post("/employees")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
@@ -133,13 +141,14 @@ class EmployeeApiTest {
     @Test
     fun `employee duplicate user id returns conflict`() {
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Finance"))
         val linkedUserId = UUID.randomUUID()
 
         mockMvc
             .perform(
                 post("/employees")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
@@ -156,7 +165,7 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 post("/employees")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
@@ -175,6 +184,7 @@ class EmployeeApiTest {
     @Test
     fun `employee delete is forbidden for hr`() {
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
         val employeeId =
             UUID.fromString(
@@ -182,7 +192,7 @@ class EmployeeApiTest {
                     mockMvc
                         .perform(
                             post("/employees")
-                                .header("X-Auth-Token", hr.id.toString())
+                                .session(hrSession)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                     """
@@ -204,13 +214,14 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 delete("/employees/$employeeId")
-                    .header("X-Auth-Token", hr.id.toString()),
+                    .session(hrSession),
             ).andExpect(status().isForbidden)
     }
 
     @Test
     fun `employee delete returns conflict when employee has linked user account`() {
         val admin = createUserWithRole("ADMIN")
+        val adminSession = login(admin.email, "hash")
         val linkedUser = createUserWithRole("PERSON")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
         val employee =
@@ -226,7 +237,7 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 delete("/employees/${employee.id}")
-                    .header("X-Auth-Token", admin.id.toString()),
+                    .session(adminSession),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.message").value("Employee has linked user account"))
     }
@@ -234,6 +245,7 @@ class EmployeeApiTest {
     @Test
     fun `admin can delete employee without linked user account`() {
         val admin = createUserWithRole("ADMIN")
+        val adminSession = login(admin.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Operations"))
         val employee =
             employeeRepository.saveAndFlush(
@@ -247,13 +259,14 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 delete("/employees/${employee.id}")
-                    .header("X-Auth-Token", admin.id.toString()),
+                    .session(adminSession),
             ).andExpect(status().isNoContent)
     }
 
     @Test
     fun `hr sees only employees from own department tree`() {
         val hrUser = createUserWithRole("HR")
+        val hrSession = login(hrUser.email, "hash")
         val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ"))
         val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ Child", parentId = rootDepartment.id))
         val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
@@ -286,7 +299,7 @@ class EmployeeApiTest {
             mockMvc
                 .perform(
                     get("/employees")
-                        .header("X-Auth-Token", hrUser.id.toString()),
+                        .session(hrSession),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").value(2))
                 .andReturn()
@@ -297,13 +310,14 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 get("/employees/${externalEmployee.id}")
-                    .header("X-Auth-Token", hrUser.id.toString()),
+                    .session(hrSession),
             ).andExpect(status().isForbidden)
     }
 
     @Test
     fun `hr sees only departments from own department tree`() {
         val hrUser = createUserWithRole("HR")
+        val hrSession = login(hrUser.email, "hash")
         val rootDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ"))
         val childDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "HQ Child", parentId = rootDepartment.id))
         val externalDepartment = departmentRepository.saveAndFlush(DepartmentEntity(name = "External"))
@@ -321,7 +335,7 @@ class EmployeeApiTest {
             mockMvc
                 .perform(
                     get("/departments")
-                        .header("X-Auth-Token", hrUser.id.toString()),
+                        .session(hrSession),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").value(2))
                 .andReturn()
@@ -332,25 +346,26 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 get("/departments/${externalDepartment.id}")
-                    .header("X-Auth-Token", hrUser.id.toString()),
+                    .session(hrSession),
             ).andExpect(status().isForbidden)
 
         mockMvc
             .perform(
                 get("/departments/${childDepartment.id}")
-                    .header("X-Auth-Token", hrUser.id.toString()),
+                    .session(hrSession),
             ).andExpect(status().isOk)
     }
 
     @Test
     fun `write operations create audit records for departments and employees`() {
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
 
         val departmentResponse =
             mockMvc
                 .perform(
                     post("/departments")
-                        .header("X-Auth-Token", hr.id.toString())
+                        .session(hrSession)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""{"name":"Audit Dept"}"""),
                 ).andExpect(status().isCreated)
@@ -362,7 +377,7 @@ class EmployeeApiTest {
             mockMvc
                 .perform(
                     post("/employees")
-                        .header("X-Auth-Token", hr.id.toString())
+                        .session(hrSession)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             """
@@ -381,7 +396,7 @@ class EmployeeApiTest {
         mockMvc
             .perform(
                 put("/employees/$employeeId")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         """
@@ -430,6 +445,20 @@ class EmployeeApiTest {
         roleRepository.deleteAll()
         userRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 
     private fun extractJsonField(
         json: String,

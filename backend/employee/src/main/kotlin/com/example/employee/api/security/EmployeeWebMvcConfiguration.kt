@@ -12,6 +12,13 @@ class EmployeeWebMvcConfiguration(
      * Подключает интерсептор безопасности к эндпоинтам подразделений и сотрудников.
      */
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(employeeSecurityInterceptor).addPathPatterns("/departments/**", "/employees/**")
+        registry
+            .addInterceptor(employeeSecurityInterceptor)
+            .addPathPatterns(
+                "/departments",
+                "/departments/**",
+                "/employees",
+                "/employees/**",
+            )
     }
 }
