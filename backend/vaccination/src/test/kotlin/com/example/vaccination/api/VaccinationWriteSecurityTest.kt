@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -72,7 +74,9 @@ class VaccinationWriteSecurityTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
     }
 
     @Test
@@ -91,11 +95,12 @@ class VaccinationWriteSecurityTest {
     fun `hr is forbidden for write`() {
         val seed = seedScopeData()
         val hr = createUserWithRole("HR")
+        val hrSession = login(hr.email, "hash")
 
         mockMvc
             .perform(
                 post("/vaccinations")
-                    .header("X-Auth-Token", hr.id.toString())
+                    .session(hrSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.childEmployeeId, seed.vaccineId)),
             ).andExpect(status().isForbidden)
@@ -104,11 +109,12 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can write within own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
 
         mockMvc
             .perform(
                 post("/vaccinations")
-                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.childEmployeeId, seed.vaccineId)),
             ).andExpect(status().isOk)
@@ -119,11 +125,12 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can create vaccination outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
 
         mockMvc
             .perform(
                 post("/vaccinations")
-                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId)),
             ).andExpect(status().isOk)
@@ -134,11 +141,12 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `admin can create vaccination outside medical scope`() {
         val seed = seedScopeData()
+        val adminSession = login(seed.adminUserEmail, "hash")
 
         mockMvc
             .perform(
                 post("/vaccinations")
-                    .header("X-Auth-Token", seed.adminUserId.toString())
+                    .session(adminSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId)),
             ).andExpect(status().isOk)
@@ -149,12 +157,13 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can update vaccination outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
         val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId, notes = "before")
 
         mockMvc
             .perform(
                 put("/vaccinations/${existing.id}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccinationBody(seed.externalEmployeeId, seed.vaccineId, notes = "after")),
             ).andExpect(status().isOk)
@@ -166,12 +175,13 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can delete vaccination outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
         val existing = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
 
         mockMvc
             .perform(
                 delete("/vaccinations/${existing.id}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isNoContent)
 
         assertEquals(false, vaccinationRepository.findById(existing.id!!).isPresent)
@@ -180,12 +190,13 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can create document outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
 
         mockMvc
             .perform(
                 post("/documents")
-                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(documentBody(externalVaccination.id!!)),
             ).andExpect(status().isOk)
@@ -196,13 +207,14 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can update document outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
         val doc = createDocument(externalVaccination.id!!, seed.adminUserId, fileName = "before.pdf")
 
         mockMvc
             .perform(
                 put("/documents/${doc.id}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(documentBody(externalVaccination.id!!, fileName = "after.pdf")),
             ).andExpect(status().isOk)
@@ -214,13 +226,14 @@ class VaccinationWriteSecurityTest {
     @Test
     fun `medical can delete document outside own department tree`() {
         val seed = seedScopeData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
         val externalVaccination = createVaccination(seed.externalEmployeeId, seed.vaccineId, seed.adminUserId)
         val doc = createDocument(externalVaccination.id!!, seed.adminUserId)
 
         mockMvc
             .perform(
                 delete("/documents/${doc.id}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isNoContent)
 
         assertEquals(false, documentRepository.findById(doc.id!!).isPresent)
@@ -267,7 +280,9 @@ class VaccinationWriteSecurityTest {
 
         return ScopeSeed(
             medicalUserId = medicalUser.id!!,
+            medicalUserEmail = medicalUser.email,
             adminUserId = adminUser.id!!,
+            adminUserEmail = adminUser.email,
             childEmployeeId = childEmployee.id!!,
             externalEmployeeId = externalEmployee.id!!,
             vaccineId = vaccine.id!!,
@@ -296,6 +311,20 @@ class VaccinationWriteSecurityTest {
     private fun ensureRole(code: String): RoleEntity =
         roleRepository.findByCode(code)
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 
     private fun createVaccination(
         employeeId: UUID,
@@ -374,7 +403,9 @@ class VaccinationWriteSecurityTest {
 
 private data class ScopeSeed(
     val medicalUserId: UUID,
+    val medicalUserEmail: String,
     val adminUserId: UUID,
+    val adminUserEmail: String,
     val childEmployeeId: UUID,
     val externalEmployeeId: UUID,
     val vaccineId: UUID,

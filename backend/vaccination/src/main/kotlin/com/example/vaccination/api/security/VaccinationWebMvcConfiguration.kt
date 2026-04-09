@@ -14,6 +14,12 @@ class VaccinationWebMvcConfiguration(
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry
             .addInterceptor(vaccinationWriteSecurityInterceptor)
-            .addPathPatterns("/vaccinations/**", "/documents/**", "/employees/**/vaccinations")
+            .addPathPatterns(
+                "/vaccinations",
+                "/vaccinations/**",
+                "/documents",
+                "/documents/**",
+                "/employees/**/vaccinations",
+            )
     }
 }

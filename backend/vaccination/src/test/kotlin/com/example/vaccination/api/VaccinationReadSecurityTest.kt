@@ -22,8 +22,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -64,7 +67,9 @@ class VaccinationReadSecurityTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
         cleanup()
     }
 
@@ -78,29 +83,31 @@ class VaccinationReadSecurityTest {
     @Test
     fun `person can read only own vaccinations`() {
         val seed = seedData()
+        val personSession = login(seed.personUserEmail, "hash")
 
         mockMvc
             .perform(
                 get("/employees/${seed.personEmployeeId}/vaccinations")
-                    .header("X-Auth-Token", seed.personUserId.toString()),
+                    .session(personSession),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
 
         mockMvc
             .perform(
                 get("/employees/${seed.externalEmployeeId}/vaccinations")
-                    .header("X-Auth-Token", seed.personUserId.toString()),
+                    .session(personSession),
             ).andExpect(status().isForbidden)
     }
 
     @Test
     fun `hr cannot request employee outside department scope`() {
         val seed = seedData()
+        val hrSession = login(seed.hrUserEmail, "hash")
 
         mockMvc
             .perform(
                 get("/vaccinations")
-                    .header("X-Auth-Token", seed.hrUserId.toString())
+                    .session(hrSession)
                     .param("employeeId", seed.externalEmployeeId.toString()),
             ).andExpect(status().isForbidden)
     }
@@ -108,11 +115,12 @@ class VaccinationReadSecurityTest {
     @Test
     fun `medical can read any document`() {
         val seed = seedData()
+        val medicalSession = login(seed.medicalUserEmail, "hash")
 
         mockMvc
             .perform(
                 get("/documents/${seed.externalDocumentId}")
-                    .header("X-Auth-Token", seed.medicalUserId.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(seed.externalDocumentId.toString()))
     }
@@ -120,11 +128,12 @@ class VaccinationReadSecurityTest {
     @Test
     fun `invalid date range returns bad request`() {
         val seed = seedData()
+        val hrSession = login(seed.hrUserEmail, "hash")
 
         mockMvc
             .perform(
                 get("/vaccinations")
-                    .header("X-Auth-Token", seed.hrUserId.toString())
+                    .session(hrSession)
                     .param("dateFrom", "2026-12-31")
                     .param("dateTo", "2026-01-01"),
             ).andExpect(status().isBadRequest)
@@ -231,8 +240,11 @@ class VaccinationReadSecurityTest {
 
         return VaccinationReadSeedData(
             personUserId = personUser.id!!,
+            personUserEmail = personUser.email,
             hrUserId = hrUser.id!!,
+            hrUserEmail = hrUser.email,
             medicalUserId = medicalUser.id!!,
+            medicalUserEmail = medicalUser.email,
             personEmployeeId = personEmployee.id!!,
             externalEmployeeId = externalEmployee.id!!,
             externalDocumentId = externalDocument.id!!,
@@ -260,12 +272,29 @@ class VaccinationReadSecurityTest {
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 }
 
 private data class VaccinationReadSeedData(
     val personUserId: UUID,
+    val personUserEmail: String,
     val hrUserId: UUID,
+    val hrUserEmail: String,
     val medicalUserId: UUID,
+    val medicalUserEmail: String,
     val personEmployeeId: UUID,
     val externalEmployeeId: UUID,
     val externalDocumentId: UUID,

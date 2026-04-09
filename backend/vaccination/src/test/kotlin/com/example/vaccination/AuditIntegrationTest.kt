@@ -3,6 +3,8 @@ package com.example.vaccination
 import com.example.audit.log.AuditAction
 import com.example.audit.log.AuditEntityType
 import com.example.audit.log.AuditLogRepository
+import com.example.auth.role.RoleRepository
+import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -41,6 +43,12 @@ class AuditIntegrationTest {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var roleRepository: RoleRepository
+
+    @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
 
     @Autowired
     private lateinit var departmentRepository: DepartmentRepository
@@ -152,6 +160,8 @@ class AuditIntegrationTest {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
     }
