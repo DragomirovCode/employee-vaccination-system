@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -80,7 +82,9 @@ class VaccineApiTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
         cleanup()
     }
 
@@ -95,11 +99,13 @@ class VaccineApiTest {
     fun `write is forbidden for person and allowed for medical`() {
         val person = createUserWithRole("PERSON")
         val medical = createUserWithRole("MEDICAL")
+        val personSession = login(person.email, "hash")
+        val medicalSession = login(medical.email, "hash")
 
         mockMvc
             .perform(
                 post("/vaccines")
-                    .header("X-Auth-Token", person.id.toString())
+                    .session(personSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccineBody("FluShield")),
             ).andExpect(status().isForbidden)
@@ -107,7 +113,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccineBody("FluShield")),
             ).andExpect(status().isCreated)
@@ -117,12 +123,13 @@ class VaccineApiTest {
     @Test
     fun `medical can create disease and vaccine disease link`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "LinkVax", validityDays = 365, dosesRequired = 1))
 
         mockMvc
             .perform(
                 post("/diseases")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"Influenza"}"""),
             ).andExpect(status().isCreated)
@@ -132,13 +139,13 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 get("/vaccines/${vaccine.id}/diseases")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
     }
@@ -146,6 +153,7 @@ class VaccineApiTest {
     @Test
     fun `duplicate vaccine disease link returns conflict`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "DupVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "DupDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -153,7 +161,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -161,11 +169,12 @@ class VaccineApiTest {
     @Test
     fun `unknown ids in link creation return bad request`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
 
         mockMvc
             .perform(
                 post("/vaccines/${UUID.randomUUID()}/diseases/12345")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
     }
@@ -173,6 +182,7 @@ class VaccineApiTest {
     @Test
     fun `delete vaccine with existing links returns conflict`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "DeleteVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "DeleteDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -180,7 +190,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 delete("/vaccines/${vaccine.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -188,6 +198,7 @@ class VaccineApiTest {
     @Test
     fun `rename disease linked to used vaccine returns conflict`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Medical"))
         val employee =
             employeeRepository.saveAndFlush(
@@ -213,7 +224,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 put("/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"RenamedDisease","description":"updated"}"""),
             ).andExpect(status().isConflict)
@@ -223,6 +234,7 @@ class VaccineApiTest {
     @Test
     fun `rename disease linked to unused vaccine is allowed`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "UnusedVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "UnusedDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -230,7 +242,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 put("/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""{"name":"RenamedUnusedDisease","description":"updated"}"""),
             ).andExpect(status().isOk)
@@ -240,6 +252,7 @@ class VaccineApiTest {
     @Test
     fun `delete disease link from used vaccine returns conflict`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Vaccination"))
         val employee =
             employeeRepository.saveAndFlush(
@@ -265,7 +278,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 delete("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -273,6 +286,7 @@ class VaccineApiTest {
     @Test
     fun `delete disease link from unused vaccine is allowed`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val vaccine = vaccineRepository.saveAndFlush(VaccineEntity(name = "UnusedLinkVax", validityDays = 365, dosesRequired = 1))
         val disease = diseaseRepository.saveAndFlush(DiseaseEntity(name = "UnusedLinkDisease"))
         vaccineDiseaseRepository.saveAndFlush(VaccineDiseaseEntity(id = VaccineDiseaseId(vaccine.id, disease.id)))
@@ -280,13 +294,14 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 delete("/vaccines/${vaccine.id}/diseases/${disease.id}")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isNoContent)
     }
 
     @Test
     fun `update used vaccine fields except active returns conflict`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Used Vaccine Department"))
         val employee =
             employeeRepository.saveAndFlush(
@@ -319,7 +334,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 put("/vaccines/${vaccine.id}")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccineBody(name = "LockedVax", manufacturer = "Other", isActive = true)),
             ).andExpect(status().isConflict)
@@ -329,6 +344,7 @@ class VaccineApiTest {
     @Test
     fun `update used vaccine active flag is allowed`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
         val department = departmentRepository.saveAndFlush(DepartmentEntity(name = "Used Vaccine Toggle"))
         val employee =
             employeeRepository.saveAndFlush(
@@ -361,7 +377,7 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 put("/vaccines/${vaccine.id}")
-                    .header("X-Auth-Token", medical.id.toString())
+                    .session(medicalSession)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(vaccineBody(name = "ToggleVax", manufacturer = "Acme", isActive = false)),
             ).andExpect(status().isOk)
@@ -371,12 +387,13 @@ class VaccineApiTest {
     @Test
     fun `write operations create audit records for vaccine disease and links`() {
         val medical = createUserWithRole("MEDICAL")
+        val medicalSession = login(medical.email, "hash")
 
         val vaccineResponse =
             mockMvc
                 .perform(
                     post("/vaccines")
-                        .header("X-Auth-Token", medical.id.toString())
+                        .session(medicalSession)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(vaccineBody("AuditVax")),
                 ).andExpect(status().isCreated)
@@ -388,7 +405,7 @@ class VaccineApiTest {
             mockMvc
                 .perform(
                     post("/diseases")
-                        .header("X-Auth-Token", medical.id.toString())
+                        .session(medicalSession)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""{"name":"AuditDisease"}"""),
                 ).andExpect(status().isCreated)
@@ -399,13 +416,13 @@ class VaccineApiTest {
         mockMvc
             .perform(
                 post("/vaccines/$vaccineId/diseases/$diseaseId")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isCreated)
 
         mockMvc
             .perform(
                 delete("/vaccines/$vaccineId/diseases/$diseaseId")
-                    .header("X-Auth-Token", medical.id.toString()),
+                    .session(medicalSession),
             ).andExpect(status().isNoContent)
 
         val logs = auditLogRepository.findAll()
@@ -452,6 +469,20 @@ class VaccineApiTest {
         roleRepository.deleteAll()
         userRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 
     private fun vaccineBody(
         name: String,

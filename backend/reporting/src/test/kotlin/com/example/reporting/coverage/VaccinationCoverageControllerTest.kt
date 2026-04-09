@@ -21,8 +21,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -62,17 +65,20 @@ class VaccinationCoverageControllerTest {
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
     }
 
     @Test
     fun `person sees only own coverage`() {
         val seed = seedData("PERSON")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
@@ -84,11 +90,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `department employee coverage returns detailed rows`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-employee")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.rootDepartmentId.toString()),
@@ -102,11 +109,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `department employee coverage supports revaccination date filter`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-employee")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.rootDepartmentId.toString())
@@ -118,11 +126,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `hr gets forbidden for department outside scope`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.externalDepartmentId.toString()),
@@ -132,11 +141,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `medical sees full coverage`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
@@ -158,11 +168,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccination coverage as csv`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
@@ -176,11 +187,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccination coverage as xlsx`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "xlsx"),
@@ -205,11 +217,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccination coverage as pdf`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "pdf"),
@@ -232,11 +245,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports employee coverage as csv`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-employee/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.rootDepartmentId.toString())
@@ -251,11 +265,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `coverage export returns bad request for unsupported format`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "xml"),
@@ -265,11 +280,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `coverage export returns forbidden for department outside scope`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.externalDepartmentId.toString()),
@@ -279,11 +295,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `medical sees vaccine coverage report`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
@@ -295,11 +312,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `vaccine coverage returns forbidden for department outside scope`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.externalDepartmentId.toString()),
@@ -309,11 +327,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `vaccine coverage returns bad request for invalid date range`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-12-31")
                     .param("dateTo", "2026-01-01"),
             ).andExpect(status().isBadRequest)
@@ -322,11 +341,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccine coverage as csv`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31"),
             ).andExpect(status().isOk)
@@ -339,11 +359,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccine coverage as xlsx`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "xlsx"),
@@ -368,11 +389,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `exports vaccine coverage as pdf`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "pdf"),
@@ -395,11 +417,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `vaccine coverage export returns bad request for unsupported format`() {
         val seed = seedData("MEDICAL")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("format", "xml"),
@@ -409,11 +432,12 @@ class VaccinationCoverageControllerTest {
     @Test
     fun `vaccine coverage export returns forbidden for department outside scope`() {
         val seed = seedData("HR")
+        val session = login(seed.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/vaccination-coverage-by-vaccine/export")
-                    .header("X-Auth-Token", seed.authUserId.toString())
+                    .session(session)
                     .param("dateFrom", "2026-01-01")
                     .param("dateTo", "2026-12-31")
                     .param("departmentId", seed.externalDepartmentId.toString()),
@@ -521,6 +545,7 @@ class VaccinationCoverageControllerTest {
 
         return SeededData(
             authUserId = authUser.id!!,
+            authEmail = authUser.email,
             rootDepartmentId = rootDepartment.id!!,
             externalDepartmentId = externalDepartment.id!!,
         )
@@ -529,10 +554,25 @@ class VaccinationCoverageControllerTest {
     private fun ensureRole(code: String): RoleEntity =
         roleRepository.findByCode(code)
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 }
 
 private data class SeededData(
     val authUserId: UUID,
+    val authEmail: String,
     val rootDepartmentId: UUID,
     val externalDepartmentId: UUID,
 )

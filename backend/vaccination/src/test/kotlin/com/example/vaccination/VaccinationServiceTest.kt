@@ -3,6 +3,8 @@ package com.example.vaccination
 import com.example.audit.log.AuditLogRepository
 import com.example.auth.notification.NotificationRepository
 import com.example.auth.notification.NotificationType
+import com.example.auth.role.RoleRepository
+import com.example.auth.role.UserRoleRepository
 import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import com.example.employee.department.DepartmentEntity
@@ -41,6 +43,12 @@ class VaccinationServiceTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var roleRepository: RoleRepository
+
+    @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
     private lateinit var departmentRepository: DepartmentRepository
 
     @Autowired
@@ -60,6 +68,8 @@ class VaccinationServiceTest {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
 
@@ -126,6 +136,8 @@ class VaccinationServiceTest {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
 
@@ -176,6 +188,8 @@ class VaccinationServiceTest {
         vaccinationRepository.deleteAll()
         employeeRepository.deleteAll()
         departmentRepository.deleteAll()
+        userRoleRepository.deleteAll()
+        roleRepository.deleteAll()
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
 

@@ -28,6 +28,7 @@ dependencies {
 
     testImplementation(project(":auth"))
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly(libs.h2)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

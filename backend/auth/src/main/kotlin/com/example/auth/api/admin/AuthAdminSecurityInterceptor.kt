@@ -28,7 +28,7 @@ class AuthAdminSecurityInterceptor(
             return true
         }
 
-        val principal = authService.requireAnyRole(request.getHeader("X-Auth-Token"), setOf(AppRole.ADMIN))
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
         request.setAttribute(AuthAdminSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
         return true
     }

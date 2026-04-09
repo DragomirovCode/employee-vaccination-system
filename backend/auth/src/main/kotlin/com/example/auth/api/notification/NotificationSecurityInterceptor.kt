@@ -26,7 +26,7 @@ class NotificationSecurityInterceptor(
             return true
         }
 
-        val principal = authService.requireAuthenticated(request.getHeader("X-Auth-Token"))
+        val principal = authService.requireAuthenticated()
         request.setAttribute(NotificationSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
         return true
     }

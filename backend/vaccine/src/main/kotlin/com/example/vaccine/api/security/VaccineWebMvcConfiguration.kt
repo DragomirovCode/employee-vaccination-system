@@ -12,6 +12,13 @@ class VaccineWebMvcConfiguration(
      * Подключает интерсептор безопасности к эндпоинтам справочников вакцин и заболеваний.
      */
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(vaccineSecurityInterceptor).addPathPatterns("/vaccines/**", "/diseases/**")
+        registry
+            .addInterceptor(vaccineSecurityInterceptor)
+            .addPathPatterns(
+                "/vaccines",
+                "/vaccines/**",
+                "/diseases",
+                "/diseases/**",
+            )
     }
 }

@@ -23,11 +23,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -69,26 +72,30 @@ class DocumentContentApiTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
         cleanup()
     }
 
     @Test
     fun `admin uploads and person downloads own document content`() {
         val seed = seedData()
+        val adminSession = login(seed.adminUserEmail, "hash")
+        val personSession = login(seed.personUserEmail, "hash")
         val file = MockMultipartFile("file", "cert.pdf", "application/pdf", "hello-pdf".toByteArray())
 
         mockMvc
             .perform(
                 multipart("/documents/${seed.ownDocumentId}/content")
                     .file(file)
-                    .header("X-Auth-Token", seed.adminUserId.toString()),
+                    .session(adminSession),
             ).andExpect(status().isOk)
 
         mockMvc
             .perform(
                 get("/documents/${seed.ownDocumentId}/content")
-                    .header("X-Auth-Token", seed.personUserId.toString()),
+                    .session(personSession),
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"cert.pdf\""))
             .andExpect(content().bytes("hello-pdf".toByteArray()))
@@ -97,57 +104,61 @@ class DocumentContentApiTest {
     @Test
     fun `person cannot upload document content`() {
         val seed = seedData()
+        val personSession = login(seed.personUserEmail, "hash")
         val file = MockMultipartFile("file", "x.pdf", "application/pdf", "x".toByteArray())
 
         mockMvc
             .perform(
                 multipart("/documents/${seed.ownDocumentId}/content")
                     .file(file)
-                    .header("X-Auth-Token", seed.personUserId.toString()),
+                    .session(personSession),
             ).andExpect(status().isForbidden)
     }
 
     @Test
     fun `person cannot download external document content`() {
         val seed = seedData()
+        val adminSession = login(seed.adminUserEmail, "hash")
+        val personSession = login(seed.personUserEmail, "hash")
         val file = MockMultipartFile("file", "ext.pdf", "application/pdf", "external".toByteArray())
 
         mockMvc
             .perform(
                 multipart("/documents/${seed.externalDocumentId}/content")
                     .file(file)
-                    .header("X-Auth-Token", seed.adminUserId.toString()),
+                    .session(adminSession),
             ).andExpect(status().isOk)
 
         mockMvc
             .perform(
                 get("/documents/${seed.externalDocumentId}/content")
-                    .header("X-Auth-Token", seed.personUserId.toString()),
+                    .session(personSession),
             ).andExpect(status().isForbidden)
     }
 
     @Test
     fun `delete content removes file from storage`() {
         val seed = seedData()
+        val adminSession = login(seed.adminUserEmail, "hash")
         val file = MockMultipartFile("file", "to-delete.pdf", "application/pdf", "del".toByteArray())
 
         mockMvc
             .perform(
                 multipart("/documents/${seed.ownDocumentId}/content")
                     .file(file)
-                    .header("X-Auth-Token", seed.adminUserId.toString()),
+                    .session(adminSession),
             ).andExpect(status().isOk)
 
         mockMvc
             .perform(
                 delete("/documents/${seed.ownDocumentId}/content")
-                    .header("X-Auth-Token", seed.adminUserId.toString()),
+                    .session(adminSession),
             ).andExpect(status().isNoContent)
 
         mockMvc
             .perform(
                 get("/documents/${seed.ownDocumentId}/content")
-                    .header("X-Auth-Token", seed.adminUserId.toString()),
+                    .session(adminSession),
             ).andExpect(status().isNotFound)
     }
 
@@ -232,7 +243,9 @@ class DocumentContentApiTest {
 
         return DocumentContentSeedData(
             personUserId = personUser.id!!,
+            personUserEmail = personUser.email,
             adminUserId = adminUser.id!!,
+            adminUserEmail = adminUser.email,
             ownDocumentId = ownDocument.id!!,
             externalDocumentId = externalDocument.id!!,
         )
@@ -259,11 +272,27 @@ class DocumentContentApiTest {
         userRepository.deleteAll()
         vaccineRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 }
 
 private data class DocumentContentSeedData(
     val personUserId: UUID,
+    val personUserEmail: String,
     val adminUserId: UUID,
+    val adminUserEmail: String,
     val ownDocumentId: UUID,
     val externalDocumentId: UUID,
 )

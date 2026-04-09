@@ -12,9 +12,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -57,6 +60,7 @@ class NotificationApiTest {
     fun `user sees only own notifications and onlyUnread filter works`() {
         val userA = userRepository.saveAndFlush(UserEntity(email = "notify-a@example.com", passwordHash = "hash"))
         val userB = userRepository.saveAndFlush(UserEntity(email = "notify-b@example.com", passwordHash = "hash"))
+        val session = login(userA.email, "hash")
 
         notificationRepository.saveAndFlush(
             NotificationEntity(
@@ -88,7 +92,7 @@ class NotificationApiTest {
         mockMvc
             .perform(
                 get("/notifications")
-                    .header("X-Auth-Token", userA.id.toString())
+                    .session(session)
                     .param("page", "0")
                     .param("size", "20"),
             ).andExpect(status().isOk)
@@ -97,7 +101,7 @@ class NotificationApiTest {
         mockMvc
             .perform(
                 get("/notifications")
-                    .header("X-Auth-Token", userA.id.toString())
+                    .session(session)
                     .param("onlyUnread", "true")
                     .param("page", "0")
                     .param("size", "20"),
@@ -109,6 +113,7 @@ class NotificationApiTest {
     @Test
     fun `user can mark own notification as read`() {
         val user = userRepository.saveAndFlush(UserEntity(email = "notify-read@example.com", passwordHash = "hash"))
+        val session = login(user.email, "hash")
         val notification =
             notificationRepository.saveAndFlush(
                 NotificationEntity(
@@ -122,7 +127,7 @@ class NotificationApiTest {
         mockMvc
             .perform(
                 patch("/notifications/${notification.id}/read")
-                    .header("X-Auth-Token", user.id.toString()),
+                    .session(session),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.isRead").value(true))
 
@@ -137,6 +142,7 @@ class NotificationApiTest {
     fun `user cannot mark another user's notification`() {
         val userA = userRepository.saveAndFlush(UserEntity(email = "notify-own-a@example.com", passwordHash = "hash"))
         val userB = userRepository.saveAndFlush(UserEntity(email = "notify-own-b@example.com", passwordHash = "hash"))
+        val session = login(userA.email, "hash")
         val notification =
             notificationRepository.saveAndFlush(
                 NotificationEntity(
@@ -150,13 +156,14 @@ class NotificationApiTest {
         mockMvc
             .perform(
                 patch("/notifications/${notification.id}/read")
-                    .header("X-Auth-Token", userA.id.toString()),
+                    .session(session),
             ).andExpect(status().isNotFound)
     }
 
     @Test
     fun `user can mark all own notifications as read`() {
         val user = userRepository.saveAndFlush(UserEntity(email = "notify-bulk@example.com", passwordHash = "hash"))
+        val session = login(user.email, "hash")
 
         notificationRepository.saveAndFlush(
             NotificationEntity(
@@ -178,7 +185,7 @@ class NotificationApiTest {
         mockMvc
             .perform(
                 patch("/notifications/read-all")
-                    .header("X-Auth-Token", user.id.toString()),
+                    .session(session),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.updated").value(2))
 
@@ -199,4 +206,18 @@ class NotificationApiTest {
         roleRepository.deleteAll()
         userRepository.deleteAll()
     }
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 }

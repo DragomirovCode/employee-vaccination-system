@@ -21,8 +21,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -62,17 +65,20 @@ class RevaccinationDueControllerTest {
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
     }
 
     @Test
     fun `person sees only own records`() {
         val seeded = seedData("PERSON")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30"),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.totalElements").value(1))
@@ -82,11 +88,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `hr sees only own department tree`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30"),
             ).andExpect(status().isOk)
             .andExpect(jsonPath("$.totalElements").value(2))
@@ -95,11 +102,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `hr gets forbidden for department outside scope`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30")
                     .param("departmentId", seeded.externalDepartmentId.toString()),
             ).andExpect(status().isForbidden)
@@ -117,11 +125,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `returns bad request for negative days`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "-1"),
             ).andExpect(status().isBadRequest)
     }
@@ -129,11 +138,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `exports revaccination due report as csv`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30"),
             ).andExpect(status().isOk)
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"revaccination-due.csv\""))
@@ -148,11 +158,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `exports revaccination due report as csv in russian`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .header("Accept-Language", "ru")
                     .param("days", "30"),
             ).andExpect(status().isOk)
@@ -168,11 +179,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `exports revaccination due report as xlsx`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30")
                     .param("format", "xlsx"),
             ).andExpect(status().isOk)
@@ -196,11 +208,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `exports revaccination due report as pdf`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30")
                     .param("format", "pdf"),
             ).andExpect(status().isOk)
@@ -222,11 +235,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `export returns bad request for unsupported format`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30")
                     .param("format", "xml"),
             ).andExpect(status().isBadRequest)
@@ -235,11 +249,12 @@ class RevaccinationDueControllerTest {
     @Test
     fun `export returns forbidden for hr department outside scope`() {
         val seeded = seedData("HR")
+        val session = login(seeded.authEmail, "hash")
 
         mockMvc
             .perform(
                 get("/reports/revaccination-due/export")
-                    .header("X-Auth-Token", seeded.authUserId.toString())
+                    .session(session)
                     .param("days", "30")
                     .param("departmentId", seeded.externalDepartmentId.toString()),
             ).andExpect(status().isForbidden)
@@ -335,6 +350,7 @@ class RevaccinationDueControllerTest {
 
         return SeededRecord(
             authUserId = authUser.id!!,
+            authEmail = authUser.email,
             authEmployeeId = authEmployee.id!!,
             externalDepartmentId = externalDepartment.id!!,
         )
@@ -343,10 +359,25 @@ class RevaccinationDueControllerTest {
     private fun ensureRole(code: String): RoleEntity =
         roleRepository.findByCode(code)
             ?: roleRepository.saveAndFlush(RoleEntity(code = code, name = code))
+
+    private fun login(
+        email: String,
+        password: String,
+    ): MockHttpSession =
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"$password"}"""),
+            ).andExpect(status().isOk)
+            .andReturn()
+            .request
+            .session as MockHttpSession
 }
 
 private data class SeededRecord(
     val authUserId: UUID,
+    val authEmail: String,
     val authEmployeeId: UUID,
     val externalDepartmentId: UUID,
 )

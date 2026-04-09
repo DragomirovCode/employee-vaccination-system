@@ -34,15 +34,15 @@ class EmployeeSecurityInterceptor(
         val principal =
             when {
                 method in ADMIN_ONLY_WRITE_METHODS -> {
-                    authService.requireAnyRole(request.getHeader("X-Auth-Token"), setOf(AppRole.ADMIN))
+                    authService.requireAnyRole(setOf(AppRole.ADMIN))
                 }
 
                 method in GENERAL_WRITE_METHODS -> {
-                    authService.requireAnyRole(request.getHeader("X-Auth-Token"), GENERAL_WRITE_ROLES)
+                    authService.requireAnyRole(GENERAL_WRITE_ROLES)
                 }
 
                 else -> {
-                    authService.requireAuthenticated(request.getHeader("X-Auth-Token"))
+                    authService.requireAuthenticated()
                 }
             }
         request.setAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE, principal)
