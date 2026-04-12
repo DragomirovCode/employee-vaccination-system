@@ -20,7 +20,6 @@
 Проверка эндпоинта:
 ```bash
 curl -i http://localhost:8080/hello
-curl -i -H 'X-Auth-Token: dev-token' http://localhost:8080/hello
 ```
 
 Swagger UI:
@@ -64,7 +63,7 @@ Default credentials:
 - On application startup, Flyway migration `V8__seed_initial_data.sql` fills all main tables with demo data.
 - Flyway migration `V9__localize_seed_data_to_ru.sql` localizes seeded departments, employee names, positions, and vaccine names to Russian.
 - Flyway migration `V10__add_demo_filter_scenarios.sql` adds extra demo employees and vaccinations for report and registry filter scenarios.
-- Seeded users for quick API checks (`X-Auth-Token` accepts the UUID directly):
+- Seeded users for quick API checks:
   - `admin@evs.local` - `ADMIN` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10`
   - `hr@evs.local` - `HR` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11`
   - `medical@evs.local` - `MEDICAL` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12`
@@ -131,12 +130,22 @@ Default credentials:
 
 ## Security model (RBAC + scope)
 
-Authentication header:
-- `X-Auth-Token: <user-uuid>`
-- optional form: `X-Auth-Token: Bearer <user-uuid>`
+Authentication:
+- primary scheme: Spring Security HTTP session via `JSESSIONID` cookie
+- `POST /auth/login` accepts `email` and `password`, creates server-side session, and returns current user payload
+- `GET /auth/me` returns current authenticated user from active session
+- `POST /auth/logout` invalidates the current session and clears `JSESSIONID`
+- frontend requests must send credentials/cookies; backend CORS allows credentials for configured origins
+
+Public auth endpoints:
+- `POST /auth/login`
+- `POST /auth/logout`
+
+Authenticated auth endpoints:
+- `GET /auth/me`
 
 Status codes:
-- `401` - token missing/invalid, user not found, or inactive user
+- `401` - session missing/expired, credentials invalid, user not found, or inactive user
 - `403` - authenticated but role/scope is not sufficient
 
 Role matrix for reporting endpoints:
