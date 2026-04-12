@@ -49,7 +49,15 @@ class SecurityConfiguration(
                 it.permitAll()
             }.authorizeHttpRequests {
                 it.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                it.requestMatchers("/error", "/auth/login", "/auth/logout", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                it
+                    .requestMatchers(
+                        "/error",
+                        "/auth/login",
+                        "/auth/logout",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                    ).permitAll()
                 it.requestMatchers("/auth/users/**", "/auth/roles", "/auth/roles/**").hasRole("ADMIN")
                 it.anyRequest().authenticated()
             }.build()
