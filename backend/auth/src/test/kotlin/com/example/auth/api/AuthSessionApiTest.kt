@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options
@@ -46,7 +47,9 @@ class AuthSessionApiTest {
 
     @BeforeEach
     fun setup() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val builder = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+        builder.apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity())
+        mockMvc = builder.build()
         cleanup()
     }
 
@@ -66,8 +69,8 @@ class AuthSessionApiTest {
                 .andReturn()
 
         val session = loginResult.request.session as MockHttpSession
-        assertNotNull(loginResult.response.getCookie("JSESSIONID"))
         assertFalse(session.isInvalid)
+        assertNotNull(session.getAttribute("SPRING_SECURITY_CONTEXT"))
 
         mockMvc
             .perform(

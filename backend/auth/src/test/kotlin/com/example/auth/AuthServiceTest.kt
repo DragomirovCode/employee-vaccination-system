@@ -9,6 +9,7 @@ import com.example.auth.user.UserEntity
 import com.example.auth.user.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -30,12 +31,16 @@ class AuthServiceTest {
     @Autowired
     private lateinit var userRoleRepository: UserRoleRepository
 
-    @Test
-    fun `authenticates user by email and password and resolves roles`() {
+    @BeforeEach
+    fun cleanup() {
+        SecurityContextHolder.clearContext()
         userRoleRepository.deleteAll()
         roleRepository.deleteAll()
         userRepository.deleteAll()
+    }
 
+    @Test
+    fun `authenticates user by email and password and resolves roles`() {
         val user = userRepository.saveAndFlush(UserEntity(email = "auth-ok@example.com", passwordHash = "secret"))
         val role = roleRepository.saveAndFlush(RoleEntity(code = "HR", name = "HR"))
         userRoleRepository.saveAndFlush(
@@ -55,7 +60,6 @@ class AuthServiceTest {
 
     @Test
     fun `rejects invalid credentials`() {
-        userRepository.deleteAll()
         userRepository.saveAndFlush(UserEntity(email = "auth-bad@example.com", passwordHash = "secret"))
 
         val ex =
@@ -68,10 +72,6 @@ class AuthServiceTest {
 
     @Test
     fun `forbids user without required role`() {
-        userRoleRepository.deleteAll()
-        roleRepository.deleteAll()
-        userRepository.deleteAll()
-
         val user = userRepository.saveAndFlush(UserEntity(email = "auth-person@example.com", passwordHash = "secret"))
         val role = roleRepository.saveAndFlush(RoleEntity(code = "PERSON", name = "PERSON"))
         userRoleRepository.saveAndFlush(
