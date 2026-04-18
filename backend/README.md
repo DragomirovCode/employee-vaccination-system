@@ -63,12 +63,20 @@ Default credentials:
 - On application startup, Flyway migration `V8__seed_initial_data.sql` fills all main tables with demo data.
 - Flyway migration `V9__localize_seed_data_to_ru.sql` localizes seeded departments, employee names, positions, and vaccine names to Russian.
 - Flyway migration `V10__add_demo_filter_scenarios.sql` adds extra demo employees and vaccinations for report and registry filter scenarios.
-- Seeded users for quick API checks:
-  - `admin@evs.local` - `ADMIN` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10`
-  - `hr@evs.local` - `HR` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11`
-  - `medical@evs.local` - `MEDICAL` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12`
-  - `petr.orlov@evs.local` - `PERSON` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13`
-  - `polina.smirnova@evs.local` - `PERSON` - `018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14`
+- Seeded users for quick login checks:
+  - `admin@evs.local` / `admin123` - `ADMIN`
+  - `hr@evs.local` / `hr123` - `HR`
+  - `medical@evs.local` / `medical123` - `MEDICAL`
+  - `petr.orlov@evs.local` / `employee123` - `PERSON`
+  - `polina.smirnova@evs.local` / `employee123` - `PERSON`
+- Local auth smoke test:
+  ```bash
+  curl -i -c cookies.txt -H "Content-Type: application/json" \
+    -d '{"email":"admin@evs.local","password":"admin123"}' \
+    http://localhost:8080/auth/login
+
+  curl -i -b cookies.txt http://localhost:8080/auth/me
+  ```
 - Seed also includes:
   - department hierarchy with Russian names
   - employees linked to seeded users
@@ -136,6 +144,7 @@ Authentication:
 - `GET /auth/me` returns current authenticated user from active session
 - `POST /auth/logout` invalidates the current session and clears `JSESSIONID`
 - frontend requests must send credentials/cookies; backend CORS allows credentials for configured origins
+- seeded demo accounts are intended for email/password login only; UUIDs remain entity identifiers and are not an authentication mechanism
 
 Public auth endpoints:
 - `POST /auth/login`

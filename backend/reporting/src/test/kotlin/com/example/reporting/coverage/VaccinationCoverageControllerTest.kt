@@ -154,7 +154,7 @@ class VaccinationCoverageControllerTest {
     }
 
     @Test
-    fun `returns unauthorized when auth token missing`() {
+    fun `returns unauthorized when session is missing`() {
         seedData("HR")
 
         mockMvc
