@@ -17,11 +17,6 @@
 ./gradlew :app:bootRun
 ```
 
-Проверка эндпоинта:
-```bash
-curl -i http://localhost:8080/hello
-```
-
 Swagger UI:
 ```bash
 http://localhost:8080/swagger-ui/index.html
@@ -123,9 +118,9 @@ Default credentials:
   - `employeeId`, `fullName`, `departmentId`, `vaccineName`
   - `lastVaccinationDate`, `revaccinationDate`, `daysLeft`
   - `vaccineId`, `vaccineName`, `employeesTotal`, `employeesCovered`, `coveragePercent`
- - export:
-  - formats: `csv`, `xlsx`, `pdf`
-  - response headers include `Content-Disposition: attachment` and format-specific `Content-Type`
+- export:
+- formats: `csv`, `xlsx`, `pdf`
+- response headers include `Content-Disposition: attachment` and format-specific `Content-Type`
 
 ## Audit module
 - `audit` module is included in backend multi-module build

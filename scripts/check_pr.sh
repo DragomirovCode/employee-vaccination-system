@@ -36,7 +36,7 @@ fi
 # ------------------------------------------------
 # Разрешённые значения
 # ------------------------------------------------
-MODULES="generic|auth|employee|vaccine|vaccination|reporting|audit"
+MODULES="generic|app|auth|employee|vaccine|vaccination|reporting|audit"
 TYPES="feature|fix|docs|refactor"
 SCOPES="docs|backend|frontend|devops|ci"
 
