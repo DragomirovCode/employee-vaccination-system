@@ -15,23 +15,23 @@ SELECT 'ADMIN', 'ADMIN'
 WHERE NOT EXISTS (SELECT 1 FROM roles WHERE code = 'ADMIN');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10', 'admin@evs.local', 'seed-hash-admin', TRUE, TIMESTAMP '2026-03-01 09:00:00', TIMESTAMP '2026-03-01 09:00:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10', 'admin@evs.local', 'admin123', TRUE, TIMESTAMP '2026-03-01 09:00:00', TIMESTAMP '2026-03-01 09:00:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a10');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11', 'hr@evs.local', 'seed-hash-hr', TRUE, TIMESTAMP '2026-03-01 09:05:00', TIMESTAMP '2026-03-01 09:05:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11', 'hr@evs.local', 'hr123', TRUE, TIMESTAMP '2026-03-01 09:05:00', TIMESTAMP '2026-03-01 09:05:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a11');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'medical@evs.local', 'seed-hash-medical', TRUE, TIMESTAMP '2026-03-01 09:10:00', TIMESTAMP '2026-03-01 09:10:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12', 'medical@evs.local', 'medical123', TRUE, TIMESTAMP '2026-03-01 09:10:00', TIMESTAMP '2026-03-01 09:10:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a12');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'petr.orlov@evs.local', 'seed-hash-employee-1', TRUE, TIMESTAMP '2026-03-01 09:15:00', TIMESTAMP '2026-03-01 09:15:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13', 'petr.orlov@evs.local', 'employee123', TRUE, TIMESTAMP '2026-03-01 09:15:00', TIMESTAMP '2026-03-01 09:15:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a13');
 
 INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
-SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'polina.smirnova@evs.local', 'seed-hash-employee-2', TRUE, TIMESTAMP '2026-03-01 09:20:00', TIMESTAMP '2026-03-01 09:20:00'
+SELECT '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14', 'polina.smirnova@evs.local', 'employee123', TRUE, TIMESTAMP '2026-03-01 09:20:00', TIMESTAMP '2026-03-01 09:20:00'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = '018f4fd2-75f8-7f2e-b95e-9df7ac8e3a14');
 
 INSERT INTO user_roles (user_id, role_id, assigned_at, assigned_by)
