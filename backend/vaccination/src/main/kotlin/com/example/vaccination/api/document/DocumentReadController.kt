@@ -1,9 +1,9 @@
 package com.example.vaccination.api.document
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.vaccination.api.read.VaccinationReadService
-import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.document.DocumentEntity
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -11,12 +11,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -24,8 +21,8 @@ import java.util.UUID
 @Tag(name = "Documents", description = "Read operations for vaccination documents")
 class DocumentReadController(
     private val readService: VaccinationReadService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список документов для записи вакцинации. */
     @GetMapping("/vaccinations/{vaccinationId}/documents")
     @Operation(summary = "Get documents by vaccination id")
     @ApiResponses(
@@ -49,16 +46,14 @@ class DocumentReadController(
         ],
     )
     fun listByVaccination(
-        request: HttpServletRequest,
         @PathVariable vaccinationId: UUID,
     ): List<DocumentReadResponse> =
         readService
             .listVaccinationDocuments(
-                principal = requirePrincipal(request),
+                principal = authService.requireAnyRole(setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)),
                 vaccinationId = vaccinationId,
             ).map(DocumentReadResponse::fromEntity)
 
-    /** Возвращает метаданные документа по идентификатору. */
     @GetMapping("/documents/{id}")
     @Operation(summary = "Get document by id")
     @ApiResponses(
@@ -82,47 +77,27 @@ class DocumentReadController(
         ],
     )
     fun getById(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ): DocumentReadResponse =
         DocumentReadResponse.fromEntity(
             readService.getDocument(
-                principal = requirePrincipal(request),
+                principal = authService.requireAnyRole(setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)),
                 documentId = id,
             ),
         )
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
-/**
- * DTO ответа с метаданными документа.
- */
 data class DocumentReadResponse(
-    /** Идентификатор документа. */
     val id: UUID,
-    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
-    /** Имя файла. */
     val fileName: String,
-    /** Путь или ключ объекта в хранилище. */
     val filePath: String,
-    /** Размер файла в байтах. */
     val fileSize: Long,
-    /** MIME-тип файла. */
     val mimeType: String,
-    /** Идентификатор пользователя, загрузившего документ. */
     val uploadedBy: UUID,
-    /** Момент загрузки документа. */
     val uploadedAt: Instant,
 ) {
     companion object {
-        /** Преобразует сущность документа в DTO ответа API. */
         fun fromEntity(entity: DocumentEntity): DocumentReadResponse =
             DocumentReadResponse(
                 id = entity.id!!,

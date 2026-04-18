@@ -1,9 +1,9 @@
 package com.example.vaccination.api.document
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.vaccination.api.read.VaccinationReadService
-import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.document.DocumentContentService
 import io.swagger.v3.oas.annotations.Operation
@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @RestController
@@ -37,8 +35,8 @@ class DocumentContentController(
     private val documentContentService: DocumentContentService,
     private val readService: VaccinationReadService,
     private val writeScopeService: VaccinationWriteScopeService,
+    private val authService: AuthService,
 ) {
-    /** Загружает бинарное содержимое документа. */
     @PostMapping("/{id}/content")
     @Operation(summary = "Upload document content")
     @ApiResponses(
@@ -67,11 +65,10 @@ class DocumentContentController(
         ],
     )
     fun upload(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestPart("file") file: MultipartFile,
     ): DocumentReadResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         writeScopeService.assertDocumentContentWriteAllowed(principal, id)
         val updated =
             documentContentService.uploadContent(
@@ -83,7 +80,6 @@ class DocumentContentController(
         return DocumentReadResponse.fromEntity(updated)
     }
 
-    /** Скачивает бинарное содержимое документа. */
     @GetMapping("/{id}/content")
     @Operation(summary = "Download document content")
     @ApiResponses(
@@ -107,11 +103,9 @@ class DocumentContentController(
         ],
     )
     fun download(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ): ResponseEntity<ByteArrayResource> {
-        val principal = requirePrincipal(request)
-        // read scope check
+        val principal = authService.requireAnyRole(setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN))
         readService.getDocument(principal, id)
         val content = documentContentService.downloadContent(id)
 
@@ -122,7 +116,6 @@ class DocumentContentController(
             .body(ByteArrayResource(content.bytes))
     }
 
-    /** Удаляет бинарное содержимое документа из хранилища. */
     @DeleteMapping("/{id}/content")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document content from storage")
@@ -147,18 +140,10 @@ class DocumentContentController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         writeScopeService.assertDocumentContentWriteAllowed(principal, id)
         documentContentService.deleteContent(id)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }

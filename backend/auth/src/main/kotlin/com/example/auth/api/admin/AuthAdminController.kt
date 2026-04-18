@@ -1,6 +1,7 @@
 package com.example.auth.api.admin
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.auth.role.RoleEntity
 import com.example.auth.role.UserRoleEntity
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -32,20 +31,24 @@ import java.util.UUID
 @Tag(name = "Auth Admin", description = "Administrative auth endpoints")
 class AuthAdminController(
     private val authAdminService: AuthAdminService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список пользователей в формате API-ответа. */
     @GetMapping("/users")
     @Operation(summary = "Get users list")
-    fun listUsers(): List<AuthUserResponse> = authAdminService.listUsers().map(AuthUserResponse::fromEntity)
+    fun listUsers(): List<AuthUserResponse> {
+        authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return authAdminService.listUsers().map(AuthUserResponse::fromEntity)
+    }
 
-    /** Возвращает пользователя по идентификатору. */
     @GetMapping("/users/{id}")
     @Operation(summary = "Get user by id")
     fun getUser(
         @PathVariable id: UUID,
-    ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.getUser(id))
+    ): AuthUserResponse {
+        authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return AuthUserResponse.fromEntity(authAdminService.getUser(id))
+    }
 
-    /** Создает пользователя от имени аутентифицированного администратора. */
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create user")
@@ -70,21 +73,21 @@ class AuthAdminController(
         ],
     )
     fun createUser(
-        request: HttpServletRequest,
         @RequestBody body: AuthUserWriteRequest,
-    ): AuthUserResponse =
-        AuthUserResponse.fromEntity(
+    ): AuthUserResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return AuthUserResponse.fromEntity(
             authAdminService.createUser(
                 CreateUserCommand(
                     email = body.email,
                     isActive = body.isActive,
                     password = body.password,
                 ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Обновляет email и статус активности пользователя. */
     @PutMapping("/users/{id}")
     @Operation(summary = "Update user")
     @ApiResponses(
@@ -113,11 +116,11 @@ class AuthAdminController(
         ],
     )
     fun updateUser(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: AuthUserWriteRequest,
-    ): AuthUserResponse =
-        AuthUserResponse.fromEntity(
+    ): AuthUserResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return AuthUserResponse.fromEntity(
             authAdminService.updateUser(
                 id = id,
                 command =
@@ -126,11 +129,11 @@ class AuthAdminController(
                         isActive = body.isActive,
                         password = body.password,
                     ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Меняет признак активности пользователя. */
     @PatchMapping("/users/{id}/status")
     @Operation(summary = "Set user active status")
     @ApiResponses(
@@ -154,17 +157,20 @@ class AuthAdminController(
         ],
     )
     fun setStatus(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: AuthUserStatusRequest,
-    ): AuthUserResponse = AuthUserResponse.fromEntity(authAdminService.setStatus(id, body.active, requirePrincipal(request).userId))
+    ): AuthUserResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return AuthUserResponse.fromEntity(authAdminService.setStatus(id, body.active, principal.userId))
+    }
 
-    /** Возвращает список ролей, доступных в системе. */
     @GetMapping("/roles")
     @Operation(summary = "Get roles list")
-    fun listRoles(): List<AuthRoleResponse> = authAdminService.listRoles().map(AuthRoleResponse::fromEntity)
+    fun listRoles(): List<AuthRoleResponse> {
+        authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return authAdminService.listRoles().map(AuthRoleResponse::fromEntity)
+    }
 
-    /** Возвращает роли, назначенные указанному пользователю. */
     @GetMapping("/users/{id}/roles")
     @Operation(summary = "Get roles assigned to user")
     @ApiResponses(
@@ -179,9 +185,11 @@ class AuthAdminController(
     )
     fun listUserRoles(
         @PathVariable id: UUID,
-    ): List<AuthUserRoleResponse> = authAdminService.listUserRoles(id).map(AuthUserRoleResponse::fromEntity)
+    ): List<AuthUserRoleResponse> {
+        authService.requireAnyRole(setOf(AppRole.ADMIN))
+        return authAdminService.listUserRoles(id).map(AuthUserRoleResponse::fromEntity)
+    }
 
-    /** Назначает пользователю роль. */
     @PostMapping("/users/{id}/roles/{roleCode}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Assign role to user")
@@ -211,15 +219,13 @@ class AuthAdminController(
         ],
     )
     fun assignRole(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @PathVariable roleCode: String,
     ): AuthUserRoleResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
         return AuthUserRoleResponse.fromEntity(authAdminService.assignRole(id, roleCode, principal.userId))
     }
 
-    /** Снимает роль с пользователя. */
     @DeleteMapping("/users/{id}/roles/{roleCode}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remove role from user")
@@ -244,22 +250,12 @@ class AuthAdminController(
         ],
     )
     fun unassignRole(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @PathVariable roleCode: String,
     ) {
-        authAdminService.unassignRole(id, roleCode, requirePrincipal(request).userId)
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        authAdminService.unassignRole(id, roleCode, principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного администратора из атрибутов запроса.
-     *
-     * @param request текущий HTTP-запрос
-     * @return данные аутентифицированного пользователя
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(AuthAdminSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class AuthUserWriteRequest(
@@ -280,7 +276,6 @@ data class AuthUserResponse(
     val updatedAt: Instant,
 ) {
     companion object {
-        /** Преобразует сущность пользователя в DTO для ответа API. */
         fun fromEntity(entity: UserEntity): AuthUserResponse =
             AuthUserResponse(
                 id = entity.id!!,
@@ -298,7 +293,6 @@ data class AuthRoleResponse(
     val name: String,
 ) {
     companion object {
-        /** Преобразует сущность роли в DTO для ответа API. */
         fun fromEntity(entity: RoleEntity): AuthRoleResponse =
             AuthRoleResponse(
                 id = entity.id!!,
@@ -315,7 +309,6 @@ data class AuthUserRoleResponse(
     val assignedBy: UUID?,
 ) {
     companion object {
-        /** Преобразует сущность назначения роли в DTO для ответа API. */
         fun fromEntity(entity: UserRoleEntity): AuthUserRoleResponse =
             AuthUserRoleResponse(
                 userId = entity.id.userId!!,

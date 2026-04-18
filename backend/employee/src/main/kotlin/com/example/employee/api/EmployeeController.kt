@@ -1,8 +1,8 @@
 package com.example.employee.api
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.employee.api.security.EmployeeSecurityContext
 import com.example.employee.person.CreateEmployeeCommand
 import com.example.employee.person.EmployeeEntity
 import com.example.employee.person.EmployeeService
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -34,22 +32,18 @@ import java.util.UUID
 @Tag(name = "Employees", description = "Employee management endpoints")
 class EmployeeController(
     private val employeeService: EmployeeService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список сотрудников, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get employees list")
-    fun list(request: HttpServletRequest): List<EmployeeResponse> =
-        employeeService.list(requirePrincipal(request)).map(EmployeeResponse::fromEntity)
+    fun list(): List<EmployeeResponse> = employeeService.list(authService.requireAuthenticated()).map(EmployeeResponse::fromEntity)
 
-    /** Возвращает сотрудника по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get employee by id")
     fun get(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
-    ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id, requirePrincipal(request)))
+    ): EmployeeResponse = EmployeeResponse.fromEntity(employeeService.get(id, authService.requireAuthenticated()))
 
-    /** Создает нового сотрудника. */
     @PostMapping
     @Operation(summary = "Create employee")
     @ApiResponses(
@@ -79,10 +73,10 @@ class EmployeeController(
     )
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: EmployeeWriteRequest,
-    ): EmployeeResponse =
-        EmployeeResponse.fromEntity(
+    ): EmployeeResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
+        return EmployeeResponse.fromEntity(
             employeeService.create(
                 CreateEmployeeCommand(
                     userId = body.userId,
@@ -94,11 +88,11 @@ class EmployeeController(
                     position = body.position,
                     hireDate = body.hireDate,
                 ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Обновляет данные сотрудника. */
     @PutMapping("/{id}")
     @Operation(summary = "Update employee")
     @ApiResponses(
@@ -132,11 +126,11 @@ class EmployeeController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: EmployeeWriteRequest,
-    ): EmployeeResponse =
-        EmployeeResponse.fromEntity(
+    ): EmployeeResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
+        return EmployeeResponse.fromEntity(
             employeeService.update(
                 id = id,
                 command =
@@ -150,11 +144,11 @@ class EmployeeController(
                         position = body.position,
                         hireDate = body.hireDate,
                     ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Удаляет сотрудника. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete employee")
@@ -179,18 +173,11 @@ class EmployeeController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        employeeService.delete(id, requirePrincipal(request).userId)
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        employeeService.delete(id, principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class EmployeeWriteRequest(
@@ -218,7 +205,6 @@ data class EmployeeResponse(
     val updatedAt: Instant,
 ) {
     companion object {
-        /** Преобразует сущность сотрудника в DTO ответа API. */
         fun fromEntity(entity: EmployeeEntity): EmployeeResponse =
             EmployeeResponse(
                 id = entity.id!!,

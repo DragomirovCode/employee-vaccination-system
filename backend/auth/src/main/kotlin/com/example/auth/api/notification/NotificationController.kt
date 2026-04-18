@@ -1,6 +1,6 @@
 package com.example.auth.api.notification
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.auth.notification.NotificationEntity
 import com.example.auth.notification.NotificationService
@@ -13,17 +13,14 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -32,8 +29,8 @@ import java.util.UUID
 @Tag(name = "Notifications", description = "Personal notifications")
 class NotificationController(
     private val notificationService: NotificationService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает страницу уведомлений текущего пользователя. */
     @GetMapping
     @Operation(summary = "Get current user's notifications")
     @ApiResponses(
@@ -56,7 +53,6 @@ class NotificationController(
         ],
     )
     fun list(
-        request: HttpServletRequest,
         @Parameter(description = "Return unread only", example = "false")
         @RequestParam(defaultValue = "false")
         onlyUnread: Boolean,
@@ -65,7 +61,7 @@ class NotificationController(
         @RequestParam(defaultValue = "20")
         size: Int,
     ): Page<NotificationResponse> {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAuthenticated()
         return notificationService
             .listForUser(
                 userId = principal.userId,
@@ -74,7 +70,6 @@ class NotificationController(
             ).map(NotificationResponse::fromEntity)
     }
 
-    /** Помечает выбранное уведомление текущего пользователя как прочитанное. */
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark notification as read")
     @ApiResponses(
@@ -93,14 +88,12 @@ class NotificationController(
         ],
     )
     fun markRead(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ): NotificationResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAuthenticated()
         return NotificationResponse.fromEntity(notificationService.markRead(principal.userId, id))
     }
 
-    /** Помечает все уведомления текущего пользователя как прочитанные. */
     @PatchMapping("/read-all")
     @Operation(summary = "Mark all current user's notifications as read")
     @ApiResponses(
@@ -113,21 +106,11 @@ class NotificationController(
             ),
         ],
     )
-    fun markAllRead(request: HttpServletRequest): NotificationBulkReadResponse {
-        val principal = requirePrincipal(request)
+    fun markAllRead(): NotificationBulkReadResponse {
+        val principal = authService.requireAuthenticated()
         val updated = notificationService.markAllRead(principal.userId)
         return NotificationBulkReadResponse(updated = updated)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     *
-     * @param request текущий HTTP-запрос
-     * @return данные аутентифицированного пользователя
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(NotificationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class NotificationResponse(
@@ -141,7 +124,6 @@ data class NotificationResponse(
     val payload: String?,
 ) {
     companion object {
-        /** Преобразует сущность уведомления в DTO для ответа API. */
         fun fromEntity(entity: NotificationEntity): NotificationResponse =
             NotificationResponse(
                 id = entity.id!!,

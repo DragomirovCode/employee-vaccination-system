@@ -1,8 +1,10 @@
 package com.example.reporting.coverage
 
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
-import com.example.reporting.access.ReportingSecurityContext
+import com.example.reporting.access.ReportingAccessScopeResolver
 import com.example.reporting.export.ReportExportService
 import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.export.ReportFormat
@@ -28,16 +30,14 @@ import java.time.LocalDate
 import java.util.Locale
 import java.util.UUID
 
-/**
- * REST endpoints для отчетов по охвату вакцинацией
- * в разрезе подразделений, сотрудников и вакцин.
- */
 @RestController
 @RequestMapping("/reports")
 @Tag(name = "Reporting", description = "Read-only reporting endpoints")
 class VaccinationCoverageController(
     private val service: VaccinationCoverageService,
     private val reportExportService: ReportExportService,
+    private val authService: AuthService,
+    private val scopeResolver: ReportingAccessScopeResolver,
 ) {
     @GetMapping("/vaccination-coverage")
     @Operation(
@@ -74,7 +74,6 @@ class VaccinationCoverageController(
         ],
     )
     fun getVaccinationCoverage(
-        request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
         @RequestParam
         dateFrom: LocalDate,
@@ -86,12 +85,10 @@ class VaccinationCoverageController(
         departmentId: UUID?,
     ): List<VaccinationCoverageItem> {
         validateDateRange(dateFrom, dateTo)
-        val scope = requireScope(request)
-
         return service.getCoverageByDepartment(
             dateFrom = dateFrom,
             dateTo = dateTo,
-            scope = scope,
+            scope = resolveScope(departmentId),
         )
     }
 
@@ -130,7 +127,6 @@ class VaccinationCoverageController(
         ],
     )
     fun getVaccinationCoverageByEmployee(
-        request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
         @RequestParam
         dateFrom: LocalDate,
@@ -149,13 +145,11 @@ class VaccinationCoverageController(
     ): List<VaccinationCoverageByEmployeeItem> {
         validateDateRange(dateFrom, dateTo)
         validateOptionalDateRange(revaccinationDateFrom, revaccinationDateTo, "revaccinationDateFrom", "revaccinationDateTo")
-        val scope = requireScope(request)
-
         return service
             .getCoverageByEmployee(
                 dateFrom = dateFrom,
                 dateTo = dateTo,
-                scope = scope,
+                scope = resolveScope(departmentId),
             ).filterByStatusAndDate(
                 rawStatus = null,
                 revaccinationDateFrom = revaccinationDateFrom,
@@ -180,10 +174,9 @@ class VaccinationCoverageController(
         val reportFormat =
             ReportFormat.fromRaw(format)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
-        val scope = requireScope(request)
         val rows =
             service
-                .getCoverageByEmployee(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+                .getCoverageByEmployee(dateFrom = dateFrom, dateTo = dateTo, scope = resolveScope(departmentId))
                 .filterByStatusAndDate(
                     rawStatus = status,
                     revaccinationDateFrom = revaccinationDateFrom,
@@ -238,8 +231,7 @@ class VaccinationCoverageController(
         val reportFormat =
             ReportFormat.fromRaw(format)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
-        val scope = requireScope(request)
-        val rows = service.getCoverageByDepartment(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val rows = service.getCoverageByDepartment(dateFrom = dateFrom, dateTo = dateTo, scope = resolveScope(departmentId))
         val exportView = ReportExportViewModels.coverageByDepartment(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
@@ -291,7 +283,6 @@ class VaccinationCoverageController(
         ],
     )
     fun getVaccinationCoverageByVaccine(
-        request: HttpServletRequest,
         @Parameter(description = "Period start date (inclusive)", example = "2026-01-01")
         @RequestParam
         dateFrom: LocalDate,
@@ -303,12 +294,10 @@ class VaccinationCoverageController(
         departmentId: UUID?,
     ): List<VaccinationCoverageByVaccineItem> {
         validateDateRange(dateFrom, dateTo)
-        val scope = requireScope(request)
-
         return service.getCoverageByVaccine(
             dateFrom = dateFrom,
             dateTo = dateTo,
-            scope = scope,
+            scope = resolveScope(departmentId),
         )
     }
 
@@ -345,8 +334,7 @@ class VaccinationCoverageController(
         val reportFormat =
             ReportFormat.fromRaw(format)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
-        val scope = requireScope(request)
-        val rows = service.getCoverageByVaccine(dateFrom = dateFrom, dateTo = dateTo, scope = scope)
+        val rows = service.getCoverageByVaccine(dateFrom = dateFrom, dateTo = dateTo, scope = resolveScope(departmentId))
         val exportView = ReportExportViewModels.coverageByVaccine(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
@@ -363,9 +351,11 @@ class VaccinationCoverageController(
             .body(reportFile.bytes)
     }
 
-    private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
-        request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
+    private fun resolveScope(departmentId: UUID?): ReportingAccessScope =
+        scopeResolver.resolve(
+            principal = authService.requireAnyRole(setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)),
+            requestedDepartmentId = departmentId,
+        )
 
     private fun validateDateRange(
         dateFrom: LocalDate,

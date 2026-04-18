@@ -1,8 +1,8 @@
-﻿package com.example.vaccination.api.document
+package com.example.vaccination.api.document
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.document.CreateDocumentCommand
 import com.example.vaccination.document.DocumentService
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @RestController
@@ -32,8 +30,8 @@ import java.util.UUID
 class DocumentWriteController(
     private val documentService: DocumentService,
     private val scopeService: VaccinationWriteScopeService,
+    private val authService: AuthService,
 ) {
-    /** Создает метаданные документа вакцинации. */
     @PostMapping
     @Operation(summary = "Create document metadata")
     @ApiResponses(
@@ -57,10 +55,9 @@ class DocumentWriteController(
         ],
     )
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: DocumentWriteRequest,
     ): DocumentWriteResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertDocumentCreateAllowed(principal, body.vaccinationId)
         val created =
             documentService.create(
@@ -77,7 +74,6 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = created.id!!)
     }
 
-    /** Обновляет метаданные документа вакцинации. */
     @PutMapping("/{id}")
     @Operation(summary = "Update document metadata")
     @ApiResponses(
@@ -101,11 +97,10 @@ class DocumentWriteController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: DocumentWriteRequest,
     ): DocumentWriteResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertDocumentUpdateAllowed(principal, id, body.vaccinationId)
         val updated =
             documentService.update(
@@ -124,7 +119,6 @@ class DocumentWriteController(
         return DocumentWriteResponse(id = updated.id!!)
     }
 
-    /** Удаляет метаданные документа вакцинации. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete document metadata")
@@ -144,42 +138,22 @@ class DocumentWriteController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertDocumentDeleteAllowed(principal, id)
         documentService.delete(id = id, deletedBy = principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
-/**
- * Тело запроса на создание или обновление метаданных документа.
- */
 data class DocumentWriteRequest(
-    /** Идентификатор записи вакцинации. */
     val vaccinationId: UUID,
-    /** Имя файла. */
     val fileName: String,
-    /** Путь или ключ объекта в хранилище. */
     val filePath: String,
-    /** Размер файла в байтах. */
     val fileSize: Long,
-    /** MIME-тип файла. */
     val mimeType: String,
 )
 
-/**
- * Ответ на успешную операцию с метаданными документа.
- */
 data class DocumentWriteResponse(
-    /** Идентификатор документа. */
     val id: UUID,
 )

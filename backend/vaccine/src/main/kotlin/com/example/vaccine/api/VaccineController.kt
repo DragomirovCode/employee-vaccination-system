@@ -1,8 +1,8 @@
 package com.example.vaccine.api
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.vaccine.api.security.VaccineSecurityContext
 import com.example.vaccine.vaccine.CreateVaccineCommand
 import com.example.vaccine.vaccine.UpdateVaccineCommand
 import com.example.vaccine.vaccine.VaccineEntity
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -33,20 +31,18 @@ import java.util.UUID
 @Tag(name = "Vaccines", description = "Vaccine dictionary management")
 class VaccineController(
     private val vaccineService: VaccineService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список вакцин. */
     @GetMapping
     @Operation(summary = "Get vaccines list")
     fun list(): List<VaccineResponse> = vaccineService.list().map(VaccineResponse::fromEntity)
 
-    /** Возвращает вакцину по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get vaccine by id")
     fun get(
         @PathVariable id: UUID,
     ): VaccineResponse = VaccineResponse.fromEntity(vaccineService.get(id))
 
-    /** Создает вакцину. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create vaccine")
@@ -76,10 +72,10 @@ class VaccineController(
         ],
     )
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: VaccineWriteRequest,
-    ): VaccineResponse =
-        VaccineResponse.fromEntity(
+    ): VaccineResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        return VaccineResponse.fromEntity(
             vaccineService.create(
                 CreateVaccineCommand(
                     name = body.name,
@@ -89,11 +85,11 @@ class VaccineController(
                     daysBetween = body.daysBetween,
                     isActive = body.isActive,
                 ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Обновляет вакцину. */
     @PutMapping("/{id}")
     @Operation(summary = "Update vaccine")
     @ApiResponses(
@@ -127,11 +123,11 @@ class VaccineController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: VaccineWriteRequest,
-    ): VaccineResponse =
-        VaccineResponse.fromEntity(
+    ): VaccineResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        return VaccineResponse.fromEntity(
             vaccineService.update(
                 id = id,
                 command =
@@ -143,11 +139,11 @@ class VaccineController(
                         daysBetween = body.daysBetween,
                         isActive = body.isActive,
                     ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Удаляет вакцину. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccine")
@@ -177,61 +173,33 @@ class VaccineController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        vaccineService.delete(id, requirePrincipal(request).userId)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        vaccineService.delete(id, principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
-/**
- * Тело запроса на создание или обновление вакцины.
- */
 data class VaccineWriteRequest(
-    /** Наименование вакцины. */
     val name: String,
-    /** Производитель вакцины. */
     val manufacturer: String? = null,
-    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
-    /** Требуемое количество доз. */
     val dosesRequired: Int,
-    /** Интервал между дозами в днях. */
     val daysBetween: Int? = null,
-    /** Признак активности вакцины. */
     val isActive: Boolean = true,
 )
 
-/**
- * DTO ответа с данными о вакцине.
- */
 data class VaccineResponse(
-    /** Идентификатор вакцины. */
     val id: UUID,
-    /** Наименование вакцины. */
     val name: String,
-    /** Производитель вакцины. */
     val manufacturer: String?,
-    /** Срок действия вакцинации в днях. */
     val validityDays: Int,
-    /** Требуемое количество доз. */
     val dosesRequired: Int,
-    /** Интервал между дозами в днях. */
     val daysBetween: Int?,
-    /** Признак активности вакцины. */
     val isActive: Boolean,
-    /** Момент создания записи. */
     val createdAt: Instant,
 ) {
     companion object {
-        /** Преобразует сущность вакцины в DTO ответа API. */
         fun fromEntity(entity: VaccineEntity): VaccineResponse =
             VaccineResponse(
                 id = entity.id!!,
