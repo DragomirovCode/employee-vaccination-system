@@ -1,8 +1,8 @@
 package com.example.vaccine.api
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.vaccine.api.security.VaccineSecurityContext
 import com.example.vaccine.disease.CreateDiseaseCommand
 import com.example.vaccine.disease.DiseaseEntity
 import com.example.vaccine.disease.DiseaseService
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,27 +23,24 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping("/diseases")
 @Tag(name = "Diseases", description = "Disease dictionary management")
 class DiseaseController(
     private val diseaseService: DiseaseService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список заболеваний. */
     @GetMapping
     @Operation(summary = "Get diseases list")
     fun list(): List<DiseaseResponse> = diseaseService.list().map(DiseaseResponse::fromEntity)
 
-    /** Возвращает заболевание по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get disease by id")
     fun get(
         @PathVariable id: Int,
     ): DiseaseResponse = DiseaseResponse.fromEntity(diseaseService.get(id))
 
-    /** Создает заболевание. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create disease")
@@ -74,20 +70,20 @@ class DiseaseController(
         ],
     )
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: DiseaseWriteRequest,
-    ): DiseaseResponse =
-        DiseaseResponse.fromEntity(
+    ): DiseaseResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        return DiseaseResponse.fromEntity(
             diseaseService.create(
                 CreateDiseaseCommand(
                     name = body.name,
                     description = body.description,
                 ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Обновляет заболевание. */
     @PutMapping("/{id}")
     @Operation(summary = "Update disease")
     @ApiResponses(
@@ -121,11 +117,11 @@ class DiseaseController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: Int,
         @RequestBody body: DiseaseWriteRequest,
-    ): DiseaseResponse =
-        DiseaseResponse.fromEntity(
+    ): DiseaseResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        return DiseaseResponse.fromEntity(
             diseaseService.update(
                 id = id,
                 command =
@@ -133,11 +129,11 @@ class DiseaseController(
                         name = body.name,
                         description = body.description,
                     ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Удаляет заболевание. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete disease")
@@ -167,43 +163,24 @@ class DiseaseController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: Int,
     ) {
-        diseaseService.delete(id, requirePrincipal(request).userId)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
+        diseaseService.delete(id, principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccineSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
-/**
- * Тело запроса на создание или обновление заболевания.
- */
 data class DiseaseWriteRequest(
-    /** Наименование заболевания. */
     val name: String,
-    /** Описание заболевания. */
     val description: String? = null,
 )
 
-/**
- * DTO ответа с данными о заболевании.
- */
 data class DiseaseResponse(
-    /** Идентификатор заболевания. */
     val id: Int,
-    /** Наименование заболевания. */
     val name: String,
-    /** Описание заболевания. */
     val description: String?,
 ) {
     companion object {
-        /** Преобразует сущность заболевания в DTO ответа API. */
         fun fromEntity(entity: DiseaseEntity): DiseaseResponse =
             DiseaseResponse(
                 id = entity.id!!,

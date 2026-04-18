@@ -1,8 +1,10 @@
 package com.example.reporting.revaccination
 
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
 import com.example.reporting.access.ReportingAccessScope
-import com.example.reporting.access.ReportingSecurityContext
+import com.example.reporting.access.ReportingAccessScopeResolver
 import com.example.reporting.export.ReportExportService
 import com.example.reporting.export.ReportExportViewModels
 import com.example.reporting.export.ReportFormat
@@ -35,8 +37,9 @@ import java.util.UUID
 class RevaccinationDueController(
     private val service: RevaccinationDueService,
     private val reportExportService: ReportExportService,
+    private val authService: AuthService,
+    private val scopeResolver: ReportingAccessScopeResolver,
 ) {
-    /** Возвращает постраничный отчет по сотрудникам, которым требуется ревакцинация. */
     @GetMapping("/revaccination-due")
     @Operation(
         summary = "Get employees due for revaccination",
@@ -72,7 +75,6 @@ class RevaccinationDueController(
         ],
     )
     fun getRevaccinationDue(
-        request: HttpServletRequest,
         @Parameter(description = "Number of days from today to include in due window", example = "30")
         @RequestParam
         days: Int,
@@ -90,16 +92,13 @@ class RevaccinationDueController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "days must be >= 0")
         }
 
-        val scope = requireScope(request)
-
         return service.getDueInDays(
             days = days,
-            scope = scope,
+            scope = resolveScope(departmentId),
             pageable = PageRequest.of(page, size),
         )
     }
 
-    /** Экспортирует отчет по предстоящей ревакцинации. */
     @GetMapping("/revaccination-due/export")
     @Operation(summary = "Export revaccination due report (csv, xlsx, pdf)")
     @ApiResponses(
@@ -134,8 +133,7 @@ class RevaccinationDueController(
         val reportFormat =
             ReportFormat.fromRaw(format)
                 ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported export format")
-        val scope = requireScope(request)
-        val rows = service.getDueInDaysForExport(days = days, scope = scope)
+        val rows = service.getDueInDaysForExport(days = days, scope = resolveScope(departmentId))
         val exportView = ReportExportViewModels.revaccinationDue(rows, resolveExportLocale(request))
         val reportFile =
             reportExportService.export(
@@ -152,16 +150,12 @@ class RevaccinationDueController(
             .body(reportFile.bytes)
     }
 
-    /**
-     * Извлекает ранее вычисленную область доступа к отчетам из атрибутов запроса.
-     */
-    private fun requireScope(request: HttpServletRequest): ReportingAccessScope =
-        request.getAttribute(ReportingSecurityContext.REPORTING_SCOPE_ATTRIBUTE) as? ReportingAccessScope
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security scope")
+    private fun resolveScope(departmentId: UUID?): ReportingAccessScope =
+        scopeResolver.resolve(
+            principal = authService.requireAnyRole(setOf(AppRole.PERSON, AppRole.HR, AppRole.MEDICAL, AppRole.ADMIN)),
+            requestedDepartmentId = departmentId,
+        )
 
-    /**
-     * Определяет локаль для экспортируемого отчета по заголовку `Accept-Language`.
-     */
     private fun resolveExportLocale(request: HttpServletRequest): Locale =
         request
             .getHeader("Accept-Language")

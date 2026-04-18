@@ -58,7 +58,7 @@ class SecurityConfiguration(
                         "/swagger-ui.html",
                         "/v3/api-docs/**",
                     ).permitAll()
-                it.requestMatchers("/auth/users/**", "/auth/roles", "/auth/roles/**").hasRole("ADMIN")
+                it.requestMatchers("/auth/users", "/auth/users/**", "/auth/roles", "/auth/roles/**").hasRole("ADMIN")
                 it.anyRequest().authenticated()
             }.build()
 

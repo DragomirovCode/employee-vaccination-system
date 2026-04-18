@@ -1,8 +1,8 @@
 package com.example.employee.api
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.employee.api.security.EmployeeSecurityContext
 import com.example.employee.department.CreateDepartmentCommand
 import com.example.employee.department.DepartmentService
 import com.example.employee.department.UpdateDepartmentCommand
@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.UUID
 
@@ -32,22 +30,18 @@ import java.util.UUID
 @Tag(name = "Departments", description = "Department management endpoints")
 class DepartmentController(
     private val departmentService: DepartmentService,
+    private val authService: AuthService,
 ) {
-    /** Возвращает список подразделений, доступных текущему пользователю. */
     @GetMapping
     @Operation(summary = "Get departments list")
-    fun list(request: HttpServletRequest): List<DepartmentResponse> =
-        departmentService.list(requirePrincipal(request)).map(DepartmentResponse::fromEntity)
+    fun list(): List<DepartmentResponse> = departmentService.list(authService.requireAuthenticated()).map(DepartmentResponse::fromEntity)
 
-    /** Возвращает подразделение по идентификатору. */
     @GetMapping("/{id}")
     @Operation(summary = "Get department by id")
     fun get(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
-    ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id, requirePrincipal(request)))
+    ): DepartmentResponse = DepartmentResponse.fromEntity(departmentService.get(id, authService.requireAuthenticated()))
 
-    /** Создает новое подразделение. */
     @PostMapping
     @Operation(summary = "Create department")
     @ApiResponses(
@@ -72,20 +66,20 @@ class DepartmentController(
     )
     @ResponseStatus(HttpStatus.CREATED)
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: DepartmentWriteRequest,
-    ): DepartmentResponse =
-        DepartmentResponse.fromEntity(
+    ): DepartmentResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
+        return DepartmentResponse.fromEntity(
             departmentService.create(
                 CreateDepartmentCommand(
                     name = body.name,
                     parentId = body.parentId,
                 ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Обновляет подразделение. */
     @PutMapping("/{id}")
     @Operation(summary = "Update department")
     @ApiResponses(
@@ -114,11 +108,11 @@ class DepartmentController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: DepartmentWriteRequest,
-    ): DepartmentResponse =
-        DepartmentResponse.fromEntity(
+    ): DepartmentResponse {
+        val principal = authService.requireAnyRole(setOf(AppRole.HR, AppRole.ADMIN))
+        return DepartmentResponse.fromEntity(
             departmentService.update(
                 id = id,
                 command =
@@ -126,11 +120,11 @@ class DepartmentController(
                         name = body.name,
                         parentId = body.parentId,
                     ),
-                performedBy = requirePrincipal(request).userId,
+                performedBy = principal.userId,
             ),
         )
+    }
 
-    /** Удаляет подразделение. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete department")
@@ -160,18 +154,11 @@ class DepartmentController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        departmentService.delete(id, requirePrincipal(request).userId)
+        val principal = authService.requireAnyRole(setOf(AppRole.ADMIN))
+        departmentService.delete(id, principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(EmployeeSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
 data class DepartmentWriteRequest(
@@ -186,7 +173,6 @@ data class DepartmentResponse(
     val createdAt: Instant,
 ) {
     companion object {
-        /** Преобразует сущность подразделения в DTO ответа API. */
         fun fromEntity(entity: com.example.employee.department.DepartmentEntity): DepartmentResponse =
             DepartmentResponse(
                 id = entity.id!!,

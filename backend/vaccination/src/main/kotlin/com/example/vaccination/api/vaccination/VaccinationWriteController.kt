@@ -1,8 +1,8 @@
-﻿package com.example.vaccination.api.vaccination
+package com.example.vaccination.api.vaccination
 
-import com.example.auth.AuthenticatedPrincipal
+import com.example.auth.AppRole
+import com.example.auth.AuthService
 import com.example.auth.api.ApiErrorResponse
-import com.example.vaccination.api.security.VaccinationSecurityContext
 import com.example.vaccination.api.security.VaccinationWriteScopeService
 import com.example.vaccination.vaccination.CreateVaccinationCommand
 import com.example.vaccination.vaccination.UpdateVaccinationCommand
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import java.util.UUID
 
@@ -33,8 +31,8 @@ import java.util.UUID
 class VaccinationWriteController(
     private val vaccinationService: VaccinationService,
     private val scopeService: VaccinationWriteScopeService,
+    private val authService: AuthService,
 ) {
-    /** Создает запись о вакцинации. */
     @PostMapping
     @Operation(summary = "Create vaccination")
     @ApiResponses(
@@ -58,10 +56,9 @@ class VaccinationWriteController(
         ],
     )
     fun create(
-        request: HttpServletRequest,
         @RequestBody body: VaccinationWriteRequest,
     ): VaccinationWriteResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertVaccinationCreateAllowed(principal, body.employeeId)
         val created =
             vaccinationService.create(
@@ -80,7 +77,6 @@ class VaccinationWriteController(
         return VaccinationWriteResponse(id = created.id!!)
     }
 
-    /** Обновляет запись о вакцинации. */
     @PutMapping("/{id}")
     @Operation(summary = "Update vaccination")
     @ApiResponses(
@@ -104,11 +100,10 @@ class VaccinationWriteController(
         ],
     )
     fun update(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
         @RequestBody body: VaccinationWriteRequest,
     ): VaccinationWriteResponse {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertVaccinationUpdateAllowed(principal, id, body.employeeId)
         val updated =
             vaccinationService.update(
@@ -129,7 +124,6 @@ class VaccinationWriteController(
         return VaccinationWriteResponse(id = updated.id!!)
     }
 
-    /** Удаляет запись о вакцинации. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete vaccination")
@@ -149,46 +143,24 @@ class VaccinationWriteController(
         ],
     )
     fun delete(
-        request: HttpServletRequest,
         @PathVariable id: UUID,
     ) {
-        val principal = requirePrincipal(request)
+        val principal = authService.requireAnyRole(setOf(AppRole.MEDICAL, AppRole.ADMIN))
         scopeService.assertVaccinationDeleteAllowed(principal, id)
         vaccinationService.delete(id = id, deletedBy = principal.userId)
     }
-
-    /**
-     * Извлекает аутентифицированного пользователя из атрибутов запроса.
-     */
-    private fun requirePrincipal(request: HttpServletRequest): AuthenticatedPrincipal =
-        request.getAttribute(VaccinationSecurityContext.PRINCIPAL_ATTRIBUTE) as? AuthenticatedPrincipal
-            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing security principal")
 }
 
-/**
- * Тело запроса на создание или обновление записи о вакцинации.
- */
 data class VaccinationWriteRequest(
-    /** Идентификатор сотрудника. */
     val employeeId: UUID,
-    /** Идентификатор вакцины. */
     val vaccineId: UUID,
-    /** Дата вакцинации. */
     val vaccinationDate: LocalDate,
-    /** Номер дозы. */
     val doseNumber: Int,
-    /** Номер партии препарата. */
     val batchNumber: String? = null,
-    /** Срок годности использованной дозы. */
     val expirationDate: LocalDate,
-    /** Дополнительные заметки. */
     val notes: String? = null,
 )
 
-/**
- * Ответ на успешную операцию записи вакцинации.
- */
 data class VaccinationWriteResponse(
-    /** Идентификатор созданной или обновленной записи. */
     val id: UUID,
 )
