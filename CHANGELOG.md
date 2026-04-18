@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.9.6 - 2026-04-18
+- 2026-04-09 | backend | generic | feature | #198 - [FEATURE] подготовить backend-инфраструктуру для перехода с кастомной UUID-аутентификации на полноценный Spring Security с входом по email и password ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/198))
+- 2026-04-12 | backend | auth | feature | #200 - [FEATURE] завершить backend login/logout API на Spring Security session ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/200))
+- 2026-04-18 | backend | generic | feature | #201 - [FEATURE] перевести backend-модули с X-Auth-Token/interceptor-ов на Spring Security principal ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/201))
+- 2026-04-18 | frontend | generic | feature | #202 - [FEATURE] перевести frontend с UUID-токена на session-based аутентификацию по email/password ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/202))
+- 2026-04-18 | backend | generic | feature | #203 - [FEATURE] переделать админку пользователей под парольную модель вместо copy token ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/203))
+- 2026-04-18 | backend | generic | feature | #204 - [FEATURE] обновить seed data, тесты и документацию под новую security-модель ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/204))
+
+
 ## v0.9.5 - 2026-03-27
 - 2026-03-22 | backend | generic | feature | #177 - [FEATURE] добавить javadoc во все модули ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/177))
 - 2026-03-25 | backend | reporting | feature | #180 - [FEATURE] Расширить Охват. Добавить доп. таблицу ([link](https://github.com/DragomirovCode/employee-vaccination-system/issues/180))
