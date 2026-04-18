@@ -10,7 +10,12 @@ export function RequireRole({
   allowedRoles: AppRole[];
   children: ReactElement;
 }) {
-  const { session } = useAuth();
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) {
+    return children;
+  }
+
   const roles = session?.roles ?? [];
   const isAllowed = allowedRoles.some((role) => roles.includes(role));
 

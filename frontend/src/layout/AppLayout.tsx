@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { apiGet } from "../shared/api/client";
+import { apiGet, apiPost } from "../shared/api/client";
 import { ApiHttpError, EmployeeDto } from "../shared/api/types";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { LanguageSwitch } from "../shared/i18n/LanguageSwitch";
@@ -24,7 +24,12 @@ export function AppLayout() {
   const navClassName = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : undefined);
   const [displayName, setDisplayName] = useState<string>("");
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiPost<void>("/auth/logout", undefined, { suppressAuthEvents: true });
+    } catch {
+      // Clearing local auth state is enough when the backend session is already gone.
+    }
     logout();
     navigate("/login", { replace: true });
   }
