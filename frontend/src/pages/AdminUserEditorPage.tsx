@@ -7,17 +7,23 @@ import { useI18n } from "../shared/i18n/I18nContext";
 type AdminUserFormState = {
   email: string;
   isActive: boolean;
+  password: string;
+  confirmPassword: string;
 };
 
 const EMPTY_FORM: AdminUserFormState = {
   email: "",
-  isActive: true
+  isActive: true,
+  password: "",
+  confirmPassword: ""
 };
 
 function toFormState(user: AuthUserDto): AdminUserFormState {
   return {
     email: user.email,
-    isActive: user.isActive
+    isActive: user.isActive,
+    password: "",
+    confirmPassword: ""
   };
 }
 
@@ -38,6 +44,8 @@ export function AdminUserEditorPage() {
   const [roleDraft, setRoleDraft] = useState("");
   const [roleBusyCode, setRoleBusyCode] = useState<string | null>(null);
   const isEditMode = Boolean(userId);
+  const trimmedPassword = formState.password.trim();
+  const shouldSubmitPassword = trimmedPassword.length > 0;
 
   useEffect(() => {
     if (!userId) {
@@ -87,9 +95,25 @@ export function AdminUserEditorPage() {
       return;
     }
 
+    if (!isEditMode && !shouldSubmitPassword) {
+      setError(t("adminUsers.passwordRequired"));
+      return;
+    }
+
+    if (shouldSubmitPassword && trimmedPassword.length < 8) {
+      setError(t("adminUsers.passwordTooShort"));
+      return;
+    }
+
+    if (shouldSubmitPassword && trimmedPassword !== formState.confirmPassword.trim()) {
+      setError(t("adminUsers.passwordMismatch"));
+      return;
+    }
+
     const payload: AuthUserWriteRequest = {
       email,
-      isActive: formState.isActive
+      isActive: formState.isActive,
+      ...(shouldSubmitPassword ? { password: trimmedPassword } : {})
     };
 
     setSubmitting(true);
@@ -197,6 +221,29 @@ export function AdminUserEditorPage() {
                 type="email"
                 value={formState.email}
                 onChange={(e) => setFormState((current) => ({ ...current, email: e.target.value }))}
+              />
+            </label>
+            <label>
+              {isEditMode ? t("adminUsers.newPassword") : t("adminUsers.password")}
+              <input
+                type="password"
+                value={formState.password}
+                onChange={(e) => setFormState((current) => ({ ...current, password: e.target.value }))}
+                autoComplete={isEditMode ? "new-password" : "off"}
+                placeholder={isEditMode ? t("adminUsers.newPasswordPlaceholder") : t("adminUsers.passwordPlaceholder")}
+              />
+              <span className="muted">
+                {isEditMode ? t("adminUsers.passwordHintOptional") : t("adminUsers.passwordHintRequired")}
+              </span>
+            </label>
+            <label>
+              {t("adminUsers.confirmPassword")}
+              <input
+                type="password"
+                value={formState.confirmPassword}
+                onChange={(e) => setFormState((current) => ({ ...current, confirmPassword: e.target.value }))}
+                autoComplete={isEditMode ? "new-password" : "off"}
+                placeholder={t("adminUsers.confirmPasswordPlaceholder")}
               />
             </label>
             <label className="checkbox-row">

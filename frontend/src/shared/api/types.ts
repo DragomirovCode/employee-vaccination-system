@@ -108,6 +108,7 @@ export type AuthUserDto = {
 export type AuthUserWriteRequest = {
   email: string;
   isActive: boolean;
+  password?: string;
 };
 
 export type AuthUserStatusRequest = {

@@ -56,7 +56,7 @@ class AuthAdminService(
             userRepository.saveAndFlush(
                 UserEntity(
                     email = command.email.trim(),
-                    passwordHash = resolvePasswordHash(command.password),
+                    passwordHash = requirePasswordHash(command.password),
                     isActive = command.isActive,
                 ),
             )
@@ -243,10 +243,9 @@ class AuthAdminService(
         roleRepository.findByCode(code.trim().uppercase())
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found")
 
-    private fun resolvePasswordHash(password: String?): String {
-        val rawPassword = password?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
-        return encodePassword(rawPassword)
-    }
+    private fun requirePasswordHash(password: String?): String =
+        password?.takeIf { it.isNotBlank() }?.let(::encodePassword)
+            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required")
 
     private fun encodePassword(rawPassword: String): String =
         passwordEncoder.encode(rawPassword)

@@ -71,7 +71,7 @@ class AuthAdminApiTest {
                 post("/auth/users")
                     .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"email":"new@example.com","isActive":true}"""),
+                    .content("""{"email":"new@example.com","isActive":true,"password":"secret-123"}"""),
             ).andExpect(status().isForbidden)
     }
 
@@ -86,7 +86,7 @@ class AuthAdminApiTest {
                     post("/auth/users")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""{"email":"new-admin@example.com","isActive":true}"""),
+                        .content("""{"email":"new-admin@example.com","isActive":true,"password":"secret-123"}"""),
                 ).andExpect(status().isCreated)
                 .andExpect(jsonPath("$.email").value("new-admin@example.com"))
                 .andReturn()
@@ -105,6 +105,21 @@ class AuthAdminApiTest {
     }
 
     @Test
+    fun `create user requires password`() {
+        val adminUser = createUserWithRole("ADMIN")
+        val session = login(adminUser.email, "hash")
+
+        mockMvc
+            .perform(
+                post("/auth/users")
+                    .session(session)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"missing-password@example.com","isActive":true}"""),
+            ).andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Password is required"))
+    }
+
+    @Test
     fun `duplicate email returns conflict`() {
         val adminUser = createUserWithRole("ADMIN")
         val session = login(adminUser.email, "hash")
@@ -115,7 +130,7 @@ class AuthAdminApiTest {
                 post("/auth/users")
                     .session(session)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"email":"dup@example.com","isActive":true}"""),
+                    .content("""{"email":"dup@example.com","isActive":true,"password":"secret-123"}"""),
             ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("HTTP_409"))
     }
@@ -177,7 +192,7 @@ class AuthAdminApiTest {
                     post("/auth/users")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""{"email":"audit-auth@example.com","isActive":true}"""),
+                        .content("""{"email":"audit-auth@example.com","isActive":true,"password":"secret-123"}"""),
                 ).andExpect(status().isCreated)
                 .andReturn()
 

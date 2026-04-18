@@ -16,7 +16,6 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
-  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,25 +76,6 @@ export function AdminUsersPage() {
     }
   }
 
-  async function copyToken(userId: string) {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(userId);
-      } else {
-        const tempInput = document.createElement("input");
-        tempInput.value = userId;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-      }
-      setCopiedUserId(userId);
-      window.setTimeout(() => setCopiedUserId((current) => (current === userId ? null : current)), 2000);
-    } catch {
-      setError(t("adminUsers.copyTokenError"));
-    }
-  }
-
   return (
     <section className="stack-lg">
       <article className="card">
@@ -144,9 +124,6 @@ export function AdminUsersPage() {
                   <div>
                     <h3>{user.email}</h3>
                     <p className="muted">
-                      {t("adminUsers.token")}: <code>{user.id}</code>
-                    </p>
-                    <p className="muted">
                       {t("adminUsers.createdAt")}: {formatDateTime(user.createdAt, locale)}
                     </p>
                     <p className="muted">
@@ -162,9 +139,6 @@ export function AdminUsersPage() {
                   <Link to={`/admin/users/${user.id}/edit`}>
                     <button type="button" className="button-secondary">{t("adminUsers.edit")}</button>
                   </Link>
-                  <button type="button" className="button-secondary" onClick={() => void copyToken(user.id)}>
-                    {copiedUserId === user.id ? t("adminUsers.copied") : t("adminUsers.copyToken")}
-                  </button>
                   <button type="button" onClick={() => void toggleStatus(user)} disabled={statusBusyId === user.id}>
                     {statusBusyId === user.id
                       ? t("adminUsers.statusUpdating")
