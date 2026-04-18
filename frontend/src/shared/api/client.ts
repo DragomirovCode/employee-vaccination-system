@@ -1,5 +1,4 @@
 import { ApiErrorResponse, ApiHttpError } from "./types";
-import { normalizeAuthToken, readSession } from "../../features/auth/session";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
@@ -7,30 +6,14 @@ type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   headers?: Record<string, string>;
   body?: unknown;
-  skipAuth?: boolean;
-  authToken?: string;
   suppressAuthEvents?: boolean;
 };
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { method = "GET", headers = {}, body, skipAuth = false, authToken, suppressAuthEvents = false } = options;
-  const token = normalizeAuthToken(authToken ?? readSession()?.token ?? "");
-
-  if (!skipAuth && !token) {
-    if (!suppressAuthEvents) emitAuthEvents(401);
-    throw new ApiHttpError(401, {
-      code: "UNAUTHORIZED",
-      message: "Session token is missing",
-      path,
-      timestamp: new Date().toISOString()
-    });
-  }
+  const { method = "GET", headers = {}, body, suppressAuthEvents = false } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
-  if (!skipAuth) {
-    requestHeaders["X-Auth-Token"] = token;
-  }
   if (body !== undefined && !isFormData && !requestHeaders["Content-Type"]) {
     requestHeaders["Content-Type"] = "application/json";
   }
@@ -38,6 +21,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: requestHeaders,
+    credentials: "include",
     body:
       body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
   });
@@ -92,27 +76,14 @@ export async function apiGetBlob(
   path: string,
   options: Omit<ApiRequestOptions, "method" | "body"> = {}
 ): Promise<{ blob: Blob; contentType: string; contentDisposition: string | null }> {
-  const { headers = {}, skipAuth = false, authToken, suppressAuthEvents = false } = options;
-  const token = normalizeAuthToken(authToken ?? readSession()?.token ?? "");
-
-  if (!skipAuth && !token) {
-    if (!suppressAuthEvents) emitAuthEvents(401);
-    throw new ApiHttpError(401, {
-      code: "UNAUTHORIZED",
-      message: "Session token is missing",
-      path,
-      timestamp: new Date().toISOString()
-    });
-  }
+  const { headers = {}, suppressAuthEvents = false } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
-  if (!skipAuth) {
-    requestHeaders["X-Auth-Token"] = token;
-  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "GET",
-    headers: requestHeaders
+    headers: requestHeaders,
+    credentials: "include"
   });
 
   if (!res.ok) {

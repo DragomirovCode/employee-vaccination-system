@@ -1,8 +1,8 @@
 import { FormEvent, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
-import { AppRole, normalizeAuthToken } from "../features/auth/session";
-import { apiGet } from "../shared/api/client";
+import { AppRole, normalizeRoles } from "../features/auth/session";
+import { apiPost } from "../shared/api/client";
 import { useI18n } from "../shared/i18n/I18nContext";
 import { LanguageSwitch } from "../shared/i18n/LanguageSwitch";
 import { ApiHttpError } from "../shared/api/types";
@@ -40,16 +40,13 @@ function resolveRedirectPath(pathname: string, roles: AppRole[]): string {
   return canAccessPath(pathname, roles) ? pathname : "/";
 }
 
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
-
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, session, isAuthenticated, isLoading } = useAuth();
   const { t } = useI18n();
-  const [token, setToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -61,14 +58,14 @@ export function LoginPage() {
     e.preventDefault();
     if (submitting) return;
 
-    const normalizedToken = normalizeAuthToken(token);
-    if (!normalizedToken) {
-      setErrorKey("login.tokenRequired");
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setErrorKey("login.emailRequired");
       setErrorMessage(null);
       return;
     }
-    if (!isUuid(normalizedToken)) {
-      setErrorKey("login.tokenNotFound");
+    if (!password) {
+      setErrorKey("login.passwordRequired");
       setErrorMessage(null);
       return;
     }
@@ -78,19 +75,24 @@ export function LoginPage() {
     setErrorMessage(null);
 
     try {
-      const me = await apiGet<AuthMeResponse>("/auth/me", {
-        authToken: normalizedToken,
-        suppressAuthEvents: true
-      });
+      const me = await apiPost<AuthMeResponse>(
+        "/auth/login",
+        {
+          email: normalizedEmail,
+          password
+        },
+        {
+          suppressAuthEvents: true
+        }
+      );
       login({
-        token: normalizedToken,
-        roles: me.roles,
+        roles: normalizeRoles(me.roles),
         userId: me.userId
       });
-      navigate(resolveRedirectPath(redirectTo, me.roles), { replace: true });
+      navigate(resolveRedirectPath(redirectTo, normalizeRoles(me.roles)), { replace: true });
     } catch (e) {
       if (e instanceof ApiHttpError && e.status === 401) {
-        setErrorKey("login.tokenNotFound");
+        setErrorKey("login.invalidCredentials");
         setErrorMessage(null);
       } else if (e instanceof ApiHttpError && e.status === 403) {
         setErrorKey(null);
@@ -115,6 +117,10 @@ export function LoginPage() {
 
   const error = errorMessage ?? (errorKey ? t(errorKey) : null);
 
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to={resolveRedirectPath(redirectTo, session?.roles ?? [])} replace />;
+  }
+
   return (
     <section className="center">
       <form className="card auth-card" onSubmit={onSubmit}>
@@ -124,13 +130,26 @@ export function LoginPage() {
         <h2>{t("login.title")}</h2>
         {reason === "expired" ? <p className="warn">{t("login.sessionExpired")}</p> : null}
         {error ? <p className="warn">{error}</p> : null}
+        <p>{t("login.hint")}</p>
         <label>
-          {t("login.tokenLabel")}
+          {t("login.emailLabel")}
           <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder={t("login.tokenPlaceholder")}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("login.emailPlaceholder")}
             autoFocus
+            autoComplete="email"
+          />
+        </label>
+        <label>
+          {t("login.passwordLabel")}
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t("login.passwordPlaceholder")}
+            autoComplete="current-password"
           />
         </label>
         <button type="submit" disabled={submitting}>
