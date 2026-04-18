@@ -17,11 +17,6 @@
 ./gradlew :app:bootRun
 ```
 
-Проверка эндпоинта:
-```bash
-curl -i http://localhost:8080/hello
-```
-
 Swagger UI:
 ```bash
 http://localhost:8080/swagger-ui/index.html
